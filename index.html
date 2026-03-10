@@ -871,12 +871,12 @@ function drawFrame(frame, c, W, H) {
   c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TR.x,TR.y);c.lineTo(BR.x,BR.y);c.lineTo(BL.x,BL.y);c.closePath();
   c.fillStyle=`rgba(${r2},${g2},${b2},${alpha})`;c.fill();
 
-  // CHAR
-  if(S.charImg){
-    if(S.clipToBand){c.save();c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TR.x,TR.y);c.lineTo(BR.x,BR.y);c.lineTo(BL.x,BL.y);c.closePath();c.clip();}
+  // CHAR（クリップONのときは縁の下に描画）
+  if(S.charImg && S.clipToBand){
+    c.save();c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TR.x,TR.y);c.lineTo(BR.x,BR.y);c.lineTo(BL.x,BL.y);c.closePath();c.clip();
     const ih=H*(S.imgScale/100),iw=S.charImg.width*(ih/S.charImg.height);
     c.drawImage(S.charImg,W*(S.imgX/100)-iw/2,H*(S.imgY/100)-ih,iw,ih);
-    if(S.clipToBand) c.restore();
+    c.restore();
   }
   c.restore();
 
@@ -886,6 +886,14 @@ function drawFrame(frame, c, W, H) {
   const textAlpha=phase==='in'?Math.pow(t,2):phase==='hold'?1:Math.pow(1-t,1.5);
   if(S.showText) drawText(c,poly,W,H,textAlpha);
   c.restore();
+
+  // CHAR（クリップOFFのときは縁の上に描画）
+  if(S.charImg && !S.clipToBand){
+    c.save();
+    const ih=H*(S.imgScale/100),iw=S.charImg.width*(ih/S.charImg.height);
+    c.drawImage(S.charImg,W*(S.imgX/100)-iw/2,H*(S.imgY/100)-ih,iw,ih);
+    c.restore();
+  }
 
   c.restore();
 
