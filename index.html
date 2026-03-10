@@ -880,9 +880,8 @@ function drawFrame(frame, c, W, H) {
   }
   c.restore();
 
-  // 縁・テキストはtranslate内で描く（キャラの上に来る）
+  // 縁・テキストはキャラの上に描く（translateは外側のsaveで既に適用済み）
   c.save();
-  c.translate(off.x,off.y);
   drawTrimC(c,poly,S.trimColor,S.trimWidth,S.trim);
   const textAlpha=phase==='in'?Math.pow(t,2):phase==='hold'?1:Math.pow(1-t,1.5);
   if(S.showText) drawText(c,poly,W,H,textAlpha);

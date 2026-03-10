@@ -69,22 +69,23 @@ body {
 .header-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff;
+  gap: 6px;
+  padding: 5px 12px;
+  background: none;
+  color: var(--text-muted);
   text-decoration: none;
-  border-radius: 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  transition: opacity 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
-.header-link:hover { opacity: 0.85; }
-.header-link::before { content: '▶'; font-size: 10px; }
+.header-link:hover { color: var(--accent); border-color: var(--accent); opacity: 1; }
+.header-link::before { content: '▶'; font-size: 9px; }
 
 /* ===== LAYOUT ===== */
 .layout {
