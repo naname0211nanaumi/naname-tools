@@ -231,6 +231,17 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
 .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.1s; }
 .status { font-size: 11px; color: var(--muted); margin-top: 5px; min-height: 14px; }
 
+.font-opt {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--border);
+}
+.font-opt:last-child { border-bottom: none; }
+.font-opt:hover, .font-opt.active { background: var(--surface3); color: var(--accent); }
+
 /* ドラッグ選択ハイライト */
 .asset-item.selected .asset-name { color: var(--accent); }
 
@@ -244,7 +255,7 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
 <header>
   <h1>CUTIN GENERATOR</h1>
   <span>v3 · Asset Layer</span>
-  <a href="guide.html" target="_blank" style="margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:4px;transition:all 0.15s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">使い方ガイド ↗</a>
+  <a href="cutin_guide.html" target="_blank" style="margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:4px;transition:all 0.15s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">使い方ガイド ↗</a>
 </header>
 
 <div class="app">
@@ -338,16 +349,33 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
     <div class="row"><label>サブ</label><input type="text" id="subText" value="Nanami Naname" oninput="rp()"></div>
     <div class="row">
       <label>フォント</label>
-      <select id="fontFamily" onchange="rp()">
-        <option value="Noto Sans JP">Noto Sans JP（ゴシック）</option>
-        <option value="Noto Serif JP">Noto Serif JP（明朝）</option>
-        <option value="Shippori Mincho">しっぽり明朝</option>
-        <option value="Zen Antique">禅アンティーク</option>
-        <option value="M PLUS Rounded 1c">M PLUS Rounded（丸ゴシック）</option>
-        <option value="DotGothic16">ドットゴシック</option>
-        <option value="Bebas Neue">Bebas Neue（英字）</option>
-        <option value="Cinzel">Cinzel（英字クラシック）</option>
-        <option value="Rajdhani">Rajdhani（英字スリム）</option>
+      <div style="position:relative" id="fontDropWrap">
+        <button id="fontDropBtn" onclick="toggleFontDrop()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;font-family:inherit;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+          <span id="fontDropLabel">Noto Sans JP（ゴシック）</span><span style="color:var(--muted)">▾</span>
+        </button>
+        <div id="fontDropList" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;margin-top:2px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+          <div class="font-opt" data-val="Noto Sans JP"      onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">Noto Sans JP（ゴシック）</div>
+          <div class="font-opt" data-val="Noto Serif JP"     onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">Noto Serif JP（明朝）</div>
+          <div class="font-opt" data-val="Shippori Mincho"   onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">しっぽり明朝</div>
+          <div class="font-opt" data-val="Zen Antique"       onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">禅アンティーク</div>
+          <div class="font-opt" data-val="M PLUS Rounded 1c" onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">M PLUS Rounded（丸ゴシック）</div>
+          <div class="font-opt" data-val="DotGothic16"       onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">ドットゴシック</div>
+          <div class="font-opt" data-val="Bebas Neue"        onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">Bebas Neue（英字）</div>
+          <div class="font-opt" data-val="Cinzel"            onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">Cinzel（英字クラシック）</div>
+          <div class="font-opt" data-val="Rajdhani"          onmouseover="previewFont(this)" onmouseout="revertFont()" onmousedown="pickFont(this)">Rajdhani（英字スリム）</div>
+        </div>
+      </div>
+      <!-- sync用hidden select -->
+      <select id="fontFamily" style="display:none">
+        <option value="Noto Sans JP" selected>Noto Sans JP</option>
+        <option value="Noto Serif JP">Noto Serif JP</option>
+        <option value="Shippori Mincho">Shippori Mincho</option>
+        <option value="Zen Antique">Zen Antique</option>
+        <option value="M PLUS Rounded 1c">M PLUS Rounded 1c</option>
+        <option value="DotGothic16">DotGothic16</option>
+        <option value="Bebas Neue">Bebas Neue</option>
+        <option value="Cinzel">Cinzel</option>
+        <option value="Rajdhani">Rajdhani</option>
       </select>
     </div>
     <div class="row">
@@ -366,8 +394,10 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
         <option value="center">帯の中央</option>
         <option value="top">帯の上部</option>
         <option value="outside">帯の外（右）</option>
+        <option value="custom">カスタム（ドラッグ）</option>
       </select>
     </div>
+    <div class="hint" style="margin-top:6px">テキストをプレビュー上で<span style="color:var(--green)">ドラッグ</span>して自由配置</div>
   </div>
 
   <!-- 素材 -->
@@ -462,7 +492,6 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
       <button class="fmt-btn active" id="fmt-webm" onclick="setFmt('webm')">WebM (VP9)</button>
       <button class="fmt-btn" id="fmt-apng" onclick="setFmt('apng')">APNG</button>
       <div>
-        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">FPS</label>
         <select id="expFps" style="width:76px"><option value="30" selected>30fps</option><option value="60">60fps</option></select>
       </div>
       <button class="exp-btn" id="expBtn" onclick="doExport()">EXPORT</button>
@@ -483,6 +512,7 @@ const S = {
   charImg:null, imgScale:85, imgX:50, imgY:100, clipToBand:true,
   showText:true, mainText:'七海ナナメ', subText:'Nanami Naname',
   fontSize:52, textColor:'#1a1a2e', textPos:'bottom',
+  textCustomX:0.5, textCustomY:0.5,
   fontFamily:'Noto Sans JP', textDir:'horizontal',
   inF:18, holdF:60, outF:14, easing:'quart',
   fmt:'webm', expFps:30, cW:1280, cH:720, transparent:true,
@@ -811,36 +841,70 @@ function drawFlower(c,x,y,r,color){
 }
 
 // ===== TEXT =====
+// テキストブロックの中心座標を返す（ドラッグ判定・ハンドル描画に使用）
+function getTextAnchor(poly,W,H){
+  const[TL,TR,BR,BL]=poly;
+  const bandCx=(TL.x+TR.x+BL.x+BR.x)/4;
+  const fs=S.fontSize, subFs=Math.round(fs*0.36);
+  if(S.textPos==='custom') return {x:S.textCustomX*W, y:S.textCustomY*H};
+  if(S.textDir==='vertical'){
+    let bx,by;
+    switch(S.textPos){case'top':bx=bandCx-fs*0.1;by=H*0.05;break;case'center':bx=bandCx-fs*0.1;by=H*0.1;break;case'outside':bx=Math.max(TR.x,BR.x)+fs*0.6;by=H*0.08;break;default:bx=bandCx-fs*0.1;by=H*0.08;}
+    return {x:bx, y:by+fs};
+  } else {
+    let ty;
+    switch(S.textPos){
+      case'top':ty=H*0.15;break;
+      case'center':ty=H*0.5;break;
+      case'outside':return{x:Math.max(TR.x,BR.x)+20, y:H*0.6};
+      default:ty=H*0.72;break;
+    }
+    ty=Math.min(ty,H-fs*1.0); ty=Math.max(ty,subFs+fs*0.2);
+    // tyはサブテキストの描画y（drawTextと同じ基準）
+    return {x:bandCx, y:ty};
+  }
+}
+
 function drawText(c,poly,W,H,alpha){
   const[TL,TR,BR,BL]=poly;
   const fs=S.fontSize,subFs=Math.round(fs*0.36),font=S.fontFamily;
   const bandCx=(TL.x+TR.x+BL.x+BR.x)/4;
   c.globalAlpha=alpha;
+
   if(S.textDir==='vertical'){
     let bx,by;
-    switch(S.textPos){case'top':bx=bandCx-fs*0.1;by=H*0.05;break;case'center':bx=bandCx-fs*0.1;by=H*0.1;break;case'outside':bx=Math.max(TR.x,BR.x)+fs*0.6;by=H*0.08;break;default:bx=bandCx-fs*0.1;by=H*0.08;}
+    if(S.textPos==='custom'){bx=S.textCustomX*W;by=S.textCustomY*H-fs;}
+    else switch(S.textPos){case'top':bx=bandCx-fs*0.1;by=H*0.05;break;case'center':bx=bandCx-fs*0.1;by=H*0.1;break;case'outside':bx=Math.max(TR.x,BR.x)+fs*0.6;by=H*0.08;break;default:bx=bandCx-fs*0.1;by=H*0.08;}
     c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;c.textAlign='center';
     c.shadowColor='rgba(255,255,255,0.25)';c.shadowBlur=6;
     [...S.mainText].forEach((ch,i)=>c.fillText(ch,bx,by+fs*(i+1)));
     c.shadowBlur=0;
     if(S.subText){c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;[...S.subText].forEach((ch,i)=>c.fillText(ch,bx+fs*0.9,by+subFs*(i+1.2)));}
   } else {
-    let ty;
+    let tx=bandCx, ty;
+    if(S.textPos==='custom'){
+      tx=S.textCustomX*W; ty=S.textCustomY*H;
+      c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;c.textAlign='center';c.fillText(S.subText,tx,ty-fs*0.1);
+      c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;
+      c.shadowColor='rgba(255,255,255,0.3)';c.shadowBlur=8;c.fillText(S.mainText,tx,ty+fs*0.8);c.shadowBlur=0;
+      c.textAlign='left';c.globalAlpha=1;return;
+    }
     switch(S.textPos){
       case'top':ty=H*0.15;break;case'center':ty=H*0.5;break;
       case'outside':{
-        const tx=Math.max(TR.x,BR.x)+20;ty=H*0.6;
+        const ox=Math.max(TR.x,BR.x)+20;ty=H*0.6;
         c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle='#aabbdd';c.textAlign='left';
-        c.fillText(S.subText,tx,ty-fs*0.05);
-        c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;c.fillText(S.mainText,tx,ty+fs*0.85);
+        c.fillText(S.subText,ox,ty-fs*0.05);
+        c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;c.fillText(S.mainText,ox,ty+fs*0.85);
         c.globalAlpha=1;return;
       }
-      default:ty=H*0.82;
+      default:ty=H*0.72;break;
     }
+    ty=Math.min(ty,H-fs*1.0); ty=Math.max(ty,subFs+fs*0.2);
     c.textAlign='center';
-    c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;c.fillText(S.subText,bandCx,ty-fs*0.1);
+    c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;c.fillText(S.subText,tx,ty-fs*0.1);
     c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;
-    c.shadowColor='rgba(255,255,255,0.3)';c.shadowBlur=8;c.fillText(S.mainText,bandCx,ty+fs*0.8);c.shadowBlur=0;
+    c.shadowColor='rgba(255,255,255,0.3)';c.shadowBlur=8;c.fillText(S.mainText,tx,ty+fs*0.8);c.shadowBlur=0;
   }
   c.textAlign='left';c.globalAlpha=1;
 }
@@ -911,6 +975,30 @@ function drawOverlay() {
 
   const{phase,t}=getProgress(curF);
   const off=getSlideOffset(t,W,H,phase);
+
+  // テキストハンドル（showTextがONのとき常に表示）
+  if(S.showText){
+    const poly=getBandPoly(W,H);
+    const anchor=getTextAnchor(poly,W,H);
+    const tx=anchor.x+off.x, ty=anchor.y+off.y;
+    const fs=S.fontSize, subFs=Math.round(fs*0.36);
+    overlayCtx.save();
+    overlayCtx.strokeStyle='rgba(74,222,128,0.8)';
+    overlayCtx.lineWidth=2;
+    overlayCtx.setLineDash([5,3]);
+    // drawTextと同じ基準: サブがty-fs*0.1、メイン下端がty+fs*1.6
+    const boxW=fs*Math.max(S.mainText.length,S.subText.length)*0.65;
+    const boxTop=ty-subFs-fs*0.15;
+    const boxH=fs*1.65;
+    overlayCtx.strokeRect(tx-boxW/2, boxTop, boxW, boxH);
+    overlayCtx.setLineDash([]);
+    overlayCtx.fillStyle='rgba(74,222,128,0.9)';
+    overlayCtx.beginPath();overlayCtx.arc(tx, boxTop+boxH/2, 7, 0, Math.PI*2);overlayCtx.fill();
+    overlayCtx.fillStyle='rgba(74,222,128,0.65)';
+    overlayCtx.font='bold 11px Rajdhani,sans-serif';
+    overlayCtx.fillText('TEXT', tx-boxW/2+4, boxTop+13);
+    overlayCtx.restore();
+  }
 
   // キャラハンドル
   if(S.charImg) {
@@ -1004,6 +1092,18 @@ function hitTestChar(pos, W, H, off) {
   return pos.x>=cx-hw && pos.x<=cx+hw && pos.y>=cy-ih && pos.y<=cy;
 }
 
+function hitTestText(pos, W, H, off) {
+  if (!S.showText) return false;
+  const poly=getBandPoly(W,H);
+  const anchor=getTextAnchor(poly,W,H);
+  const tx=anchor.x+off.x, ty=anchor.y+off.y;
+  const fs=S.fontSize, subFs=Math.round(fs*0.36);
+  const boxW=fs*Math.max(S.mainText.length,S.subText.length)*0.65;
+  const boxTop=ty-subFs-fs*0.15;
+  const boxH=fs*1.65;
+  return pos.x>=tx-boxW/2 && pos.x<=tx+boxW/2 && pos.y>=boxTop && pos.y<=boxTop+boxH;
+}
+
 function onPointerDown(e) {
   if(playing) return;
   const pos=getCanvasPos(e);
@@ -1031,6 +1131,20 @@ function onPointerDown(e) {
     return;
   }
 
+  // テキストチェック
+  if(hitTestText(pos,W,H,slideOff)){
+    // カスタムモードでない場合、現在の位置をカスタム座標に変換して引き継ぐ
+    const poly=getBandPoly(W,H);
+    const anchor=getTextAnchor(poly,W,H);
+    S.textCustomX=anchor.x/W;
+    S.textCustomY=anchor.y/H;
+    S.textPos='custom';
+    document.getElementById('textPos').value='custom';
+    dragState={type:'text',startX:pos.x,startY:pos.y,startTX:S.textCustomX,startTY:S.textCustomY};
+    e.preventDefault();
+    return;
+  }
+
   // ヒットなし→選択解除
   selectedAssetId=null;
   renderAssetList();
@@ -1053,6 +1167,13 @@ function onPointerMove(e) {
     document.getElementById('iXV').textContent=Math.round(S.imgX);
     document.getElementById('imgY').value=Math.round(S.imgY);
     document.getElementById('iYV').textContent=Math.round(S.imgY);
+    drawFrame(curF);
+    return;
+  }
+
+  if(dragState.type==='text'){
+    S.textCustomX=Math.max(0,Math.min(1,dragState.startTX+dx/W));
+    S.textCustomY=Math.max(0,Math.min(1,dragState.startTY+dy/H));
     drawFrame(curF);
     return;
   }
@@ -1201,6 +1322,54 @@ async function buildAPNG(frames,width,height){
   const res=new Uint8Array(total);let off=0;parts.forEach(p=>{res.set(p,off);off+=p.length;});
   return new Blob([res],{type:'image/png'});
 }
+
+// ===== FONT DROPDOWN =====
+let _fontBeforePreview = null;
+
+function toggleFontDrop() {
+  const list = document.getElementById('fontDropList');
+  const isOpen = list.style.display !== 'none';
+  list.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    _fontBeforePreview = S.fontFamily;
+    document.querySelectorAll('.font-opt').forEach(el => {
+      el.classList.toggle('active', el.dataset.val === S.fontFamily);
+    });
+  }
+}
+
+function previewFont(el) {
+  S.fontFamily = el.dataset.val;
+  drawFrame(curF);
+  document.querySelectorAll('.font-opt').forEach(e => e.classList.toggle('active', e === el));
+}
+
+function revertFont() {
+  // mouseoutはpickFont後にも発火するので、ドロップが開いている間だけ戻す
+  if (document.getElementById('fontDropList').style.display !== 'none' && _fontBeforePreview) {
+    S.fontFamily = _fontBeforePreview;
+    drawFrame(curF);
+  }
+}
+
+function pickFont(el) {
+  const val = el.dataset.val;
+  _fontBeforePreview = val;
+  S.fontFamily = val;
+  document.getElementById('fontFamily').value = val;
+  document.getElementById('fontDropLabel').textContent = el.textContent;
+  document.getElementById('fontDropList').style.display = 'none';
+  drawFrame(curF);
+}
+
+// クリック外で閉じる
+document.addEventListener('mousedown', e => {
+  const wrap = document.getElementById('fontDropWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    if (_fontBeforePreview) { S.fontFamily = _fontBeforePreview; drawFrame(curF); }
+    document.getElementById('fontDropList').style.display = 'none';
+  }
+});
 
 // ===== INIT =====
 overlayCV.style.pointerEvents='none';
