@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUTIN GENERATOR — 使い方ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Noto+Sans+JP:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09090e;
+  --surface: #101018;
+  --surface2: #181822;
+  --surface3: #20202e;
+  --border: #222233;
+  --border2: #2e2e44;
+  --accent: #6e9cf4;
+  --accent2: #a87ef7;
+  --green: #4ade80;
+  --orange: #fb923c;
+  --red: #f87171;
+  --text: #d8e0f0;
+  --muted: #50607a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* ===== HEADER ===== */
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+}
+.logo span {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  -webkit-text-fill-color: var(--muted);
+  background: none;
+  display: block;
+  margin-top: -4px;
+}
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.header-link:hover { opacity: 0.85; }
+.header-link::before { content: '▶'; font-size: 10px; }
+
+/* ===== LAYOUT ===== */
+.layout {
+  display: flex;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  gap: 36px;
+}
+
+/* ===== TOC ===== */
+.toc {
+  width: 210px;
+  min-width: 210px;
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+}
+.toc-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.toc a {
+  display: block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  padding: 5px 0 5px 10px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+.toc a:hover { color: var(--text); border-left-color: var(--border2); }
+.toc a.active { color: var(--accent); border-left-color: var(--accent); }
+.toc a.sub { padding-left: 22px; font-size: 11px; }
+
+/* ===== CONTENT ===== */
+.content { flex: 1; min-width: 0; }
+
+/* ===== SECTIONS ===== */
+.sec {
+  margin-bottom: 56px;
+  scroll-margin-top: 80px;
+}
+.sec-eyebrow {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 8px;
+}
+.sec h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sec h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 28px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec h3::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sec p { color: #b0bccc; margin-bottom: 12px; }
+.sec p:last-child { margin-bottom: 0; }
+
+/* ===== HERO ===== */
+.hero {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 32px 36px;
+  margin-bottom: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(110,156,244,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+.hero p { color: #8899bb; font-size: 14px; margin-bottom: 20px; }
+.badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.badge-blue  { background: rgba(110,156,244,0.12); color: var(--accent);  border: 1px solid rgba(110,156,244,0.25); }
+.badge-purple{ background: rgba(168,126,247,0.12); color: var(--accent2); border: 1px solid rgba(168,126,247,0.25); }
+.badge-green { background: rgba(74,222,128,0.12);  color: var(--green);   border: 1px solid rgba(74,222,128,0.25); }
+.badge-orange{ background: rgba(251,146,60,0.12);  color: var(--orange);  border: 1px solid rgba(251,146,60,0.25); }
+
+/* ===== FLOW ===== */
+.flow {
+  display: flex;
+  gap: 0;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.flow-step {
+  flex: 1;
+  min-width: 130px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 16px 14px;
+  position: relative;
+  text-align: center;
+}
+.flow-step:first-child { border-radius: 6px 0 0 6px; }
+.flow-step:last-child  { border-radius: 0 6px 6px 0; }
+.flow-step + .flow-step { border-left: none; }
+.flow-step + .flow-step::before {
+  content: '→';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+  background: var(--bg);
+  padding: 2px 0;
+  z-index: 1;
+}
+.flow-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.flow-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ===== PANEL DIAGRAM ===== */
+.ui-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.ui-diagram .hi  { color: var(--accent); }
+.ui-diagram .hi2 { color: var(--accent2); }
+.ui-diagram .hi3 { color: var(--green); }
+.ui-diagram .hi4 { color: var(--orange); }
+
+/* ===== TABLE ===== */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 13px;
+}
+.tbl th {
+  background: var(--surface2);
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+.tbl td {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  color: #b0bccc;
+  vertical-align: top;
+}
+.tbl tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+.tbl td:first-child { color: var(--text); font-weight: 700; white-space: nowrap; }
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent2);
+}
+
+/* ===== CALLOUT ===== */
+.callout {
+  border-left: 3px solid var(--accent);
+  background: rgba(110,156,244,0.06);
+  padding: 14px 18px;
+  border-radius: 0 6px 6px 0;
+  margin: 14px 0;
+  font-size: 13px;
+  color: #a0b4cc;
+}
+.callout.warn  { border-color: var(--orange); background: rgba(251,146,60,0.06); }
+.callout.tip   { border-color: var(--green);  background: rgba(74,222,128,0.06); }
+.callout strong { color: var(--text); }
+
+/* ===== DRAG DIAGRAM ===== */
+.drag-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin: 16px 0;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.drag-box {
+  flex: 1;
+  min-width: 200px;
+}
+.drag-box h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.drag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.drag-handle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.handle-blue   { background: rgba(110,156,244,0.2); border: 2px solid var(--accent); }
+.handle-purple { background: rgba(168,126,247,0.2); border: 2px solid var(--accent2); width: 32px; height: 32px; border-radius: 4px; }
+.handle-green  { background: rgba(74,222,128,0.2);  border: 2px solid var(--green); }
+.handle-orange { background: rgba(251,146,60,0.2);  border: 2px solid var(--orange); border-radius: 3px; }
+.drag-desc strong { color: var(--text); font-size: 13px; display: block; margin-bottom: 2px; }
+.drag-desc span   { color: var(--muted); font-size: 12px; }
+
+/* ===== LAYER DIAGRAM ===== */
+.layer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px 0;
+}
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+.layer-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 20px;
+}
+.layer-bar {
+  width: 4px;
+  height: 24px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.layer-name { font-weight: 700; color: var(--text); flex: 1; }
+.layer-note { font-size: 11px; color: var(--muted); }
+
+/* ===== STEP LIST ===== */
+.steps { list-style: none; margin: 14px 0; }
+.steps li {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-body { flex: 1; color: #b0bccc; }
+.step-body strong { color: var(--text); display: block; margin-bottom: 3px; }
+
+/* ===== OBS ===== */
+.obs-setting {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.obs-key { color: var(--muted); min-width: 120px; font-size: 12px; padding-top: 1px; }
+.obs-val { color: var(--text); font-weight: 700; }
+.obs-val .note { font-weight: 400; color: var(--muted); font-size: 11px; margin-left: 6px; }
+
+/* ===== FORMAT COMPARE ===== */
+.fmt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+.fmt-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 16px 18px;
+}
+.fmt-card h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.fmt-card.webm h4 { color: var(--accent); }
+.fmt-card.apng h4 { color: var(--accent2); }
+.fmt-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.fmt-row .k { color: var(--muted); }
+.fmt-row .v { color: var(--text); font-weight: 700; }
+.fmt-row .v.good { color: var(--green); }
+.fmt-row .v.warn { color: var(--orange); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 800px) {
+  .layout { flex-direction: column; padding: 24px 16px; }
+  .toc { width: 100%; position: static; }
+  .site-header { padding: 14px 16px; }
+  .fmt-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    CUTIN GENERATOR
+    <span>USER GUIDE · v3</span>
+  </div>
+  <a href="../" class="header-link">ツールを開く</a>
+</header>
+
+<div class="layout">
+
+<!-- TOC -->
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#overview">概要</a>
+  <a href="#quickstart">クイックスタート</a>
+  <a href="#panels">各パネルの設定</a>
+  <a href="#panels" class="sub">イン・アウト方向</a>
+  <a href="#band" class="sub">帯デザイン</a>
+  <a href="#char" class="sub">キャラクター画像</a>
+  <a href="#text" class="sub">テキスト</a>
+  <a href="#assets" class="sub">素材（あしらい）</a>
+  <a href="#anim" class="sub">アニメーション</a>
+  <a href="#canvas" class="sub">キャンバス</a>
+  <a href="#drag">ドラッグ操作</a>
+  <a href="#seek">シークバー</a>
+  <a href="#export">書き出し手順</a>
+  <a href="#obs">OBSへの組み込み</a>
+</nav>
+
+<!-- CONTENT -->
+<main class="content">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>CUTIN GENERATOR</h1>
+    <p>OBS配信用カットインアニメーションをブラウザ単体で作成・書き出しできるツール。<br>インストール不要。HTMLファイルをブラウザで開くだけで使えます。</p>
+    <div class="badges">
+      <span class="badge badge-blue">インストール不要</span>
+      <span class="badge badge-purple">WebM / APNG書き出し</span>
+      <span class="badge badge-green">OBS対応</span>
+      <span class="badge badge-orange">透過対応</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="sec" id="overview">
+    <div class="sec-eyebrow">Section 01</div>
+    <h2>概要</h2>
+    <p>カットインジェネレーターは、配信中に画面に飛び込んでくる「カットインアニメーション」を作るツールです。キャラクター画像・帯デザイン・テキスト・素材を組み合わせて、OBSのブラウザソースに読み込むWebMまたはAPNGファイルを書き出せます。</p>
+
+    <h3>画面構成</h3>
+    <div class="ui-diagram">
+┌──────────────────────────────────────────────────────────┐<br>
+│ <span class="hi">CUTIN GENERATOR</span>  v3 · Asset Layer                      │ ← ヘッダー<br>
+├────────────────┬─────────────────────────────────────────┤<br>
+│ <span class="hi2">サイドバー</span>     │ <span class="hi3">プレビューキャンバス</span>                       │<br>
+│                │                                         │<br>
+│ 各種設定パネル  │  カットインのリアルタイムプレビュー        │<br>
+│                │                                         │<br>
+│ ・イン方向      ├─────────────────────────────────────────┤<br>
+│ ・アウト方向    │ <span class="hi">▶ プレビュー</span>  ■ 停止  ⟨ 先頭           │ ← 操作ボタン<br>
+│ ・帯デザイン    ├─────────────────────────────────────────┤<br>
+│ ・キャラ画像    │ <span class="hi4">IN ━━━━━━━━━━━━━━━━━━━━━━</span> F 0 / 92    │ ← シークバー<br>
+│ ・テキスト      ├─────────────────────────────────────────┤<br>
+│ ・素材          │ <span class="hi2">書き出しパネル</span>  WebM / APNG  EXPORT    │<br>
+│ ・アニメーション│                                         │<br>
+│ ・キャンバス    │                                         │<br>
+└────────────────┴─────────────────────────────────────────┘
+    </div>
+  </section>
+
+  <!-- QUICKSTART -->
+  <section class="sec" id="quickstart">
+    <div class="sec-eyebrow">Section 02</div>
+    <h2>クイックスタート</h2>
+    <p>最短手順でカットインを作って書き出すまでの流れです。</p>
+
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-label">キャラ画像をアップロード</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-label">テキストを入力</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-label">プレビューで確認</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-label">WebMで書き出し</div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-label">OBSに読み込む</div></div>
+    </div>
+
+    <ul class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>キャラ画像をアップロード</strong>
+          サイドバー「キャラクター画像」エリアにPNG（透過推奨）をドロップまたはクリックしてアップ。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>テキストを設定</strong>
+          「テキスト」パネルでメインテキスト（例：七海ナナメ）とサブテキスト（例：Nanami Naname）を入力。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>プレビューで確認</strong>
+          「▶ プレビュー」ボタンでアニメーション再生。シークバーで任意フレームに止めて細かい調整ができます。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>書き出し</strong>
+          書き出しパネルでWebM（VP9）を選択して「EXPORT」。ダウンロードフォルダに <code>cutin.webm</code> が保存されます。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>OBSに読み込む</strong>
+          OBSのシーンにメディアソースを追加し、書き出したWebMファイルを指定。「アルファチャンネルがある場合は使用する」にチェック。
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- PANELS -->
+  <section class="sec" id="panels">
+    <div class="sec-eyebrow">Section 03</div>
+    <h2>各パネルの設定</h2>
+
+    <h3 id="dir">イン方向 / アウト方向</h3>
+    <p>カットインが画面に入ってくる方向と、出ていく方向を独立して設定します。</p>
+    <table class="tbl">
+      <tr><th>ボタン</th><th>矢印の読み方</th><th>動き</th></tr>
+      <tr><td>→ 左から</td><td>画面左から右へ入ってくる</td><td>左外からスライドイン</td></tr>
+      <tr><td>← 右から</td><td>画面右から左へ入ってくる</td><td>右外からスライドイン</td></tr>
+      <tr><td>↓ 上から</td><td>画面上から下へ入ってくる</td><td>上からスライドイン</td></tr>
+      <tr><td>↑ 下から</td><td>画面下から上へ入ってくる</td><td>下からスライドイン</td></tr>
+      <tr><td>↘ 斜め左</td><td>左上方向から入ってくる</td><td>斜め左上からスライドイン</td></tr>
+      <tr><td>↙ 斜め右</td><td>右上方向から入ってくる</td><td>斜め右上からスライドイン</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>TIP：</strong>イン方向とアウト方向を別々に設定できます。例えば「右から入って→下へ去る」といった組み合わせが可能です。
+    </div>
+
+    <h3 id="band">帯デザイン</h3>
+    <p>カットインの背景となる斜め帯の見た目を調整します。</p>
+    <table class="tbl">
+      <tr><th>項目</th><th>説明</th><th>範囲</th></tr>
+      <tr><td>角度</td><td>帯の傾き。プラスで右上がり、マイナスで左上がり</td><td>-45° 〜 +45°</td></tr>
+      <tr><td>幅</td><td>帯の横幅（画面幅に対するパーセンテージ）</td><td>20% 〜 90%</td></tr>
+      <tr><td>帯の色</td><td>帯の塗りつぶし色</td><td>カラーピッカー</td></tr>
+      <tr><td>透明度</td><td>帯の不透明度</td><td>10% 〜 100%</td></tr>
+      <tr><td>縁のあしらい</td><td>帯の左右の縁に付けるデコレーション</td><td>7種類</td></tr>
+      <tr><td>縁の色</td><td>あしらいの色</td><td>カラーピッカー</td></tr>
+      <tr><td>縁の太さ</td><td>あしらいのサイズ・線幅</td><td>1 〜 20</td></tr>
+    </table>
+
+    <p>縁のあしらいの種類：</p>
+    <table class="tbl">
+      <tr><th>種類</th><th>見た目</th></tr>
+      <tr><td>ライン</td><td>シンプルな単線</td></tr>
+      <tr><td>二重線</td><td>細い2本線</td></tr>
+      <tr><td>花</td><td>小花が等間隔に並ぶ</td></tr>
+      <tr><td>菱形</td><td>菱形が等間隔に並ぶ</td></tr>
+      <tr><td>波</td><td>なめらかな波線</td></tr>
+      <tr><td>十字</td><td>十字マークが等間隔に並ぶ</td></tr>
+      <tr><td>なし</td><td>縁なし</td></tr>
+    </table>
+
+    <h3 id="char">キャラクター画像</h3>
+    <p>帯に重ねて表示するキャラクター画像の設定です。</p>
+    <table class="tbl">
+      <tr><th>項目</th><th>説明</th><th>範囲</th></tr>
+      <tr><td>アップロード</td><td>PNG透過推奨。クリックまたはドロップで読み込み</td><td>—</td></tr>
+      <tr><td>サイズ</td><td>キャンバス高さに対する画像の高さ</td><td>20% 〜 200%</td></tr>
+      <tr><td>横位置</td><td>画像の水平中心位置</td><td>-50% 〜 150%</td></tr>
+      <tr><td>縦位置</td><td>画像の下辺位置（大きいほど下）</td><td>0% 〜 150%</td></tr>
+      <tr><td>帯内にクリップ</td><td>ONにすると帯の外にはみ出た部分を非表示にする</td><td>ON/OFF</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>TIP：</strong>プレビュー上でキャラ画像を直接ドラッグして位置を調整できます。オレンジ色の枠が表示されているときがドラッグ可能な状態です。
+    </div>
+
+    <h3 id="text">テキスト</h3>
+    <table class="tbl">
+      <tr><th>項目</th><th>説明</th></tr>
+      <tr><td>テキスト表示</td><td>テキスト全体の表示/非表示</td></tr>
+      <tr><td>メイン</td><td>大きく表示されるメインテキスト（例：七海ナナメ）</td></tr>
+      <tr><td>サブ</td><td>小さく表示されるサブテキスト（例：Nanami Naname）</td></tr>
+      <tr><td>フォント</td><td>9種類から選択。日本語・英字フォントを使い分けられる</td></tr>
+      <tr><td>書き方向</td><td>横書き / 縦書き</td></tr>
+      <tr><td>文字サイズ</td><td>メインテキストのサイズ（サブは自動で縮小）</td></tr>
+      <tr><td>テキスト色</td><td>メインテキストの色</td></tr>
+      <tr><td>テキスト位置</td><td>帯の上部 / 中央 / 下部 / 帯の外（右）</td></tr>
+    </table>
+
+    <h3 id="assets">素材（あしらい）</h3>
+    <p>帯の上や下に自由に配置できる装飾素材です。PNG・GIF・WebPを複数同時にアップロードできます。</p>
+    <table class="tbl">
+      <tr><th>項目</th><th>説明</th></tr>
+      <tr><td>サイズ</td><td>キャンバス高さに対する素材の高さ（1% 〜 200%）</td></tr>
+      <tr><td>回転</td><td>素材の回転角度（-180° 〜 180°）</td></tr>
+      <tr><td>不透明度</td><td>素材の透明度（5% 〜 100%）</td></tr>
+      <tr><td>レイヤー：前面</td><td>帯・キャラクターより上に描画</td></tr>
+      <tr><td>レイヤー：背面</td><td>帯より下に描画（帯に隠れる）</td></tr>
+      <tr><td>帯からはみ出し：はみ出す</td><td>帯の外に素材がはみ出す（デフォルト）</td></tr>
+      <tr><td>帯からはみ出し：カット</td><td>帯の形でクリッピング。帯の外が非表示になる</td></tr>
+    </table>
+    <div class="callout">
+      <strong>表示タイミング：</strong>素材はアニメーション全体（イン〜アウト）を通して常時表示されます。
+    </div>
+
+    <h3 id="anim">アニメーション</h3>
+    <table class="tbl">
+      <tr><th>項目</th><th>説明</th><th>デフォルト</th></tr>
+      <tr><td>イン（フレーム）</td><td>カットインが入ってくるフレーム数</td><td>18</td></tr>
+      <tr><td>ホールド（フレーム）</td><td>カットインが止まって表示されるフレーム数</td><td>60</td></tr>
+      <tr><td>アウト（フレーム）</td><td>カットインが出ていくフレーム数</td><td>14</td></tr>
+      <tr><td>イージング</td><td>アニメーションの加速カーブ</td><td>Ease Out Quart</td></tr>
+    </table>
+
+    <p>イージングの種類：</p>
+    <table class="tbl">
+      <tr><th>種類</th><th>特徴</th><th>おすすめ用途</th></tr>
+      <tr><td>Ease Out Quart</td><td>勢いよく入って急停止</td><td>汎用。ほとんどの場合これで良い</td></tr>
+      <tr><td>Ease Out Expo</td><td>さらに鋭い急停止感</td><td>スピード感を強調したいとき</td></tr>
+      <tr><td>Ease Out Back</td><td>少しオーバーシュートして戻る</td><td>弾むような印象を出したいとき</td></tr>
+      <tr><td>Linear</td><td>一定速度</td><td>機械的・無機質な動きが欲しいとき</td></tr>
+    </table>
+
+    <h3 id="canvas">キャンバス</h3>
+    <table class="tbl">
+      <tr><th>設定</th><th>説明</th></tr>
+      <tr><td>1280 × 720</td><td>HD。一般的なゲーム配信用</td></tr>
+      <tr><td>1920 × 1080</td><td>フルHD。高品質配信用（書き出しに時間がかかる）</td></tr>
+      <tr><td>854 × 480</td><td>SD。軽量な配信環境向け</td></tr>
+      <tr><td>背景透過</td><td>ONにするとカットイン以外の部分が透明になる（OBS推奨）</td></tr>
+    </table>
+    <div class="callout warn">
+      <strong>注意：</strong>OBSで使う場合は「背景透過」を必ずONにしてください。OFFにすると黒背景で書き出されます。
+    </div>
+  </section>
+
+  <!-- DRAG -->
+  <section class="sec" id="drag">
+    <div class="sec-eyebrow">Section 04</div>
+    <h2>ドラッグ操作</h2>
+    <p>プレビューキャンバス上で直接ドラッグして、キャラクターと素材の位置・サイズ・回転を調整できます。</p>
+
+    <h3>キャラクター画像のドラッグ</h3>
+    <div class="drag-diagram">
+      <div class="drag-box">
+        <h4>ハンドル</h4>
+        <div class="drag-item">
+          <div class="drag-handle handle-orange">✦</div>
+          <div class="drag-desc">
+            <strong>オレンジ枠の内部</strong>
+            <span>ドラッグで位置を移動。サイドバーのX/Yスライダーにも即反映される</span>
+          </div>
+        </div>
+      </div>
+      <div class="drag-box">
+        <h4>操作方法</h4>
+        <p style="font-size:13px;color:#8899bb">キャラ画像の上にカーソルを合わせるとオレンジ色の枠が表示されます。その範囲内をドラッグして移動。<br><br>サイズと回転はサイドバーのスライダーで調整してください。</p>
+      </div>
+    </div>
+
+    <h3>素材（あしらい）のドラッグ</h3>
+    <div class="drag-diagram">
+      <div class="drag-box">
+        <h4>ハンドル</h4>
+        <div class="drag-item">
+          <div class="drag-handle handle-blue">●</div>
+          <div class="drag-desc">
+            <strong>青丸（中心）</strong>
+            <span>ドラッグで移動</span>
+          </div>
+        </div>
+        <div class="drag-item">
+          <div class="drag-handle handle-purple">■</div>
+          <div class="drag-desc">
+            <strong>紫四角（右下角）</strong>
+            <span>ドラッグでリサイズ（縦横比固定）</span>
+          </div>
+        </div>
+        <div class="drag-item">
+          <div class="drag-handle handle-green">●</div>
+          <div class="drag-desc">
+            <strong>緑丸（上中央の外側）</strong>
+            <span>ドラッグで回転</span>
+          </div>
+        </div>
+      </div>
+      <div class="drag-box">
+        <h4>選択方法</h4>
+        <p style="font-size:13px;color:#8899bb">サイドバーの素材リストをクリックするか、プレビュー上で素材を直接クリックして選択します。<br><br>選択中の素材は青い点線枠で囲まれます。<br><br>素材が重なっている場合は前面（リストの下）のものが優先されます。枠の外をクリックすると選択解除。</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>注意：</strong>プレビュー再生中はドラッグ操作できません。■ 停止 を押してからドラッグしてください。
+    </div>
+  </section>
+
+  <!-- SEEK -->
+  <section class="sec" id="seek">
+    <div class="sec-eyebrow">Section 05</div>
+    <h2>シークバー</h2>
+    <p>プレビューキャンバス下のスライダーで、アニメーションの任意フレームに止めて作業できます。</p>
+
+    <div class="ui-diagram">
+<span class="hi">IN</span>  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  F 0 / 92<br>
+&nbsp;&nbsp;&nbsp;&nbsp;  ↑                                    ↑<br>
+&nbsp;&nbsp;&nbsp;&nbsp; フェーズ表示                      フレーム番号 / 総フレーム数
+    </div>
+
+    <table class="tbl">
+      <tr><th>フェーズ表示</th><th>色</th><th>内容</th></tr>
+      <tr><td>IN</td><td style="color:var(--accent)">青</td><td>カットインが入ってくる区間（インフレーム数分）</td></tr>
+      <tr><td>HOLD</td><td style="color:var(--green)">緑</td><td>カットインが止まって表示されている区間</td></tr>
+      <tr><td>OUT</td><td style="color:var(--accent2)">紫</td><td>カットインが出ていく区間（アウトフレーム数分）</td></tr>
+    </table>
+
+    <div class="callout tip">
+      <strong>使い方：</strong>帯デザインや縁のあしらいを確認・調整するときは、シークバーをHOLDゾーン（緑）に合わせてください。カットインが画面中央に止まった状態で作業できます。
+    </div>
+  </section>
+
+  <!-- EXPORT -->
+  <section class="sec" id="export">
+    <div class="sec-eyebrow">Section 06</div>
+    <h2>書き出し手順</h2>
+
+    <h3>フォーマットの選択</h3>
+    <div class="fmt-grid">
+      <div class="fmt-card webm">
+        <h4>WebM (VP9)</h4>
+        <div class="fmt-row"><span class="k">透過</span><span class="v good">対応</span></div>
+        <div class="fmt-row"><span class="k">ファイルサイズ</span><span class="v good">小さい</span></div>
+        <div class="fmt-row"><span class="k">書き出し速度</span><span class="v good">リアルタイム</span></div>
+        <div class="fmt-row"><span class="k">OBS対応</span><span class="v good">◎</span></div>
+        <div class="fmt-row"><span class="k">推奨用途</span><span class="v">OBS配信用</span></div>
+      </div>
+      <div class="fmt-card apng">
+        <h4>APNG</h4>
+        <div class="fmt-row"><span class="k">透過</span><span class="v good">対応</span></div>
+        <div class="fmt-row"><span class="k">ファイルサイズ</span><span class="v warn">大きい</span></div>
+        <div class="fmt-row"><span class="k">書き出し速度</span><span class="v warn">やや遅い</span></div>
+        <div class="fmt-row"><span class="k">OBS対応</span><span class="v good">◎</span></div>
+        <div class="fmt-row"><span class="k">推奨用途</span><span class="v">互換性が必要な場合</span></div>
+      </div>
+    </div>
+    <div class="callout tip"><strong>基本はWebMを推奨。</strong>OBSでの透過再生・ファイルサイズのどちらも優れています。</div>
+
+    <h3>書き出し手順</h3>
+    <ul class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>フォーマットを選ぶ</strong>
+          書き出しパネルで「WebM (VP9)」または「APNG」を選択。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>FPSを選ぶ</strong>
+          30fps（推奨）または60fps。60fpsはファイルサイズが大きくなります。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>EXPORTボタンを押す</strong>
+          進捗バーが表示され、書き出しが完了するとブラウザのダウンロードフォルダに保存されます。
+        </div>
+      </li>
+    </ul>
+
+    <h3>保存先</h3>
+    <p>書き出したファイルは <strong>ブラウザのデフォルトダウンロードフォルダ</strong> に保存されます。</p>
+    <table class="tbl">
+      <tr><th>OS</th><th>デフォルト保存先</th></tr>
+      <tr><td>Windows</td><td><code>C:\Users\ユーザー名\Downloads\cutin.webm</code></td></tr>
+      <tr><td>Mac</td><td><code>/Users/ユーザー名/Downloads/cutin.webm</code></td></tr>
+    </table>
+    <div class="callout warn">
+      <strong>注意：</strong>WebMはブラウザのMediaRecorder APIを使ってリアルタイムに生成されます。書き出し中はタブを閉じたり他の操作をしないでください。
+    </div>
+  </section>
+
+  <!-- OBS -->
+  <section class="sec" id="obs">
+    <div class="sec-eyebrow">Section 07</div>
+    <h2>OBSへの組み込み方</h2>
+
+    <h3>メディアソースとして追加する</h3>
+    <ul class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>シーンにソースを追加</strong>
+          OBSのシーン内で「＋」→「メディアソース」を選択。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>ファイルを指定</strong>
+          「参照」ボタンで書き出した <code>cutin.webm</code>（または <code>cutin.png</code>）を指定。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>透過の設定</strong>
+          「アルファチャンネルがある場合は使用する」にチェックを入れる。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>ループ設定</strong>
+          カットインを繰り返し再生しない場合は「ループ」のチェックを外す。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>ホットキーで制御（推奨）</strong>
+          OBSのホットキー設定でソースの「再生を再開」にキーを割り当てると、配信中にワンキーでカットインを発動できます。
+        </div>
+      </li>
+    </ul>
+
+    <h3>推奨OBS設定値</h3>
+    <div class="obs-setting">
+      <span class="obs-key">ソース種別</span>
+      <span class="obs-val">メディアソース</span>
+    </div>
+    <div class="obs-setting">
+      <span class="obs-key">ファイル形式</span>
+      <span class="obs-val">WebM (VP9) <span class="note">透過対応のため推奨</span></span>
+    </div>
+    <div class="obs-setting">
+      <span class="obs-key">アルファチャンネル</span>
+      <span class="obs-val">チェックON <span class="note">必須</span></span>
+    </div>
+    <div class="obs-setting">
+      <span class="obs-key">ループ</span>
+      <span class="obs-val">チェックOFF <span class="note">1回再生のみにする場合</span></span>
+    </div>
+    <div class="obs-setting">
+      <span class="obs-key">キャンバスサイズ</span>
+      <span class="obs-val">OBSの映像設定と合わせる <span class="note">例：1280×720</span></span>
+    </div>
+
+    <h3>ホットキーで発動する方法</h3>
+    <p>配信中にカットインを任意のタイミングで出したい場合、OBSのホットキー機能を使います。</p>
+    <ul class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>OBS設定を開く</strong>
+          OBS上部メニュー「ツール」→「ホットキー」を開く。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>ソースのホットキーを探す</strong>
+          カットインのメディアソース名を探し、「再生を再開」の欄をクリック。
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>キーを割り当てる</strong>
+          発動させたいキー（例：F9）を押して登録。配信中にそのキーを押すたびにカットインが再生されます。
+        </div>
+      </li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>TIP：</strong>ループをOFFにしておくと1回再生して止まります。ホットキーを押すたびに最初から再生されるので、入場やイベント演出に最適です。
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+// TOCのアクティブ追従
+const sections = document.querySelectorAll('.sec');
+const tocLinks = document.querySelectorAll('.toc a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      tocLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
