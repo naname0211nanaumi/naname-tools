@@ -3,1208 +3,812 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>カットインジェネレーター v3</title>
+<title>七海ナナメ</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&family=Zen+Antique&family=Shippori+Mincho:wght@400;700;800&family=M+PLUS+Rounded+1c:wght@400;700;900&family=DotGothic16&family=Bebas+Neue&family=Cinzel:wght@400;700;900&display=swap');
-
 :root {
-  --bg: #09090e;
-  --surface: #101018;
-  --surface2: #181822;
-  --surface3: #20202e;
-  --border: #222233;
-  --border2: #2e2e44;
-  --accent: #6e9cf4;
-  --accent2: #a87ef7;
-  --green: #4ade80;
-  --red: #f87171;
-  --text: #d8e0f0;
-  --muted: #50607a;
+  --bg:      #070810;
+  --deep:    #0a0c18;
+  --mist:    #10132a;
+  --border:  rgba(180,200,255,0.08);
+  --border2: rgba(180,200,255,0.15);
+  --text:    #d0dcf4;
+  --soft:    rgba(200,215,245,0.45);
+  --dim:     rgba(180,200,240,0.2);
+  --blue:    #a8c8f8;
+  --lavender:#c4aef7;
+  --teal:    #8ff0d8;
+  --glow-b:  rgba(168,200,248,0.12);
+  --glow-l:  rgba(196,174,247,0.1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Noto Sans JP', sans-serif;
-  height: 100vh;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ===== CUSTOM CURSOR ===== */
+.cursor {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: var(--blue);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, opacity 0.2s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  position: fixed;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(168,200,248,0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.12s ease, width 0.3s, height 0.3s, border-color 0.3s;
+  mix-blend-mode: screen;
+}
+body:has(a:hover) .cursor-ring,
+body:has(button:hover) .cursor-ring {
+  width: 48px; height: 48px;
+  border-color: rgba(196,174,247,0.6);
+}
+
+/* ===== CANVAS BG ===== */
+#bgCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ===== GRAIN ===== */
+.grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%; height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  animation: grain-drift 8s steps(10) infinite;
+}
+@keyframes grain-drift {
+  0%,100% { transform: translate(0,0); }
+  10% { transform: translate(-2%,-3%); }
+  20% { transform: translate(2%,1%); }
+  30% { transform: translate(-1%,2%); }
+  40% { transform: translate(3%,-1%); }
+  50% { transform: translate(-2%,3%); }
+  60% { transform: translate(1%,-2%); }
+  70% { transform: translate(-3%,1%); }
+  80% { transform: translate(2%,-3%); }
+  90% { transform: translate(-1%,2%); }
+}
+
+/* ===== LAYOUT ===== */
+.wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+/* ===== HEADER ===== */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 24px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(7,8,16,0.9) 0%, transparent 100%);
+  backdrop-filter: blur(2px);
+}
+
+.site-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 6px;
+  color: var(--blue);
+  text-decoration: none;
+  opacity: 0;
+  animation: appear 1s ease 0.5s forwards;
+}
+
+nav {
+  display: flex;
+  gap: 36px;
+  opacity: 0;
+  animation: appear 1s ease 0.8s forwards;
+}
+nav a {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+nav a:hover { color: var(--blue); }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-size: 13px;
+  justify-content: center;
+  padding: 120px 48px 80px;
   overflow: hidden;
 }
 
-header {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+.hero-bg-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(120px, 20vw, 260px);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: -4px;
+  color: rgba(168,200,248,0.03);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.hero-content {
+  position: relative;
+  max-width: 680px;
+}
+
+.hero-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: slide-up 0.9s ease 0.3s forwards;
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
 }
-header h1 {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-header span { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-
-.app { display: flex; flex: 1; overflow: hidden; }
-
-/* ===== SIDEBAR ===== */
-.sidebar {
-  width: 290px;
-  min-width: 290px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-.sidebar::-webkit-scrollbar { width: 3px; }
-.sidebar::-webkit-scrollbar-thumb { background: var(--border2); }
-
-.sec { border-bottom: 1px solid var(--border); padding: 12px 14px; }
-.sec-title { font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-
-.row { margin-bottom: 9px; }
-.row:last-child { margin-bottom: 0; }
-.row label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 700; letter-spacing: 0.5px; }
-
-input[type=text], select {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: inherit;
-  transition: border-color 0.15s;
-}
-input:focus, select:focus { outline: none; border-color: var(--accent); }
-input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface2); padding: 2px; cursor: pointer; }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-.rrow { display: flex; align-items: center; gap: 6px; }
-.rrow input[type=range] { flex: 1; }
-.rval { font-size: 11px; color: var(--accent); font-family: 'Rajdhani', sans-serif; font-weight: 700; min-width: 28px; text-align: right; }
-
-.thumb-row { display: flex; gap: 5px; flex-wrap: wrap; }
-.thumb { border: 1px solid var(--border); border-radius: 4px; padding: 5px 9px; cursor: pointer; font-size: 11px; background: var(--surface2); transition: all 0.15s; white-space: nowrap; font-family: inherit; color: var(--text); }
-.thumb:hover { border-color: var(--accent); }
-.thumb.active { border-color: var(--accent2); background: rgba(168,126,247,0.12); color: var(--accent2); }
-
-.dir-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.dir-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 11px; text-align: center; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: inherit; }
-.dir-btn .arrow { font-size: 15px; line-height: 1; }
-.dir-btn .lbl { font-size: 9px; color: var(--muted); }
-.dir-btn:hover { border-color: var(--accent); }
-.dir-btn.active { border-color: var(--accent); background: rgba(110,156,244,0.12); }
-
-.upload { border: 1px dashed var(--border2); border-radius: 5px; padding: 12px; text-align: center; cursor: pointer; position: relative; transition: all 0.15s; }
-.upload:hover { border-color: var(--accent); background: rgba(110,156,244,0.04); }
-.upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-.upload .ico { font-size: 18px; }
-.upload p { font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-.tog-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
-.tog-row label { font-size: 10px; color: var(--muted); font-weight: 700; margin: 0; }
-.tog { position: relative; width: 32px; height: 17px; flex-shrink: 0; }
-.tog input { opacity: 0; width: 0; height: 0; }
-.tog-s { position: absolute; inset: 0; background: var(--border2); border-radius: 17px; cursor: pointer; transition: 0.2s; }
-.tog-s::before { content: ''; position: absolute; width: 11px; height: 11px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
-.tog input:checked + .tog-s { background: var(--accent); }
-.tog input:checked + .tog-s::before { transform: translateX(15px); }
-
-/* ===== MAIN ===== */
-.main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; overflow-y: auto; background: var(--bg); }
-
-.canvas-wrap {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  overflow: hidden;
-  max-width: 100%;
-  cursor: crosshair;
-}
-.canvas-wrap::before {
+.hero-label::before {
   content: '';
-  position: absolute; inset: 0;
-  background-image: linear-gradient(45deg,#141420 25%,transparent 25%),linear-gradient(-45deg,#141420 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#141420 75%),linear-gradient(-45deg,transparent 75%,#141420 75%);
-  background-size: 14px 14px;
-  background-position: 0 0,0 7px,7px -7px,-7px 0;
-  background-color: #0d0d18;
-  z-index: 0;
+  width: 32px; height: 1px;
+  background: var(--teal);
+  opacity: 0.5;
 }
-/* overlayキャンバス（素材ドラッグ用）*/
-.canvas-stack { position: relative; display: inline-block; max-width: 100%; }
-#cv, #overlayCV { display: block; width: 100%; height: auto; }
-#cv { position: relative; z-index: 1; }
-#overlayCV { position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none; }
 
-.ctrl-row { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
+.hero-name-ja {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: clamp(48px, 8vw, 88px);
+  font-weight: 700;
+  letter-spacing: 16px;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: #fff;
+  opacity: 0;
+  animation: slide-up 0.9s ease 0.5s forwards;
+}
 
-.seek-wrap {
-  width: 100%;
-  max-width: 854px;
+.hero-name-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(16px, 2.5vw, 26px);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: 8px;
+  color: var(--blue);
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: slide-up 0.9s ease 0.7s forwards;
+}
+
+.hero-tagline {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--soft);
+  line-height: 2.2;
+  letter-spacing: 1.5px;
+  border-left: 1px solid var(--border2);
+  padding-left: 24px;
+  opacity: 0;
+  animation: slide-up 0.9s ease 0.9s forwards;
+}
+.hero-tagline em {
+  font-style: normal;
+  color: var(--blue);
+}
+
+.hero-scroll {
+  position: absolute;
+  bottom: 48px;
+  left: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  animation: appear 1s ease 1.8s forwards;
+}
+.hero-scroll-line {
+  width: 40px; height: 1px;
+  background: var(--dim);
+  animation: scroll-pulse 2s ease-in-out infinite;
+}
+@keyframes scroll-pulse {
+  0%,100% { width: 40px; opacity: 0.3; }
+  50% { width: 60px; opacity: 0.7; }
+}
+.hero-scroll-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  margin: 0 48px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== SECTION ===== */
+section {
+  position: relative;
+  z-index: 2;
+  padding: 100px 48px;
+}
+
+.sec-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--lavender);
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 2px;
 }
-.seek-wrap input[type=range] {
+.sec-label::after {
+  content: '';
   flex: 1;
-  accent-color: var(--accent);
-  cursor: pointer;
-  height: 4px;
+  max-width: 48px;
+  height: 1px;
+  background: var(--lavender);
+  opacity: 0.3;
 }
-.seek-label {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
-  color: var(--muted);
-  min-width: 80px;
-  text-align: right;
-  white-space: nowrap;
-}
-.seek-phase {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 3px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  min-width: 48px;
-  text-align: center;
-}
-.seek-phase.in   { background: rgba(110,156,244,0.15); color: var(--accent); }
-.seek-phase.hold { background: rgba(74,222,128,0.15);  color: var(--green); }
-.seek-phase.out  { background: rgba(168,126,247,0.15); color: var(--accent2); }
 
-.btn { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: all 0.15s; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { opacity: 0.85; }
-.btn-sub { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-sub:hover { border-color: var(--accent); }
+.sec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: #fff;
+  margin-bottom: 48px;
+  line-height: 1.3;
+}
+.sec-title em {
+  font-style: italic;
+  color: var(--blue);
+}
 
-/* ===== ASSET LIST ===== */
-.asset-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.asset-item {
-  background: var(--surface2);
+/* ===== TOOLS GRID ===== */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1px;
+  background: var(--border);
   border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 7px 9px;
+}
+
+.tool-card {
+  background: var(--bg);
+  padding: 36px 32px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s;
+}
+.tool-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 40%, var(--glow-b), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.tool-card:hover { background: var(--mist); }
+.tool-card:hover::after { opacity: 1; }
+
+/* coming soon card */
+.tool-card.soon {
+  cursor: default;
+  opacity: 0.4;
+}
+.tool-card.soon:hover { background: var(--bg); }
+.tool-card.soon:hover::after { opacity: 0; }
+
+.tool-status {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tool-status.live { color: var(--teal); }
+.tool-status.live::before {
+  content: '';
+  width: 5px; height: 5px;
+  background: var(--teal);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--teal);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.tool-status.soon-label { color: var(--dim); }
+
+.tool-num {
+  position: absolute;
+  top: 32px; right: 32px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 300;
+  color: rgba(168,200,248,0.06);
+  line-height: 1;
+  font-style: italic;
+}
+
+.tool-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  color: #e8f0ff;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.tool-name-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.tool-desc {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--soft);
+  line-height: 2;
+  margin-bottom: 28px;
+}
+
+.tool-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.tool-tag {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.tool-cta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
+  gap: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--blue);
+  transition: gap 0.3s;
 }
-.asset-item:hover { border-color: var(--border2); }
-.asset-item.selected { border-color: var(--accent); background: rgba(110,156,244,0.08); }
-.asset-thumb { width: 32px; height: 32px; object-fit: contain; border-radius: 3px; background: #000; flex-shrink: 0; }
-.asset-info { flex: 1; min-width: 0; }
-.asset-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.asset-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
-.asset-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 3px; flex-shrink: 0; }
-.asset-del:hover { color: var(--red); background: rgba(248,113,113,0.1); }
+.tool-card:hover .tool-cta { gap: 16px; }
+.tool-cta::after {
+  content: '→';
+  font-size: 14px;
+}
 
-.asset-controls { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+/* ===== ABOUT ===== */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
 
-/* ===== EXPORT PANEL ===== */
-.export-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 14px 16px; width: 100%; max-width: 854px; }
-.export-panel h3 { font-family: 'Rajdhani', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-.export-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
-.fmt-btn { padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; transition: all 0.15s; }
-.fmt-btn.active { border-color: var(--accent2); background: rgba(168,126,247,0.12); color: var(--accent2); }
-.exp-btn { margin-left: auto; padding: 8px 22px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 5px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transition: opacity 0.15s; }
-.exp-btn:hover { opacity: 0.85; }
-.exp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.prog { width: 100%; height: 3px; background: var(--border); border-radius: 2px; margin-top: 9px; display: none; overflow: hidden; }
-.prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.1s; }
-.status { font-size: 11px; color: var(--muted); margin-top: 5px; min-height: 14px; }
+.about-text {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--soft);
+  line-height: 2.4;
+  letter-spacing: 0.5px;
+}
+.about-text p + p { margin-top: 24px; }
+.about-text strong {
+  font-weight: 700;
+  color: var(--text);
+}
 
-/* ドラッグ選択ハイライト */
-.asset-item.selected .asset-name { color: var(--accent); }
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
-/* 操作ヒント */
-.hint { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
-.hint span { color: var(--accent2); }
+.about-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: padding-left 0.3s;
+  position: relative;
+}
+.about-link::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 0; height: 1px;
+  background: var(--blue);
+  transform: translateY(-50%);
+  transition: width 0.3s;
+}
+.about-link:hover { padding-left: 16px; }
+.about-link:hover::before { width: 10px; }
+
+.about-link-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: var(--text);
+}
+.about-link-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ===== FOOTER ===== */
+footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+  padding: 40px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-style: italic;
+  letter-spacing: 4px;
+  color: var(--dim);
+}
+
+.footer-copy {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(180,200,240,0.15);
+  text-transform: uppercase;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  header, section, .hero { padding-left: 24px; padding-right: 24px; }
+  .wrap { padding: 0 24px; }
+  .about-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero-name-ja { letter-spacing: 8px; }
+  footer { flex-direction: column; gap: 12px; text-align: center; }
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+}
 </style>
 </head>
 <body>
 
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<canvas id="bgCanvas"></canvas>
+<div class="grain"></div>
+
+<!-- HEADER -->
 <header>
-  <h1>CUTIN GENERATOR</h1>
-  <span>v3 · Asset Layer</span>
-  <a href="guide/" target="_blank" style="margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:4px;transition:all 0.15s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">使い方ガイド ↗</a>
+  <a href="#" class="site-name">七海ナナメ</a>
+  <nav>
+    <a href="#tools">Tools</a>
+    <a href="#about">About</a>
+    <a href="https://www.tiktok.com" target="_blank">TikTok</a>
+  </nav>
 </header>
 
-<div class="app">
-<div class="sidebar">
-
-  <!-- イン方向 -->
-  <div class="sec">
-    <div class="sec-title">イン方向</div>
-    <div class="dir-grid">
-      <button class="dir-btn" id="dirIn-left"   onclick="setDirIn('left')">  <span class="arrow">→</span><span class="lbl">左から</span></button>
-      <button class="dir-btn active" id="dirIn-right" onclick="setDirIn('right')"><span class="arrow">←</span><span class="lbl">右から</span></button>
-      <button class="dir-btn" id="dirIn-top"    onclick="setDirIn('top')">   <span class="arrow">↓</span><span class="lbl">上から</span></button>
-      <button class="dir-btn" id="dirIn-bottom" onclick="setDirIn('bottom')"><span class="arrow">↑</span><span class="lbl">下から</span></button>
-      <button class="dir-btn" id="dirIn-diag-l" onclick="setDirIn('diag-l')"><span class="arrow">↘</span><span class="lbl">斜め左</span></button>
-      <button class="dir-btn" id="dirIn-diag-r" onclick="setDirIn('diag-r')"><span class="arrow">↙</span><span class="lbl">斜め右</span></button>
-    </div>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg-text">Naname</div>
+  <div class="hero-content">
+    <div class="hero-label">VTuber · Creator</div>
+    <h1 class="hero-name-ja">七海ナナメ</h1>
+    <p class="hero-name-en">Nanami Naname</p>
+    <p class="hero-tagline">
+      ふと、<em>異世界</em>に迷い込んだような感覚。<br>
+      気づいたら、ここにいた。
+    </p>
   </div>
-
-  <!-- アウト方向 -->
-  <div class="sec">
-    <div class="sec-title">アウト方向</div>
-    <div class="dir-grid">
-      <button class="dir-btn" id="dirOut-left"   onclick="setDirOut('left')">  <span class="arrow">←</span><span class="lbl">左へ</span></button>
-      <button class="dir-btn" id="dirOut-right"  onclick="setDirOut('right')"> <span class="arrow">→</span><span class="lbl">右へ</span></button>
-      <button class="dir-btn" id="dirOut-top"    onclick="setDirOut('top')">   <span class="arrow">↑</span><span class="lbl">上へ</span></button>
-      <button class="dir-btn active" id="dirOut-bottom" onclick="setDirOut('bottom')"><span class="arrow">↓</span><span class="lbl">下へ</span></button>
-      <button class="dir-btn" id="dirOut-diag-l" onclick="setDirOut('diag-l')"><span class="arrow">↙</span><span class="lbl">斜め左</span></button>
-      <button class="dir-btn" id="dirOut-diag-r" onclick="setDirOut('diag-r')"><span class="arrow">↘</span><span class="lbl">斜め右</span></button>
-    </div>
-  </div>
-
-  <!-- 帯 -->
-  <div class="sec">
-    <div class="sec-title">帯デザイン</div>
-    <div class="row">
-      <label>角度（°）</label>
-      <div class="rrow"><input type="range" id="bandAngle" min="-45" max="45" value="15" oninput="rv('bandAngle','bAV');rp()"><span class="rval" id="bAV">15</span></div>
-    </div>
-    <div class="row">
-      <label>幅（%）</label>
-      <div class="rrow"><input type="range" id="bandWidth" min="20" max="90" value="55" oninput="rv('bandWidth','bWV');rp()"><span class="rval" id="bWV">55</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><label>帯の色</label><input type="color" id="bandColor" value="#e8e4e0" oninput="rp()"></div>
-      <div class="row">
-        <label>透明度</label>
-        <div class="rrow" style="margin-top:4px"><input type="range" id="bandAlpha" min="10" max="100" value="95" oninput="rv('bandAlpha','bAlV');rp()"><span class="rval" id="bAlV">95</span></div>
-      </div>
-    </div>
-    <div class="row">
-      <label>縁のあしらい</label>
-      <div class="thumb-row">
-        <button class="thumb active" onclick="setTrim('line')"    id="trim-line">ライン</button>
-        <button class="thumb"        onclick="setTrim('double')"  id="trim-double">二重線</button>
-        <button class="thumb"        onclick="setTrim('flower')"  id="trim-flower">花</button>
-        <button class="thumb"        onclick="setTrim('diamond')" id="trim-diamond">菱形</button>
-        <button class="thumb"        onclick="setTrim('wave')"    id="trim-wave">波</button>
-        <button class="thumb"        onclick="setTrim('cross')"   id="trim-cross">十字</button>
-        <button class="thumb"        onclick="setTrim('none')"    id="trim-none">なし</button>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="row"><label>縁の色</label><input type="color" id="trimColor" value="#b8972a" oninput="rp()"></div>
-      <div class="row">
-        <label>縁の太さ</label>
-        <div class="rrow" style="margin-top:4px"><input type="range" id="trimWidth" min="1" max="20" value="5" oninput="rv('trimWidth','tWV');rp()"><span class="rval" id="tWV">5</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- キャラ画像 -->
-  <div class="sec">
-    <div class="sec-title">キャラクター画像</div>
-    <div class="upload" id="charUpload">
-      <input type="file" accept="image/*" onchange="loadChar(event)">
-      <div class="ico">🖼</div>
-      <p>PNG透過推奨</p>
-      <div style="font-size:10px;color:var(--accent);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="charFilename"></div>
-    </div>
-    <div class="row" style="margin-top:8px"><label>サイズ（%）</label><div class="rrow"><input type="range" id="imgScale" min="20" max="200" value="85" oninput="rv('imgScale','iSV');rp()"><span class="rval" id="iSV">85</span></div></div>
-    <div class="row"><label>横位置（%）</label><div class="rrow"><input type="range" id="imgX" min="-50" max="150" value="50" oninput="rv('imgX','iXV');rp()"><span class="rval" id="iXV">50</span></div></div>
-    <div class="row"><label>縦位置（%）</label><div class="rrow"><input type="range" id="imgY" min="0" max="150" value="100" oninput="rv('imgY','iYV');rp()"><span class="rval" id="iYV">100</span></div></div>
-    <div class="tog-row"><label>帯内にクリップ</label><label class="tog"><input type="checkbox" id="clipToBand" checked onchange="rp()"><span class="tog-s"></span></label></div>
-  </div>
-
-  <!-- テキスト -->
-  <div class="sec">
-    <div class="sec-title">テキスト</div>
-    <div class="tog-row"><label>テキスト表示</label><label class="tog"><input type="checkbox" id="showText" checked onchange="rp()"><span class="tog-s"></span></label></div>
-    <div class="row"><label>メイン</label><input type="text" id="mainText" value="七海ナナメ" oninput="rp()"></div>
-    <div class="row"><label>サブ</label><input type="text" id="subText" value="Nanami Naname" oninput="rp()"></div>
-    <div class="row">
-      <label>フォント</label>
-      <select id="fontFamily" onchange="rp()">
-        <option value="Noto Sans JP">Noto Sans JP（ゴシック）</option>
-        <option value="Noto Serif JP">Noto Serif JP（明朝）</option>
-        <option value="Shippori Mincho">しっぽり明朝</option>
-        <option value="Zen Antique">禅アンティーク</option>
-        <option value="M PLUS Rounded 1c">M PLUS Rounded（丸ゴシック）</option>
-        <option value="DotGothic16">ドットゴシック</option>
-        <option value="Bebas Neue">Bebas Neue（英字）</option>
-        <option value="Cinzel">Cinzel（英字クラシック）</option>
-        <option value="Rajdhani">Rajdhani（英字スリム）</option>
-      </select>
-    </div>
-    <div class="row">
-      <label>書き方向</label>
-      <div class="thumb-row">
-        <button class="thumb active" id="td-h" onclick="setTextDir('horizontal')">横書き</button>
-        <button class="thumb"        id="td-v" onclick="setTextDir('vertical')">縦書き</button>
-      </div>
-    </div>
-    <div class="row"><label>文字サイズ</label><div class="rrow"><input type="range" id="fontSize" min="18" max="90" value="52" oninput="rv('fontSize','fSV');rp()"><span class="rval" id="fSV">52</span></div></div>
-    <div class="row"><label>テキスト色</label><input type="color" id="textColor" value="#1a1a2e" oninput="rp()"></div>
-    <div class="row">
-      <label>テキスト位置</label>
-      <select id="textPos" onchange="rp()">
-        <option value="bottom">帯の下部</option>
-        <option value="center">帯の中央</option>
-        <option value="top">帯の上部</option>
-        <option value="outside">帯の外（右）</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- 素材 -->
-  <div class="sec">
-    <div class="sec-title">素材（あしらい）</div>
-    <div class="upload">
-      <input type="file" accept="image/*,.gif" multiple onchange="loadAssets(event)">
-      <div class="ico">✨</div>
-      <p>PNG / GIF / WebP 複数可<br><span style="font-size:10px">プレビュー上でドラッグ配置</span></p>
-    </div>
-    <div class="asset-list" id="assetList"></div>
-
-    <!-- 選択中素材のコントロール -->
-    <div class="asset-controls" id="assetControls" style="display:none">
-      <div class="sec-title" style="margin-bottom:8px">選択中素材の設定</div>
-      <div class="row"><label>サイズ（%）</label><div class="rrow"><input type="range" id="aScale" min="1" max="200" value="30" oninput="updateSelAsset('scale',this.value);rv('aScale','aSV')"><span class="rval" id="aSV">30</span></div></div>
-      <div class="row"><label>回転（°）</label><div class="rrow"><input type="range" id="aRot" min="-180" max="180" value="0" oninput="updateSelAsset('rot',this.value);rv('aRot','aRV')"><span class="rval" id="aRV">0</span></div></div>
-      <div class="row"><label>不透明度（%）</label><div class="rrow"><input type="range" id="aOpacity" min="5" max="100" value="100" oninput="updateSelAsset('opacity',this.value);rv('aOpacity','aOV')"><span class="rval" id="aOV">100</span></div></div>
-      <div class="row">
-        <label>レイヤー</label>
-        <div class="thumb-row">
-          <button class="thumb active" id="layer-front" onclick="updateSelAsset('layer','front')">帯の前面</button>
-          <button class="thumb"        id="layer-back"  onclick="updateSelAsset('layer','back')">帯の背面</button>
-        </div>
-      </div>
-      <div class="row">
-        <label>帯からはみ出し</label>
-        <div class="thumb-row">
-          <button class="thumb active" id="clip-off" onclick="updateSelAsset('clip',false)">はみ出す</button>
-          <button class="thumb"        id="clip-on"  onclick="updateSelAsset('clip',true)">カット</button>
-        </div>
-      </div>
-      <div class="hint">
-        <span>ドラッグ</span>で移動 ／ <span>Shift+ドラッグ</span>で拡縮<br>
-        <span>Alt+ドラッグ</span>で回転
-      </div>
-    </div>
-  </div>
-
-  <!-- アニメーション -->
-  <div class="sec">
-    <div class="sec-title">アニメーション</div>
-    <div class="row"><label>イン（フレーム）</label><div class="rrow"><input type="range" id="inF" min="3" max="60" value="18" oninput="rv('inF','inFV');rp()"><span class="rval" id="inFV">18</span></div></div>
-    <div class="row"><label>ホールド（フレーム）</label><div class="rrow"><input type="range" id="holdF" min="10" max="180" value="60" oninput="rv('holdF','holdFV');rp()"><span class="rval" id="holdFV">60</span></div></div>
-    <div class="row"><label>アウト（フレーム）</label><div class="rrow"><input type="range" id="outF" min="3" max="60" value="14" oninput="rv('outF','outFV');rp()"><span class="rval" id="outFV">14</span></div></div>
-    <div class="row">
-      <label>イージング</label>
-      <select id="easing" onchange="rp()">
-        <option value="quart">Ease Out Quart</option>
-        <option value="expo">Ease Out Expo</option>
-        <option value="back">Ease Out Back（オーバーシュート）</option>
-        <option value="linear">Linear</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- キャンバス -->
-  <div class="sec">
-    <div class="sec-title">キャンバス</div>
-    <div class="grid2">
-      <div class="row"><label>幅</label><select id="cW" onchange="resizeCv()"><option value="1280" selected>1280</option><option value="1920">1920</option><option value="854">854</option></select></div>
-      <div class="row"><label>高さ</label><select id="cH" onchange="resizeCv()"><option value="720" selected>720</option><option value="1080">1080</option><option value="480">480</option></select></div>
-    </div>
-    <div class="tog-row"><label>背景透過</label><label class="tog"><input type="checkbox" id="transparent" checked onchange="rp()"><span class="tog-s"></span></label></div>
-  </div>
-
-</div><!-- /sidebar -->
-
-<div class="main">
-  <div class="canvas-wrap" id="cvWrap">
-    <div class="canvas-stack" id="cvStack">
-      <canvas id="cv" width="1280" height="720"></canvas>
-      <canvas id="overlayCV" width="1280" height="720"></canvas>
-    </div>
-  </div>
-
-  <div class="ctrl-row">
-    <button class="btn btn-primary" onclick="playAnim()">▶ プレビュー</button>
-    <button class="btn btn-sub" onclick="stopAnim()">■ 停止</button>
-    <button class="btn btn-sub" onclick="seekFrame(0)">⟨ 先頭</button>
-  </div>
-
-  <div class="seek-wrap">
-    <span class="seek-phase in" id="seekPhaseLabel">IN</span>
-    <input type="range" id="seekBar" min="0" max="91" value="0" oninput="onSeek(this.value)">
-    <span class="seek-label" id="seekLabel">F 0 / 92</span>
-  </div>
-
-  <div class="export-panel">
-    <h3>書き出し</h3>
-    <div class="export-row">
-      <button class="fmt-btn active" id="fmt-webm" onclick="setFmt('webm')">WebM (VP9)</button>
-      <button class="fmt-btn" id="fmt-apng" onclick="setFmt('apng')">APNG</button>
-      <div>
-        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">FPS</label>
-        <select id="expFps" style="width:76px"><option value="30" selected>30fps</option><option value="60">60fps</option></select>
-      </div>
-      <button class="exp-btn" id="expBtn" onclick="doExport()">EXPORT</button>
-    </div>
-    <div class="prog" id="progBar"><div class="prog-fill" id="progFill"></div></div>
-    <div class="status" id="statusMsg"></div>
+  <div class="hero-scroll">
+    <span class="hero-scroll-line"></span>
+    <span class="hero-scroll-text">Scroll</span>
   </div>
 </div>
-</div><!-- /app -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-<script>
-// ===== STATE =====
-const S = {
-  dirIn:'right', dirOut:'bottom',
-  bandAngle:15, bandWidth:55, bandColor:'#e8e4e0', bandAlpha:95,
-  trim:'line', trimColor:'#b8972a', trimWidth:5,
-  charImg:null, imgScale:85, imgX:50, imgY:100, clipToBand:true,
-  showText:true, mainText:'七海ナナメ', subText:'Nanami Naname',
-  fontSize:52, textColor:'#1a1a2e', textPos:'bottom',
-  fontFamily:'Noto Sans JP', textDir:'horizontal',
-  inF:18, holdF:60, outF:14, easing:'quart',
-  fmt:'webm', expFps:30, cW:1280, cH:720, transparent:true,
-};
+<div class="divider"></div>
 
-// ===== ASSETS =====
-// asset: { id, name, img, imgEl, x(0-1), y(0-1), scale(%), rot(deg), opacity(%), layer:'front'|'back', isGif, gifFrames }
-let assets = [];
-let selectedAssetId = null;
-let assetIdCounter = 0;
+<!-- TOOLS -->
+<section id="tools">
+  <div class="sec-label">Tools</div>
+  <h2 class="sec-title">配信で使う、<em>自分で作った</em>ツールたち</h2>
 
-// ===== CANVAS =====
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-const overlayCV = document.getElementById('overlayCV');
-const overlayCtx = overlayCV.getContext('2d');
+  <div class="tools-grid">
 
-let raf = null, playing = false, curF = 0;
-let gifAnimFrame = 0;
-
-// ===== DRAG STATE =====
-let dragState = null;
-// dragState: { assetId, mode:'move'|'scale'|'rotate', startX, startY, startAssetX, startAssetY, startScale, startRot, cx, cy }
-
-// ===== HELPERS =====
-function rv(id, vid) { document.getElementById(vid).textContent = document.getElementById(id).value; }
-
-function sync() {
-  ['bandAngle','bandWidth','bandAlpha','imgScale','imgX','imgY','trimWidth','inF','holdF','outF','fontSize'].forEach(id=>{
-    S[id]=parseFloat(document.getElementById(id).value);
-  });
-  ['bandColor','trimColor','textColor','mainText','subText','textPos','easing','fontFamily'].forEach(id=>{
-    S[id]=document.getElementById(id).value;
-  });
-  S.cW=parseInt(document.getElementById('cW').value);
-  S.cH=parseInt(document.getElementById('cH').value);
-  S.clipToBand=document.getElementById('clipToBand').checked;
-  S.showText=document.getElementById('showText').checked;
-  S.transparent=document.getElementById('transparent').checked;
-  S.expFps=parseInt(document.getElementById('expFps').value);
-}
-
-function rp() { sync(); updateSeekBar(); drawFrame(curF); }
-
-function seekFrame(f) { curF=f; sync(); updateSeekBar(); drawFrame(curF); }
-
-function onSeek(val) {
-  if (playing) stopAnim();
-  curF = parseInt(val);
-  sync();
-  updateSeekLabel();
-  drawFrame(curF);
-}
-
-function updateSeekBar() {
-  const total = totalFrames();
-  const bar = document.getElementById('seekBar');
-  bar.max = total - 1;
-  bar.value = curF;
-  updateSeekLabel();
-}
-
-function updateSeekLabel() {
-  const total = totalFrames();
-  document.getElementById('seekLabel').textContent = `F ${curF} / ${total}`;
-  const { phase } = getProgress(curF);
-  const el = document.getElementById('seekPhaseLabel');
-  el.textContent = phase === 'in' ? 'IN' : phase === 'hold' ? 'HOLD' : 'OUT';
-  el.className = 'seek-phase ' + phase;
-}
-
-function resizeCv() {
-  sync();
-  cv.width=S.cW; cv.height=S.cH;
-  overlayCV.width=S.cW; overlayCV.height=S.cH;
-  drawFrame(curF);
-}
-
-// ===== DIRECTION =====
-function setDirIn(d) {
-  S.dirIn=d;
-  document.querySelectorAll('[id^="dirIn-"]').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dirIn-'+d).classList.add('active');
-  rp();
-}
-function setDirOut(d) {
-  S.dirOut=d;
-  document.querySelectorAll('[id^="dirOut-"]').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dirOut-'+d).classList.add('active');
-  rp();
-}
-function setTrim(t) {
-  S.trim=t;
-  document.querySelectorAll('[id^="trim-"]').forEach(b=>b.classList.remove('active'));
-  document.getElementById('trim-'+t).classList.add('active');
-  rp();
-}
-function setFmt(f) {
-  S.fmt=f;
-  document.getElementById('fmt-webm').classList.toggle('active',f==='webm');
-  document.getElementById('fmt-apng').classList.toggle('active',f==='apng');
-}
-function setTextDir(d) {
-  S.textDir=d;
-  document.getElementById('td-h').classList.toggle('active',d==='horizontal');
-  document.getElementById('td-v').classList.toggle('active',d==='vertical');
-  rp();
-}
-
-// ===== CHAR IMAGE =====
-function loadChar(e) {
-  const f=e.target.files[0]; if(!f) return;
-  document.getElementById('charFilename').textContent=f.name;
-  const r=new FileReader();
-  r.onload=ev=>{const img=new Image();img.onload=()=>{S.charImg=img;rp();};img.src=ev.target.result;};
-  r.readAsDataURL(f);
-}
-
-// ===== ASSETS =====
-function loadAssets(e) {
-  [...e.target.files].forEach(f=>{
-    const id = ++assetIdCounter;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const src = ev.target.result;
-      const isGif = f.type === 'image/gif';
-      const imgEl = new Image();
-      imgEl.onload = () => {
-        const asset = {
-          id, name: f.name, imgEl, src,
-          x: 0.5, y: 0.5,
-          scale: 30, rot: 0, opacity: 100,
-          layer: 'front',
-          clip: false,
-          isGif,
-        };
-        assets.push(asset);
-        renderAssetList();
-        selectAsset(id);
-        rp();
-      };
-      imgEl.src = src;
-    };
-    reader.readAsDataURL(f);
-  });
-  e.target.value = '';
-}
-
-function deleteAsset(id) {
-  assets = assets.filter(a=>a.id!==id);
-  if (selectedAssetId===id) { selectedAssetId=null; updateAssetControls(); }
-  renderAssetList();
-  rp();
-}
-
-function selectAsset(id) {
-  selectedAssetId = id;
-  renderAssetList();
-  updateAssetControls();
-}
-
-function updateSelAsset(key, val) {
-  const a = assets.find(a=>a.id===selectedAssetId);
-  if (!a) return;
-  if (key==='scale'||key==='rot'||key==='opacity') a[key]=parseFloat(val);
-  else a[key]=val;
-  if (key==='layer') {
-    document.getElementById('layer-front').classList.toggle('active',val==='front');
-    document.getElementById('layer-back').classList.toggle('active',val==='back');
-  }
-  if (key==='clip') {
-    document.getElementById('clip-off').classList.toggle('active',!val);
-    document.getElementById('clip-on').classList.toggle('active', !!val);
-  }
-  rp();
-}
-
-function updateAssetControls() {
-  const ctrl = document.getElementById('assetControls');
-  const a = assets.find(a=>a.id===selectedAssetId);
-  if (!a) { ctrl.style.display='none'; return; }
-  ctrl.style.display='block';
-  document.getElementById('aScale').value=a.scale; document.getElementById('aSV').textContent=a.scale;
-  document.getElementById('aRot').value=a.rot;   document.getElementById('aRV').textContent=a.rot;
-  document.getElementById('aOpacity').value=a.opacity; document.getElementById('aOV').textContent=a.opacity;
-  document.getElementById('layer-front').classList.toggle('active',a.layer==='front');
-  document.getElementById('layer-back').classList.toggle('active',a.layer==='back');
-  document.getElementById('clip-off').classList.toggle('active',!a.clip);
-  document.getElementById('clip-on').classList.toggle('active', !!a.clip);
-}
-
-function renderAssetList() {
-  const list = document.getElementById('assetList');
-  if (assets.length===0) { list.innerHTML=''; return; }
-  list.innerHTML = assets.map(a=>`
-    <div class="asset-item${a.id===selectedAssetId?' selected':''}" onclick="selectAsset(${a.id})">
-      <img class="asset-thumb" src="${a.src}" alt="">
-      <div class="asset-info">
-        <div class="asset-name">${a.name}</div>
-        <div class="asset-meta">${a.layer==='front'?'前面':'背面'} · ${a.scale}% · ${a.rot}°</div>
+    <!-- カットインジェネレーター -->
+    <a href="cutin/" class="tool-card" target="_blank">
+      <span class="tool-num">01</span>
+      <div class="tool-status live">Live</div>
+      <div class="tool-name">Cutin Generator</div>
+      <div class="tool-name-sub">カットインジェネレーター · v3</div>
+      <p class="tool-desc">
+        OBS配信用のカットインアニメーションを<br>
+        ブラウザ上で作成・書き出せるツール。<br>
+        WebM（VP9透過）・APNG対応。
+      </p>
+      <div class="tool-tags">
+        <span class="tool-tag">OBS</span>
+        <span class="tool-tag">WebM</span>
+        <span class="tool-tag">APNG</span>
+        <span class="tool-tag">配信演出</span>
       </div>
-      <button class="asset-del" onclick="event.stopPropagation();deleteAsset(${a.id})">✕</button>
+      <div class="tool-cta">Open Tool</div>
+    </a>
+
+    <!-- coming soon -->
+    <div class="tool-card soon">
+      <span class="tool-num">02</span>
+      <div class="tool-status soon-label">Coming Soon</div>
+      <div class="tool-name">Next Tool</div>
+      <div class="tool-name-sub">開発中</div>
+      <p class="tool-desc">
+        次のツールは近日公開予定。
+      </p>
     </div>
-  `).join('');
-}
 
-// ===== EASING =====
-function ease(t,type) {
-  switch(type){
-    case 'quart': return 1-Math.pow(1-t,4);
-    case 'expo':  return t===1?1:1-Math.pow(2,-10*t);
-    case 'back':  { const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
-    default: return t;
-  }
-}
-function easeIn(t,type) {
-  switch(type){
-    case 'quart': return Math.pow(t,4);
-    case 'expo':  return t===0?0:Math.pow(2,10*t-10);
-    case 'back':  { const c1=1.70158,c3=c1+1; return c3*t*t*t-c1*t*t; }
-    default: return t;
-  }
-}
-function getProgress(frame) {
-  const {inF,holdF,outF}=S;
-  if(frame<inF) return{phase:'in',t:ease(frame/inF,S.easing)};
-  if(frame<inF+holdF) return{phase:'hold',t:1};
-  const ot=(frame-inF-holdF)/outF;
-  return{phase:'out',t:1-easeIn(Math.min(ot,1),S.easing)};
-}
-function totalFrames(){ return S.inF+S.holdF+S.outF; }
+  </div>
+</section>
 
-// ===== GEOMETRY =====
-function getBandPoly(W,H) {
-  const ang=S.bandAngle*Math.PI/180;
-  const bw=W*(S.bandWidth/100);
-  const cx=W/2, tan=Math.tan(ang);
-  return [
-    {x:cx-bw/2-H*tan/2,y:0},
-    {x:cx+bw/2-H*tan/2,y:0},
-    {x:cx+bw/2+H*tan/2,y:H},
-    {x:cx-bw/2+H*tan/2,y:H},
-  ];
-}
+<div class="divider"></div>
 
-function dirOffset(dir,progress,W,H) {
-  const bw=W*S.bandWidth/100*1.5;
-  switch(dir){
-    case 'left':   return{x:-(1-progress)*(W+bw),y:0};
-    case 'right':  return{x: (1-progress)*(W+bw),y:0};
-    case 'top':    return{x:0,y:-(1-progress)*(H*1.5)};
-    case 'bottom': return{x:0,y: (1-progress)*(H*1.5)};
-    case 'diag-l': return{x:-(1-progress)*(W*1.2),y:-(1-progress)*(H*0.6)};
-    case 'diag-r': return{x: (1-progress)*(W*1.2),y:-(1-progress)*(H*0.6)};
-    default: return{x:0,y:0};
-  }
-}
-function getSlideOffset(progress,W,H,phase) {
-  return phase==='out' ? dirOffset(S.dirOut,progress,W,H) : dirOffset(S.dirIn,progress,W,H);
-}
+<!-- ABOUT -->
+<section id="about">
+  <div class="sec-label">About</div>
+  <h2 class="sec-title"><em>領主</em>型の引力で、<br>自分の世界を作っていく</h2>
 
-// ===== DRAW ASSET =====
-function drawAsset(c, asset, W, H, globalOff, poly) {
-  const iw = asset.imgEl.naturalWidth || asset.imgEl.width;
-  const ih = asset.imgEl.naturalHeight || asset.imgEl.height;
-  const drawH = H*(asset.scale/100);
-  const drawW = iw*(drawH/ih);
-  const cx = W*asset.x;
-  const cy = H*asset.y;
+  <div class="about-grid">
+    <div class="about-text">
+      <p>
+        VTuber・<strong>七海ナナメ</strong>。<br>
+        白髪、青い瞳、獣耳。一人称は「僕」。
+      </p>
+      <p>
+        「こうなるから見てなよ」と宣言するスタイルで、<br>
+        武道館クラスの3Dライブを目指して活動中。
+      </p>
+      <p>
+        見てくれとは言わない。<br>
+        気づいたら目が離せなくなってた——<br>
+        そんな存在を目指している。
+      </p>
+    </div>
 
-  c.save();
-  // クリップ：帯の形に切り抜く
-  if (asset.clip && poly) {
-    const[TL,TR,BR,BL]=poly;
-    c.beginPath();
-    c.moveTo(TL.x+globalOff.x, TL.y+globalOff.y);
-    c.lineTo(TR.x+globalOff.x, TR.y+globalOff.y);
-    c.lineTo(BR.x+globalOff.x, BR.y+globalOff.y);
-    c.lineTo(BL.x+globalOff.x, BL.y+globalOff.y);
-    c.closePath();
-    c.clip();
-  }
-  c.globalAlpha = asset.opacity/100;
-  c.translate(cx+globalOff.x, cy+globalOff.y);
-  c.rotate(asset.rot*Math.PI/180);
-  c.drawImage(asset.imgEl, -drawW/2, -drawH/2, drawW, drawH);
-  c.restore();
-}
+    <div class="about-links">
+      <a href="https://www.tiktok.com" class="about-link" target="_blank">
+        <span class="about-link-label">TikTok</span>
+        <span class="about-link-sub">@naname</span>
+      </a>
+      <a href="https://www.youtube.com" class="about-link" target="_blank">
+        <span class="about-link-label">YouTube</span>
+        <span class="about-link-sub">配信・動画</span>
+      </a>
+      <a href="https://twitter.com" class="about-link" target="_blank">
+        <span class="about-link-label">X / Twitter</span>
+        <span class="about-link-sub">@naname</span>
+      </a>
+      <a href="cutin/" class="about-link" target="_blank">
+        <span class="about-link-label">Cutin Generator</span>
+        <span class="about-link-sub">Tool · v3</span>
+      </a>
+    </div>
+  </div>
+</section>
 
-// ===== TRIM =====
-function drawTrimC(c,poly,color,tw,trim){
-  if(trim==='none') return;
-  const[TL,TR,BR,BL]=poly;
-  drawEdge(c,TL,BL,color,tw,trim,'left');
-  drawEdge(c,TR,BR,color,tw,trim,'right');
-}
-function drawEdge(c,p1,p2,color,tw,trim,side){
-  const dx=p2.x-p1.x,dy=p2.y-p1.y;
-  const len=Math.sqrt(dx*dx+dy*dy);
-  const nx=-dy/len,ny=dx/len;
-  const co=side==='left'?-tw/2:tw/2;
-  c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=tw;c.lineCap='round';c.lineJoin='round';
-  if(trim==='line'){
-    c.beginPath();c.moveTo(p1.x+nx*co,p1.y+ny*co);c.lineTo(p2.x+nx*co,p2.y+ny*co);c.stroke();
-  } else if(trim==='double'){
-    [-tw,tw].forEach(o=>{c.beginPath();c.moveTo(p1.x+nx*(co+o*0.6),p1.y+ny*(co+o*0.6));c.lineTo(p2.x+nx*(co+o*0.6),p2.y+ny*(co+o*0.6));c.lineWidth=tw*0.4;c.stroke();});
-  } else if(trim==='flower'){
-    const step=tw*3.5,cnt=Math.floor(len/step);
-    for(let i=0;i<=cnt;i++){const r=i/Math.max(cnt,1);drawFlower(c,p1.x+dx*r+nx*co*1.5,p1.y+dy*r+ny*co*1.5,tw*1.1,color);}
-  } else if(trim==='diamond'){
-    const step=tw*3,cnt=Math.floor(len/step);
-    for(let i=0;i<=cnt;i++){const r=i/Math.max(cnt,1);const px=p1.x+dx*r+nx*co*1.5,py=p1.y+dy*r+ny*co*1.5,s=tw*0.9,ang=Math.atan2(dy,dx);c.save();c.translate(px,py);c.rotate(ang);c.beginPath();c.moveTo(0,-s);c.lineTo(s*0.6,0);c.lineTo(0,s);c.lineTo(-s*0.6,0);c.closePath();c.fill();c.restore();}
-  } else if(trim==='wave'){
-    const wl=tw*2.5,amp=tw*0.7,steps=Math.floor(len/2);c.beginPath();
-    for(let i=0;i<=steps;i++){const r=i/steps,bx=p1.x+dx*r,by=p1.y+dy*r,w=Math.sin(r*Math.PI*2*(len/wl))*amp;if(i===0)c.moveTo(bx+nx*(co+w),by+ny*(co+w));else c.lineTo(bx+nx*(co+w),by+ny*(co+w));}c.stroke();
-  } else if(trim==='cross'){
-    const step=tw*3,cnt=Math.floor(len/step),s=tw*0.7;
-    for(let i=0;i<=cnt;i++){const r=i/Math.max(cnt,1),px=p1.x+dx*r+nx*co*1.5,py=p1.y+dy*r+ny*co*1.5,ang=Math.atan2(dy,dx);c.save();c.translate(px,py);c.rotate(ang);c.lineWidth=tw*0.35;c.beginPath();c.moveTo(-s,0);c.lineTo(s,0);c.moveTo(0,-s);c.lineTo(0,s);c.stroke();c.restore();}
-  }
-  c.restore();
-}
-function drawFlower(c,x,y,r,color){
-  c.save();c.translate(x,y);c.fillStyle=color;
-  for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2-Math.PI/2;c.beginPath();c.ellipse(Math.cos(a)*r*0.55,Math.sin(a)*r*0.55,r*0.4,r*0.25,a,0,Math.PI*2);c.fill();}
-  c.beginPath();c.arc(0,0,r*0.22,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.restore();
-}
+<!-- FOOTER -->
+<footer>
+  <span class="footer-name">七海ナナメ · Nanami Naname</span>
+  <span class="footer-copy">© 2026 Nanami Naname</span>
+</footer>
 
-// ===== TEXT =====
-function drawText(c,poly,W,H,alpha){
-  const[TL,TR,BR,BL]=poly;
-  const fs=S.fontSize,subFs=Math.round(fs*0.36),font=S.fontFamily;
-  const bandCx=(TL.x+TR.x+BL.x+BR.x)/4;
-  c.globalAlpha=alpha;
-  if(S.textDir==='vertical'){
-    let bx,by;
-    switch(S.textPos){case'top':bx=bandCx-fs*0.1;by=H*0.05;break;case'center':bx=bandCx-fs*0.1;by=H*0.1;break;case'outside':bx=Math.max(TR.x,BR.x)+fs*0.6;by=H*0.08;break;default:bx=bandCx-fs*0.1;by=H*0.08;}
-    c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;c.textAlign='center';
-    c.shadowColor='rgba(255,255,255,0.25)';c.shadowBlur=6;
-    [...S.mainText].forEach((ch,i)=>c.fillText(ch,bx,by+fs*(i+1)));
-    c.shadowBlur=0;
-    if(S.subText){c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;[...S.subText].forEach((ch,i)=>c.fillText(ch,bx+fs*0.9,by+subFs*(i+1.2)));}
-  } else {
-    let ty;
-    switch(S.textPos){
-      case'top':ty=H*0.15;break;case'center':ty=H*0.5;break;
-      case'outside':{
-        const tx=Math.max(TR.x,BR.x)+20;ty=H*0.6;
-        c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle='#aabbdd';c.textAlign='left';
-        c.fillText(S.subText,tx,ty-fs*0.05);
-        c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;c.fillText(S.mainText,tx,ty+fs*0.85);
-        c.globalAlpha=1;return;
-      }
-      default:ty=H*0.82;
+<script>
+// ===== CURSOR =====
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+// ===== BACKGROUND CANVAS =====
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// パーティクル（浮遊する光の粒）
+const particles = Array.from({length: 60}, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight,
+  vx: (Math.random() - 0.5) * 0.3,
+  vy: -Math.random() * 0.4 - 0.1,
+  r: Math.random() * 1.5 + 0.3,
+  alpha: Math.random() * 0.5 + 0.1,
+  life: Math.random(),
+  speed: Math.random() * 0.003 + 0.001,
+}));
+
+// 霞（大きなソフトなグロー）
+const hazes = [
+  { x: 0.2, y: 0.3, rx: 0.35, ry: 0.25, c: 'rgba(120,160,255,0.04)', phase: 0, speed: 0.0008 },
+  { x: 0.75, y: 0.6, rx: 0.3, ry: 0.2, c: 'rgba(180,140,255,0.03)', phase: 2, speed: 0.001 },
+  { x: 0.5, y: 0.1, rx: 0.4, ry: 0.18, c: 'rgba(100,220,200,0.025)', phase: 4, speed: 0.0007 },
+];
+
+let t = 0;
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 霞
+  hazes.forEach(h => {
+    const offX = Math.sin(t * h.speed + h.phase) * 40;
+    const offY = Math.cos(t * h.speed * 0.7 + h.phase) * 20;
+    const grd = ctx.createRadialGradient(
+      h.x * W + offX, h.y * H + offY, 0,
+      h.x * W + offX, h.y * H + offY, h.rx * W
+    );
+    grd.addColorStop(0, h.c);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+  });
+
+  // パーティクル
+  particles.forEach(p => {
+    p.life += p.speed;
+    if (p.life > 1) {
+      p.life = 0;
+      p.x = Math.random() * W;
+      p.y = H + 10;
+      p.vx = (Math.random() - 0.5) * 0.3;
+      p.vy = -Math.random() * 0.4 - 0.1;
     }
-    c.textAlign='center';
-    c.font=`400 ${subFs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.trimColor;c.fillText(S.subText,bandCx,ty-fs*0.1);
-    c.font=`900 ${fs}px '${font}','Noto Sans JP',sans-serif`;c.fillStyle=S.textColor;
-    c.shadowColor='rgba(255,255,255,0.3)';c.shadowBlur=8;c.fillText(S.mainText,bandCx,ty+fs*0.8);c.shadowBlur=0;
-  }
-  c.textAlign='left';c.globalAlpha=1;
+    p.x += p.vx;
+    p.y += p.vy;
+
+    const a = p.alpha * Math.sin(p.life * Math.PI);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(180,210,255,${a})`;
+    ctx.fill();
+  });
+
+  t++;
+  requestAnimationFrame(draw);
 }
+draw();
 
-// ===== DRAW FRAME =====
-function drawFrame(frame, c, W, H) {
-  c=c||ctx; W=W||cv.width; H=H||cv.height;
-  c.clearRect(0,0,W,H);
-
-  const{phase,t}=getProgress(frame);
-  const off=getSlideOffset(t,W,H,phase);
-  const poly=getBandPoly(W,H);
-
-  // back layer assets (fixed, not slide with band)
-  assets.filter(a=>a.layer==='back').forEach(a=>drawAsset(c,a,W,H,{x:0,y:0},poly));
-
-  c.save();
-  c.translate(off.x,off.y);
-  if(!S.transparent){c.fillStyle='#000';c.fillRect(-W,-H,W*3,H*3);}
-
-  const[TL,TR,BR,BL]=poly;
-  const hex=S.bandColor;
-  const r2=parseInt(hex.slice(1,3),16),g2=parseInt(hex.slice(3,5),16),b2=parseInt(hex.slice(5,7),16);
-  const alpha=S.bandAlpha/100;
-
-  // BAND
-  c.save();
-  c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TR.x,TR.y);c.lineTo(BR.x,BR.y);c.lineTo(BL.x,BL.y);c.closePath();
-  c.fillStyle=`rgba(${r2},${g2},${b2},${alpha})`;c.fill();
-
-  // CHAR（クリップONのときは縁の下に描画）
-  if(S.charImg && S.clipToBand){
-    c.save();c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TR.x,TR.y);c.lineTo(BR.x,BR.y);c.lineTo(BL.x,BL.y);c.closePath();c.clip();
-    const ih=H*(S.imgScale/100),iw=S.charImg.width*(ih/S.charImg.height);
-    c.drawImage(S.charImg,W*(S.imgX/100)-iw/2,H*(S.imgY/100)-ih,iw,ih);
-    c.restore();
-  }
-  c.restore();
-
-  // 縁・テキストはキャラの上に描く（translateは外側のsaveで既に適用済み）
-  c.save();
-  drawTrimC(c,poly,S.trimColor,S.trimWidth,S.trim);
-  const textAlpha=phase==='in'?Math.pow(t,2):phase==='hold'?1:Math.pow(1-t,1.5);
-  if(S.showText) drawText(c,poly,W,H,textAlpha);
-  c.restore();
-
-  // CHAR（クリップOFFのときは縁の上に描画）
-  if(S.charImg && !S.clipToBand){
-    c.save();
-    const ih=H*(S.imgScale/100),iw=S.charImg.width*(ih/S.charImg.height);
-    c.drawImage(S.charImg,W*(S.imgX/100)-iw/2,H*(S.imgY/100)-ih,iw,ih);
-    c.restore();
-  }
-
-  c.restore();
-
-  // front layer assets (slide with band)
-  assets.filter(a=>a.layer==='front').forEach(a=>drawAsset(c,a,W,H,off,poly));
-
-  // overlay (ハンドル)
-  if (c===ctx) drawOverlay();
-}
-
-// ===== OVERLAY (ドラッグハンドル) =====
-function drawOverlay() {
-  const W=cv.width, H=cv.height;
-  overlayCtx.clearRect(0,0,W,H);
-
-  const{phase,t}=getProgress(curF);
-  const off=getSlideOffset(t,W,H,phase);
-
-  // キャラハンドル
-  if(S.charImg) {
-    const ih=H*(S.imgScale/100);
-    const iw=S.charImg.width*(ih/S.charImg.height);
-    const cx=W*(S.imgX/100)+off.x;
-    const cy=H*(S.imgY/100)+off.y;
-    const hw=iw/2, hh=ih;
-
-    overlayCtx.save();
-    overlayCtx.strokeStyle='rgba(251,146,60,0.85)';
-    overlayCtx.lineWidth=2;
-    overlayCtx.setLineDash([6,3]);
-    overlayCtx.strokeRect(cx-hw, cy-hh, iw, ih);
-    overlayCtx.setLineDash([]);
-    overlayCtx.fillStyle='rgba(251,146,60,0.9)';
-    overlayCtx.beginPath();overlayCtx.arc(cx,cy-hh/2,8,0,Math.PI*2);overlayCtx.fill();
-    // ラベル
-    overlayCtx.fillStyle='rgba(251,146,60,0.7)';
-    overlayCtx.font='bold 11px Rajdhani,sans-serif';
-    overlayCtx.fillText('CHAR',cx-hw+4,cy-hh+14);
-    overlayCtx.restore();
-  }
-
-  // 素材ハンドル
-  const a=assets.find(a=>a.id===selectedAssetId);
-  if(!a) return;
-
-  const baseOff=a.layer==='front'?off:{x:0,y:0};
-  const ih=H*(a.scale/100);
-  const iw=(a.imgEl.naturalWidth||a.imgEl.width)*(ih/(a.imgEl.naturalHeight||a.imgEl.height));
-  const cx=W*a.x+baseOff.x;
-  const cy=H*a.y+baseOff.y;
-  const hw=iw/2, hh=ih/2;
-
-  overlayCtx.save();
-  overlayCtx.translate(cx,cy);
-  overlayCtx.rotate(a.rot*Math.PI/180);
-  overlayCtx.strokeStyle='rgba(110,156,244,0.9)';
-  overlayCtx.lineWidth=2;
-  overlayCtx.setLineDash([6,3]);
-  overlayCtx.strokeRect(-hw,-hh,iw,ih);
-  overlayCtx.setLineDash([]);
-  overlayCtx.fillStyle='rgba(110,156,244,0.8)';
-  overlayCtx.beginPath();overlayCtx.arc(0,0,7,0,Math.PI*2);overlayCtx.fill();
-  overlayCtx.fillStyle='rgba(168,126,247,0.9)';
-  overlayCtx.fillRect(hw-8,hh-8,12,12);
-  overlayCtx.fillStyle='rgba(74,222,128,0.9)';
-  overlayCtx.beginPath();overlayCtx.arc(0,-hh-16,7,0,Math.PI*2);overlayCtx.fill();
-  overlayCtx.restore();
-}
-
-// ===== POINTER EVENTS =====
-function getCanvasPos(e) {
-  const rect=cv.getBoundingClientRect();
-  const scaleX=cv.width/rect.width, scaleY=cv.height/rect.height;
-  const clientX=e.touches?e.touches[0].clientX:e.clientX;
-  const clientY=e.touches?e.touches[0].clientY:e.clientY;
-  return{x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY};
-}
-
-function hitTest(pos, asset, W, H, off) {
-  const ih=H*(asset.scale/100);
-  const iw=(asset.imgEl.naturalWidth||asset.imgEl.width)*(ih/(asset.imgEl.naturalHeight||asset.imgEl.height));
-  const cx=W*asset.x+off.x, cy=H*asset.y+off.y;
-  const hw=iw/2, hh=ih/2;
-  const rot=asset.rot*Math.PI/180;
-
-  // pos を asset 座標系に変換
-  const dx=pos.x-cx, dy=pos.y-cy;
-  const lx= dx*Math.cos(-rot)-dy*Math.sin(-rot);
-  const ly= dx*Math.sin(-rot)+dy*Math.cos(-rot);
-
-  // 回転ハンドル
-  const rdx=lx, rdy=ly+hh+16;
-  if(Math.sqrt(rdx*rdx+rdy*rdy)<14) return 'rotate';
-  // スケールハンドル
-  if(lx>=hw-12&&lx<=hw+4&&ly>=hh-12&&ly<=hh+4) return 'scale';
-  // 内部
-  if(Math.abs(lx)<=hw&&Math.abs(ly)<=hh) return 'move';
-  return null;
-}
-
-function hitTestChar(pos, W, H, off) {
-  if (!S.charImg) return false;
-  const ih=H*(S.imgScale/100);
-  const iw=S.charImg.width*(ih/S.charImg.height);
-  const cx=W*(S.imgX/100)+off.x;
-  const cy=H*(S.imgY/100)+off.y;
-  const hw=iw/2;
-  return pos.x>=cx-hw && pos.x<=cx+hw && pos.y>=cy-ih && pos.y<=cy;
-}
-
-function onPointerDown(e) {
-  if(playing) return;
-  const pos=getCanvasPos(e);
-  const W=cv.width, H=cv.height;
-  const{phase,t}=getProgress(curF);
-  const slideOff=getSlideOffset(t,W,H,phase);
-
-  // 素材を前面優先でチェック
-  const sorted=[...assets].reverse();
-  for(const a of sorted){
-    const off=a.layer==='front'?slideOff:{x:0,y:0};
-    const hit=hitTest(pos,a,W,H,off);
-    if(hit){
-      selectAsset(a.id);
-      dragState={type:'asset',assetId:a.id,mode:hit,startX:pos.x,startY:pos.y,startAX:a.x,startAY:a.y,startScale:a.scale,startRot:a.rot,cx:W*a.x+off.x,cy:H*a.y+off.y};
-      e.preventDefault();
-      return;
+// ===== SCROLL FADE IN =====
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
     }
-  }
+  });
+}, { threshold: 0.1 });
 
-  // キャラ画像チェック
-  if(hitTestChar(pos,W,H,slideOff)){
-    dragState={type:'char',startX:pos.x,startY:pos.y,startImgX:S.imgX,startImgY:S.imgY};
-    e.preventDefault();
-    return;
-  }
-
-  // ヒットなし→選択解除
-  selectedAssetId=null;
-  renderAssetList();
-  updateAssetControls();
-  drawOverlay();
-}
-
-function onPointerMove(e) {
-  if(!dragState||playing) return;
-  e.preventDefault();
-  const pos=getCanvasPos(e);
-  const W=cv.width, H=cv.height;
-  const dx=pos.x-dragState.startX, dy=pos.y-dragState.startY;
-
-  if(dragState.type==='char'){
-    S.imgX=Math.max(-50,Math.min(150,dragState.startImgX+dx/W*100));
-    S.imgY=Math.max(0,Math.min(150,dragState.startImgY+dy/H*100));
-    // スライダーに反映
-    document.getElementById('imgX').value=Math.round(S.imgX);
-    document.getElementById('iXV').textContent=Math.round(S.imgX);
-    document.getElementById('imgY').value=Math.round(S.imgY);
-    document.getElementById('iYV').textContent=Math.round(S.imgY);
-    drawFrame(curF);
-    return;
-  }
-
-  const a=assets.find(a=>a.id===dragState.assetId);
-  if(!a) return;
-
-  if(dragState.mode==='move'){
-    a.x=Math.max(0,Math.min(1,dragState.startAX+dx/W));
-    a.y=Math.max(0,Math.min(1,dragState.startAY+dy/H));
-  } else if(dragState.mode==='scale'){
-    const dist=Math.sqrt((pos.x-dragState.cx)**2+(pos.y-dragState.cy)**2);
-    const origH=H*(dragState.startScale/100);
-    const origW=(a.imgEl.naturalWidth||a.imgEl.width)*(origH/(a.imgEl.naturalHeight||a.imgEl.height));
-    const origDist=Math.sqrt((origW/2)**2+(origH/2)**2);
-    a.scale=Math.max(1,Math.min(200,Math.round(dragState.startScale*(dist/origDist))));
-    document.getElementById('aScale').value=a.scale;
-    document.getElementById('aSV').textContent=a.scale;
-  } else if(dragState.mode==='rotate'){
-    const angle=Math.atan2(pos.y-dragState.cy,pos.x-dragState.cx)*180/Math.PI+90;
-    a.rot=Math.round(angle);
-    document.getElementById('aRot').value=Math.max(-180,Math.min(180,a.rot));
-    document.getElementById('aRV').textContent=a.rot;
-  }
-
-  renderAssetList();
-  drawFrame(curF);
-}
-
-function onPointerUp(e) {
-  dragState=null;
-}
-
-// canvasにイベント登録
-const cvWrap=document.getElementById('cvStack');
-cvWrap.addEventListener('mousedown',onPointerDown);
-cvWrap.addEventListener('mousemove',onPointerMove);
-cvWrap.addEventListener('mouseup',onPointerUp);
-cvWrap.addEventListener('mouseleave',onPointerUp);
-cvWrap.addEventListener('touchstart',onPointerDown,{passive:false});
-cvWrap.addEventListener('touchmove',onPointerMove,{passive:false});
-cvWrap.addEventListener('touchend',onPointerUp);
-
-// ===== PLAY =====
-function playAnim() {
-  stopAnim();sync();
-  curF=0;playing=true;
-  const fps=30,interval=1000/fps;
-  let last=0;
-  const total=totalFrames();
-  function loop(ts){
-    if(!playing) return;
-    if(ts-last>=interval){
-      drawFrame(curF);
-      updateSeekLabel();
-      document.getElementById('seekBar').value=curF;
-      last=ts;curF++;if(curF>=total)curF=0;
-    }
-    raf=requestAnimationFrame(loop);
-  }
-  raf=requestAnimationFrame(loop);
-}
-function stopAnim(){
-  playing=false;
-  if(raf){cancelAnimationFrame(raf);raf=null;}
-  // 現在フレームをキープ（先頭に戻さない）
-  drawFrame(curF);
-  updateSeekBar();
-}
-
-// ===== EXPORT =====
-async function doExport(){
-  sync();
-  const btn=document.getElementById('expBtn');
-  const bar=document.getElementById('progBar');
-  const fill=document.getElementById('progFill');
-  const msg=document.getElementById('statusMsg');
-  btn.disabled=true;bar.style.display='block';fill.style.width='0%';
-
-  const oc=document.createElement('canvas');
-  oc.width=S.cW;oc.height=S.cH;
-  const oc_ctx=oc.getContext('2d');
-  const total=totalFrames();
-
-  if(S.fmt==='webm'){
-    msg.textContent='WebM書き出し中...';
-    const stream=oc.captureStream(S.expFps);
-    const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
-    const rec=new MediaRecorder(stream,{mimeType:mime});
-    const chunks=[];
-    rec.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
-    rec.onstop=()=>{
-      const blob=new Blob(chunks,{type:'video/webm'});
-      dl(blob,'cutin.webm');
-      msg.textContent='完了！ cutin.webm';btn.disabled=false;
-    };
-    rec.start();
-    for(let f=0;f<total;f++){
-      drawFrame(f,oc_ctx,oc.width,oc.height);
-      fill.style.width=`${Math.round(f/total*100)}%`;
-      await sleep(1000/S.expFps);
-    }
-    rec.stop();
-  } else {
-    msg.textContent='フレーム生成中...';
-    const frames=[];
-    const delay=Math.round(1000/S.expFps);
-    for(let f=0;f<total;f++){
-      drawFrame(f,oc_ctx,oc.width,oc.height);
-      frames.push({data:oc_ctx.getImageData(0,0,oc.width,oc.height),delay});
-      fill.style.width=`${Math.round(f/total*90)}%`;
-      await sleep(0);
-    }
-    msg.textContent='APNGエンコード中...';
-    const blob=await buildAPNG(frames,oc.width,oc.height);
-    fill.style.width='100%';
-    dl(blob,'cutin.png');
-    msg.textContent='完了！ cutin.png (APNG)';btn.disabled=false;
-  }
-}
-
-// ===== UTILS =====
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function dl(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
-
-// ===== APNG =====
-async function buildAPNG(frames,width,height){
-  function u32(n){return new Uint8Array([(n>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff]);}
-  function crc32(d){let c=0xffffffff;for(let i=0;i<d.length;i++){c^=d[i];for(let j=0;j<8;j++)c=(c&1)?(c>>>1)^0xedb88320:c>>>1;}return(c^0xffffffff)>>>0;}
-  function chunk(type,data){const tb=new TextEncoder().encode(type);const cd=new Uint8Array(tb.length+data.length);cd.set(tb);cd.set(data,tb.length);const crc=crc32(cd);const out=new Uint8Array(4+4+data.length+4);out.set(u32(data.length));out.set(tb,4);out.set(data,8);out.set(u32(crc),8+data.length);return out;}
-  function ihdr(w,h){const d=new Uint8Array(13);d.set(u32(w));d.set(u32(h),4);d[8]=8;d[9]=6;return chunk('IHDR',d);}
-  function actl(n){const d=new Uint8Array(8);d.set(u32(n));d.set(u32(0),4);return chunk('acTL',d);}
-  function fctl(seq,w,h,dn,dd){const d=new Uint8Array(26);d.set(u32(seq));d.set(u32(w),4);d.set(u32(h),8);d.set(u32(0),12);d.set(u32(0),16);d[20]=(dn>>8)&0xff;d[21]=dn&0xff;d[22]=(dd>>8)&0xff;d[23]=dd&0xff;d[24]=1;d[25]=0;return chunk('fcTL',d);}
-  function compress(img,w,h){const raw=new Uint8Array((1+w*4)*h);for(let y=0;y<h;y++){raw[y*(1+w*4)]=0;raw.set(img.data.subarray(y*w*4,(y+1)*w*4),y*(1+w*4)+1);}return pako.deflate(raw,{level:6});}
-  const sig=new Uint8Array([137,80,78,71,13,10,26,10]);
-  const parts=[sig,ihdr(width,height),actl(frames.length)];
-  let seq=0;
-  for(let i=0;i<frames.length;i++){
-    const{data,delay}=frames[i];const comp=compress(data,width,height);
-    parts.push(fctl(seq++,width,height,delay,1000));
-    if(i===0){parts.push(chunk('IDAT',comp));}
-    else{const fd=new Uint8Array(4+comp.length);fd.set(u32(seq));fd.set(comp,4);parts.push(chunk('fdAT',fd));seq++;}
-  }
-  parts.push(chunk('IEND',new Uint8Array(0)));
-  let total=0;parts.forEach(p=>total+=p.length);
-  const res=new Uint8Array(total);let off=0;parts.forEach(p=>{res.set(p,off);off+=p.length;});
-  return new Blob([res],{type:'image/png'});
-}
-
-// ===== INIT =====
-overlayCV.style.pointerEvents='none';
-window.addEventListener('load',()=>{sync();updateSeekBar();drawFrame(0);});
+document.querySelectorAll('.tool-card, .about-text, .about-links').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+  observer.observe(el);
+});
 </script>
 </body>
 </html>
