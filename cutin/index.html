@@ -339,6 +339,7 @@ input[type=color] { width: 100%; height: 30px; border: 1px solid var(--border); 
     <div class="row"><label>横位置（%）</label><div class="rrow"><input type="range" id="imgX" min="-50" max="150" value="50" oninput="rv('imgX','iXV');rp()"><span class="rval" id="iXV">50</span></div></div>
     <div class="row"><label>縦位置（%）</label><div class="rrow"><input type="range" id="imgY" min="0" max="150" value="100" oninput="rv('imgY','iYV');rp()"><span class="rval" id="iYV">100</span></div></div>
     <div class="tog-row"><label>帯内にクリップ</label><label class="tog"><input type="checkbox" id="clipToBand" checked onchange="rp()"><span class="tog-s"></span></label></div>
+    <div class="tog-row"><label>画像をロック（ドラッグ無効）</label><label class="tog"><input type="checkbox" id="charLock" onchange="updateCharLock()"><span class="tog-s"></span></label></div>
   </div>
 
   <!-- テキスト -->
@@ -509,7 +510,7 @@ const S = {
   dirIn:'right', dirOut:'bottom',
   bandAngle:15, bandWidth:55, bandColor:'#e8e4e0', bandAlpha:95,
   trim:'line', trimColor:'#b8972a', trimWidth:5,
-  charImg:null, imgScale:85, imgX:50, imgY:100, clipToBand:true,
+  charImg:null, imgScale:85, imgX:50, imgY:100, clipToBand:true, charLocked:false,
   showText:true, mainText:'七海ナナメ', subText:'Nanami Naname',
   fontSize:52, textColor:'#1a1a2e', textPos:'bottom',
   textCustomX:0.5, textCustomY:0.5,
@@ -1007,19 +1008,20 @@ function drawOverlay() {
     const cx=W*(S.imgX/100)+off.x;
     const cy=H*(S.imgY/100)+off.y;
     const hw=iw/2, hh=ih;
+    const locked = S.charLocked;
 
     overlayCtx.save();
-    overlayCtx.strokeStyle='rgba(251,146,60,0.85)';
+    overlayCtx.strokeStyle = locked ? 'rgba(90,100,130,0.6)' : 'rgba(251,146,60,0.85)';
     overlayCtx.lineWidth=2;
     overlayCtx.setLineDash([6,3]);
     overlayCtx.strokeRect(cx-hw, cy-hh, iw, ih);
     overlayCtx.setLineDash([]);
-    overlayCtx.fillStyle='rgba(251,146,60,0.9)';
+    overlayCtx.fillStyle = locked ? 'rgba(90,100,130,0.7)' : 'rgba(251,146,60,0.9)';
     overlayCtx.beginPath();overlayCtx.arc(cx,cy-hh/2,8,0,Math.PI*2);overlayCtx.fill();
     // ラベル
-    overlayCtx.fillStyle='rgba(251,146,60,0.7)';
+    overlayCtx.fillStyle = locked ? 'rgba(90,100,130,0.8)' : 'rgba(251,146,60,0.7)';
     overlayCtx.font='bold 11px Rajdhani,sans-serif';
-    overlayCtx.fillText('CHAR',cx-hw+4,cy-hh+14);
+    overlayCtx.fillText(locked ? '🔒 LOCKED' : 'CHAR', cx-hw+4, cy-hh+14);
     overlayCtx.restore();
   }
 
@@ -1083,13 +1085,18 @@ function hitTest(pos, asset, W, H, off) {
 }
 
 function hitTestChar(pos, W, H, off) {
-  if (!S.charImg) return false;
+  if (!S.charImg || S.charLocked) return false;
   const ih=H*(S.imgScale/100);
   const iw=S.charImg.width*(ih/S.charImg.height);
   const cx=W*(S.imgX/100)+off.x;
   const cy=H*(S.imgY/100)+off.y;
   const hw=iw/2;
   return pos.x>=cx-hw && pos.x<=cx+hw && pos.y>=cy-ih && pos.y<=cy;
+}
+
+function updateCharLock() {
+  S.charLocked = document.getElementById('charLock').checked;
+  drawOverlay();
 }
 
 function hitTestText(pos, W, H, off) {
