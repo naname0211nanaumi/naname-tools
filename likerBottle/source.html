@@ -29,8 +29,9 @@
     transform: translateX(-50%);
     bottom: 95px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 2px;
     pointer-events: none;
     z-index: 10;
   }
@@ -45,9 +46,11 @@
   }
   .pct-sign {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 17px;
+    font-size: 24px;
+    font-weight: 400;
     color: rgba(200,230,255,0.85);
     text-shadow: 0 0 8px rgba(140,190,255,0.6);
+    line-height: 1;
   }
   @keyframes wave1 { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
   @keyframes wave2 { 0%{transform:translateX(0)} 100%{transform:translateX(50%)}  }
@@ -122,11 +125,10 @@ function connectTikFinity() {
     let msg;
     try { msg = JSON.parse(e.data); } catch { return; }
 
-    // デバッグ: 全イベントをコンソール出力（確認後に削除OK）
-    if (msg.event) console.log('[TikFinity]', msg.event, msg.data);
+    // 全イベントをコンソールに出力（イベント名確認用）
+    console.log('[TikFinity RAW]', JSON.stringify(msg));
 
     if (msg.event === 'like') {
-      // フィールド名の揺れに対応
       const count = msg.data?.likeCount ?? msg.data?.like_count ?? msg.data?.count ?? 1;
       state.likes += count;
       saveState(state);
@@ -183,8 +185,9 @@ setInterval(() => {
 // 液体レベル更新
 // =============================================
 function updateLiquid() {
-  const pct = Math.min(100, (state.likes / Math.max(1, state.goal)) * 100);
-  document.getElementById('percentNum').textContent = Math.round(pct);
+  const rawPct = (state.likes / Math.max(1, state.goal)) * 100;
+  const pct    = Math.min(100, rawPct); // 液体の高さは100%上限
+  document.getElementById('percentNum').textContent = Math.round(rawPct); // 表示は上限なし
 
   const TOTAL_H = 245;
   const BOT_Y   = 333;
