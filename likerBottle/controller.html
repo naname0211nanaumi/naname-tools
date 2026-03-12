@@ -3,153 +3,263 @@
 <head>
 <meta charset="UTF-8">
 <title>Liker Bottle – Controller</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Rajdhani:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background:#0b0e1a;
-  color:#c8dcf0;
-  font-family:'Rajdhani', sans-serif;
-  font-size:14px;
-  padding:14px;
-  min-width:220px;
-}
-h1 {
-  font-family:'Cormorant Garamond', serif;
-  font-size:18px;
-  font-weight:300;
-  letter-spacing:0.12em;
-  color:#a8d0f0;
-  margin-bottom:14px;
-  padding-bottom:8px;
-  border-bottom:1px solid rgba(160,200,255,0.15);
-}
-.row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-label { font-size:12px; color:#88aac8; min-width:52px; }
-input[type=number] {
-  flex:1; background:#0f1628; border:1px solid rgba(120,170,220,0.25);
-  color:#c8dcf0; padding:5px 8px; border-radius:4px;
-  font-family:'Rajdhani', sans-serif; font-size:14px;
-}
-input[type=number]:focus { outline:none; border-color:rgba(120,190,255,0.5); }
-button {
-  background:rgba(80,130,210,0.18); border:1px solid rgba(100,160,240,0.35);
-  color:#a8d0f5; padding:5px 14px; border-radius:4px;
-  font-family:'Rajdhani', sans-serif; font-size:13px;
-  cursor:pointer; transition:background 0.2s;
-  white-space:nowrap;
-}
-button:hover { background:rgba(80,130,210,0.35); }
-button.danger {
-  background:rgba(210,80,80,0.15); border-color:rgba(240,100,100,0.3);
-  color:#f0a0a0;
-}
-button.danger:hover { background:rgba(210,80,80,0.3); }
-.sep { border:none; border-top:1px solid rgba(160,200,255,0.1); margin:12px 0; }
-.status-box {
-  font-size:11px; color:#607890;
-  background:rgba(255,255,255,0.04);
-  border-radius:4px; padding:6px 10px;
-  line-height:1.6;
-}
-.status-box span { color:#7bcfff; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#080a14;color:#c8d8f0;font-family:'Rajdhani',sans-serif;font-weight:300;font-size:13px;min-height:100vh;padding:16px;}
+  h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:20px;letter-spacing:4px;color:#a8c8f8;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(168,200,248,0.15);}
+  .status{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,215,245,0.4);}
+  .dot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;}
+  .dot.ok{background:#8ff0d8;box-shadow:0 0 6px #8ff0d8;}
+  .dot.err{background:#f07878;}
 
-/* ターゲットフレーム用（source.htmlがiframe内にある場合） */
-#iframeWrap {
-  display:none; /* OBSでは不要、デスクトップテスト用 */
-}
+  .section{margin-bottom:18px;padding:14px;background:rgba(168,200,248,0.04);border:1px solid rgba(168,200,248,0.08);border-radius:3px;}
+  .sec-title{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(168,200,248,0.45);margin-bottom:10px;}
+
+  /* カウンター表示 */
+  .counter-display{display:flex;align-items:baseline;gap:6px;margin-bottom:12px;}
+  .count-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:#e8f0ff;line-height:1;}
+  .count-goal{font-size:11px;color:rgba(200,215,245,0.35);letter-spacing:1px;}
+  .progress-bar{height:2px;background:rgba(168,200,248,0.12);border-radius:1px;margin-bottom:12px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#5082d2,#a8c8f8);border-radius:1px;transition:width 0.4s ease;}
+
+  /* ボタン群 */
+  .btn-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+  button{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:1px solid rgba(168,200,248,0.25);background:rgba(168,200,248,0.06);color:#a8c8f8;padding:7px 14px;border-radius:2px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  button:hover{background:rgba(168,200,248,0.14);border-color:rgba(168,200,248,0.5);}
+  button.danger{border-color:rgba(255,140,140,0.3);color:#f09898;background:rgba(255,120,120,0.06);}
+  button.danger:hover{background:rgba(255,120,120,0.14);}
+  button.active{background:rgba(168,200,248,0.18);border-color:rgba(168,200,248,0.6);color:#d8eaff;}
+
+  /* 入力 */
+  .input-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+  input[type=number],input[type=text]{background:rgba(168,200,248,0.06);border:1px solid rgba(168,200,248,0.18);color:#c8d8f0;font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:1px;padding:6px 10px;border-radius:2px;width:80px;outline:none;}
+  input:focus{border-color:rgba(168,200,248,0.5);}
+  input[type=color]{width:36px;height:30px;border:1px solid rgba(168,200,248,0.2);background:none;padding:0;cursor:pointer;border-radius:2px;}
+  label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,215,245,0.5);min-width:60px;}
+
+  /* セレクタ */
+  select{background:rgba(168,200,248,0.06);border:1px solid rgba(168,200,248,0.18);color:#c8d8f0;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;padding:6px 10px;border-radius:2px;outline:none;cursor:pointer;}
+  select:focus{border-color:rgba(168,200,248,0.5);}
+
+  /* チェックボックスグループ */
+  .check-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .check-item{display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(200,215,245,0.55);cursor:pointer;}
+  .check-item input[type=checkbox]{accent-color:#a8c8f8;width:13px;height:13px;cursor:pointer;}
+  .check-item.checked{color:#a8c8f8;}
+
+  /* ログ */
+  #log{font-size:10px;letter-spacing:0.5px;color:rgba(200,215,245,0.3);height:48px;overflow-y:auto;font-family:monospace;line-height:1.6;margin-top:6px;}
 </style>
 </head>
 <body>
 <h1>Liker Bottle</h1>
 
-<div class="row">
-  <label>目標</label>
-  <input type="number" id="goalInput" value="1000" min="1">
-  <button onclick="applyGoal()">設定</button>
+<div class="status">
+  <div class="dot" id="dot"></div>
+  <span id="statusText">接続中...</span>
 </div>
 
-<div class="row">
-  <label>いいね数</label>
-  <input type="number" id="likesInput" value="0" min="0">
-  <button onclick="applyLikes()">セット</button>
+<!-- カウンター表示 -->
+<div class="section">
+  <div class="sec-title">カウンター</div>
+  <div class="counter-display">
+    <span class="count-num" id="dispLikes">0</span>
+    <span class="count-goal">/ <span id="dispGoal">1000</span></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="btn-row">
+    <button onclick="send({type:'add_likes',value:1})">+1</button>
+    <button onclick="send({type:'add_likes',value:10})">+10</button>
+    <button onclick="send({type:'add_likes',value:50})">+50</button>
+    <button onclick="send({type:'add_likes',value:100})">+100</button>
+    <button class="danger" onclick="send({type:'reset'})">Reset</button>
+  </div>
+  <div class="input-row">
+    <label>手動セット</label>
+    <input type="number" id="manualLikes" value="0" min="0">
+    <button onclick="send({type:'set_likes',value:+document.getElementById('manualLikes').value})">Set</button>
+  </div>
+  <div class="input-row">
+    <label>目標</label>
+    <input type="number" id="goalInput" value="1000" min="1">
+    <button onclick="send({type:'set_goal',value:+document.getElementById('goalInput').value})">Set</button>
+  </div>
 </div>
 
-<div class="row">
-  <label>追加</label>
-  <input type="number" id="addInput" value="10" min="1">
-  <button onclick="addLikes()">＋追加</button>
+<!-- 液体の色 -->
+<div class="section">
+  <div class="sec-title">液体の色</div>
+  <div class="input-row">
+    <label>上</label>
+    <input type="color" id="liqTop" value="#5082d2" oninput="sendLiquidColor()">
+    <label style="margin-left:10px">下</label>
+    <input type="color" id="liqBot" value="#0d2370" oninput="sendLiquidColor()">
+  </div>
+  <div class="btn-row" style="margin-top:8px;">
+    <button onclick="setLiqPreset('#5082d2','#0d2370')">ブルー</button>
+    <button onclick="setLiqPreset('#c060a8','#3a0860')">パープル</button>
+    <button onclick="setLiqPreset('#30b878','#084828')">グリーン</button>
+    <button onclick="setLiqPreset('#d08030','#501800')">アンバー</button>
+    <button onclick="setLiqPreset('#c03060','#380018')">ルビー</button>
+  </div>
 </div>
 
-<hr class="sep">
-
-<div class="row">
-  <button class="danger" onclick="resetLikes()" style="flex:1;">リセット</button>
+<!-- 瓶の外観 -->
+<div class="section">
+  <div class="sec-title">瓶の外観</div>
+  <div class="input-row">
+    <label>ガラス色</label>
+    <select id="glassColor" onchange="send({type:'set_glass_color',value:this.value})">
+      <option value="blue">ブルー</option>
+      <option value="pink">ピンク</option>
+      <option value="green">グリーン</option>
+      <option value="gold">ゴールド</option>
+      <option value="white">ホワイト</option>
+    </select>
+  </div>
+  <div class="input-row" style="margin-top:8px;">
+    <label>形状</label>
+    <select id="bottleShape" onchange="send({type:'set_bottle_shape',value:this.value})">
+      <option value="standard">スタンダード</option>
+      <option value="slim">スリム</option>
+      <option value="round">ラウンド</option>
+    </select>
+  </div>
 </div>
 
-<hr class="sep">
-
-<div class="status-box" id="statusBox">
-  操作方法: OBSのカスタムブラウザドックで<br>
-  このHTMLを開き、source.htmlをブラウザソースに追加してください。<br><br>
-  <span>source.html</span> と同じウィンドウ内ならpostMessageで直接制御できます。
+<!-- 浮遊モチーフ -->
+<div class="section">
+  <div class="sec-title">浮遊モチーフ</div>
+  <div class="check-group" id="floatChecks">
+    <label class="check-item" data-key="gem"><input type="checkbox" checked onchange="sendFloatItems()"> 💎 ジェム</label>
+    <label class="check-item" data-key="star"><input type="checkbox" checked onchange="sendFloatItems()"> ✦ スター</label>
+    <label class="check-item" data-key="moon"><input type="checkbox" onchange="sendFloatItems()"> 🌙 ムーン</label>
+    <label class="check-item" data-key="drop"><input type="checkbox" onchange="sendFloatItems()"> 💧 ドロップ</label>
+    <label class="check-item" data-key="hex"><input type="checkbox" onchange="sendFloatItems()"> ⬡ ヘクサ</label>
+    <label class="check-item" data-key="snow"><input type="checkbox" onchange="sendFloatItems()"> ❄ スノウ</label>
+  </div>
 </div>
+
+<!-- ログ -->
+<div id="log"></div>
 
 <script>
-// postMessageでsource.htmlを制御
-// OBSでは同一ウィンドウに複数ブラウザソースが独立しているため
-// ローカルサーバー経由が確実だが、まず直接送信を試みる
+let ws = null;
+let reconnectTimer = null;
+
+function log(msg) {
+  const el = document.getElementById('log');
+  const t = new Date().toTimeString().slice(0,8);
+  el.textContent = `[${t}] ${msg}\n` + el.textContent;
+}
+
+function setStatus(ok, text) {
+  document.getElementById('dot').className = 'dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('statusText').textContent = text;
+}
+
+function connect() {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  ws = new WebSocket('ws://localhost:3000');
+
+  ws.onopen = () => {
+    setStatus(true, 'server.ts 接続中');
+    log('connected');
+    clearTimeout(reconnectTimer);
+  };
+
+  ws.onmessage = (ev) => {
+    let m;
+    try { m = JSON.parse(ev.data); } catch { return; }
+    if (m.type === 'state' && m.data) {
+      syncUI(m.data);
+    }
+    if (m.type === 'add_likes') updateDisplay();
+    if (m.type === 'set_likes') updateDisplay();
+    if (m.type === 'reset')     updateDisplay();
+  };
+
+  ws.onclose = () => {
+    setStatus(false, 'server.tsに接続できません。start.batを起動してください。');
+    log('disconnected – retry in 5s');
+    reconnectTimer = setTimeout(connect, 5000);
+  };
+  ws.onerror = () => {};
+}
+
+// サーバーからの状態同期
+const localState = { likes:0, goal:1000, liquidColor:{top:'#5082d2',bottom:'#0d2370'}, glassColor:'blue', bottleShape:'standard', floatItems:['gem','star'] };
+
+function syncUI(data) {
+  Object.assign(localState, data);
+  document.getElementById('dispLikes').textContent = localState.likes;
+  document.getElementById('dispGoal').textContent  = localState.goal;
+  document.getElementById('goalInput').value = localState.goal;
+  document.getElementById('liqTop').value = localState.liquidColor?.top || '#5082d2';
+  document.getElementById('liqBot').value = localState.liquidColor?.bottom || '#0d2370';
+  document.getElementById('glassColor').value  = localState.glassColor  || 'blue';
+  document.getElementById('bottleShape').value = localState.bottleShape || 'standard';
+  updateProgress();
+  // チェックボックス同期
+  const items = localState.floatItems || [];
+  document.querySelectorAll('#floatChecks .check-item').forEach(el => {
+    const key = el.dataset.key;
+    const cb  = el.querySelector('input');
+    cb.checked = items.includes(key);
+    el.classList.toggle('checked', cb.checked);
+  });
+}
+
+function updateDisplay() { syncUI(localState); }
+
+function updateProgress() {
+  const pct = Math.min(100, (localState.likes / Math.max(1, localState.goal)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('dispLikes').textContent = localState.likes;
+}
 
 function send(msg) {
-  // 1) TikFinity server.js経由（ws://localhost:3000）
-  sendViaWS(msg);
-  // 2) postMessage（同一ページでiframe使う場合）
-  // window.postMessage(msg, '*');
-}
+  // ローカルに先反映
+  if (msg.type === 'add_likes') localState.likes = Math.max(0, localState.likes + (parseInt(msg.value)||0));
+  if (msg.type === 'set_likes') localState.likes = Math.max(0, parseInt(msg.value)||0);
+  if (msg.type === 'set_goal')  localState.goal  = Math.max(1, parseInt(msg.value)||1000);
+  if (msg.type === 'reset')     localState.likes = 0;
+  updateProgress();
 
-let ws = null;
-function connectWS() {
-  try {
-    ws = new WebSocket('ws://localhost:3000');
-    ws.onopen = () => {
-      document.getElementById('statusBox').innerHTML =
-        '<span>TikFinity server.js</span> に接続中。<br>わんコメが起動していればそちらが優先されます。';
-    };
-    ws.onclose = () => {
-      ws = null;
-      document.getElementById('statusBox').innerHTML =
-        'server.js に接続できません。<br>わんコメ単体の場合、手動操作はこのページから行えません。<br><span>わんコメ起動中ならいいね検知は自動です。</span>';
-      setTimeout(connectWS, 6000);
-    };
-    ws.onerror = () => {};
-  } catch(e) {}
-}
-
-function sendViaWS(msg) {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(msg));
+    log(`→ ${msg.type}` + (msg.value !== undefined ? ` ${msg.value}` : ''));
+  } else {
+    log('× 未接続');
   }
 }
 
-function applyGoal() {
-  const v = parseInt(document.getElementById('goalInput').value);
-  if (!isNaN(v) && v > 0) send({ type:'set_goal', value:v });
-}
-function applyLikes() {
-  const v = parseInt(document.getElementById('likesInput').value);
-  if (!isNaN(v) && v >= 0) send({ type:'set_likes', value:v });
-}
-function addLikes() {
-  const v = parseInt(document.getElementById('addInput').value);
-  if (!isNaN(v) && v > 0) send({ type:'add_likes', value:v });
-}
-function resetLikes() {
-  send({ type:'reset' });
-  document.getElementById('likesInput').value = 0;
+function sendLiquidColor() {
+  const top = document.getElementById('liqTop').value;
+  const bot = document.getElementById('liqBot').value;
+  localState.liquidColor = { top, bottom: bot };
+  send({ type:'set_liquid_color', value:{ top, bottom:bot } });
 }
 
-connectWS();
+function setLiqPreset(top, bot) {
+  document.getElementById('liqTop').value = top;
+  document.getElementById('liqBot').value = bot;
+  sendLiquidColor();
+}
+
+function sendFloatItems() {
+  const items = [];
+  document.querySelectorAll('#floatChecks .check-item').forEach(el => {
+    const cb = el.querySelector('input');
+    el.classList.toggle('checked', cb.checked);
+    if (cb.checked) items.push(el.dataset.key);
+  });
+  localState.floatItems = items;
+  send({ type:'set_float_items', value: items });
+}
+
+connect();
 </script>
 </body>
 </html>

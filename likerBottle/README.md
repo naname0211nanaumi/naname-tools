@@ -1,76 +1,95 @@
-# Liker Bottle – わんコメ対応版
+# Liker Bottle v2
 
-## 構成
+TikTokライブのいいね数を香水瓶で可視化するOBSブラウザソース。
+
+## ファイル構成
 
 ```
-liker-bottle-onecomme/
-├── source.html      ← OBSブラウザソース用（瓶表示）
-├── controller.html  ← OBSカスタムブラウザドック用（手動操作）
+liker-bottle-v2/
+├── source.html      ← OBSブラウザソース（瓶の表示）
+├── controller.html  ← OBSカスタムブラウザドック（操作パネル）
+├── server.ts        ← Denoサーバー（中継 & TikFinity受信）
+├── start.bat        ← サーバー起動ボタン（ダブルクリック）
 └── README.md
 ```
 
-## セットアップ
-
-### 1. OBSにブラウザソースを追加
-- ソースを追加 → ブラウザ
-- URL: `ローカルファイル` → `source.html` のパスを指定
-- 幅: 300 / 高さ: 480
-- 「OBSで透明背景を使用」にチェック
-
-### 2. OBSにカスタムブラウザドックを追加（オプション）
-- ツール → カスタムブラウザドック
-- URL: `controller.html` のパスを指定
-
 ---
 
-## いいね検知の仕組み
+## 初回セットアップ
 
-### ① わんコメ経由（優先）
-わんコメが起動してTikTok Liveに接続されていれば自動でいいねを検知します。
+### 1. Deno インストール（初回のみ）
 
-**わんコメ側の設定は不要です（自動で接続を試みます）。**
-
-接続確認: source.html 右下に `◉ わんコメ` と表示されれば成功。
-
-### ② TikFinity経由（フォールバック）
-わんコメが使えないときの予備。
-`server.js`（別途Node.jsが必要）が起動していれば自動的に切り替わります。
-
-接続確認: source.html 右下に `◉ TikFinity` と表示されれば成功。
-
----
-
-## わんコメのTikTokいいねイベントについて
-
-わんコメのWSから届くいいねイベントの想定形式:
-
-```json
-{
-  "type": "systemComment",
-  "data": {
-    "service": "TikTok",
-    "data": {
-      "type": "like",
-      "likeCount": 5
-    }
-  }
-}
+PowerShellで実行:
+```powershell
+irm https://deno.land/install.ps1 | iex
 ```
 
-実際のイベント形式はわんコメのバージョンによって異なる場合があります。
-もし反応しない場合は、わんコメのWS受信内容をブラウザのコンソールで確認し、
-source.html の `handleOneCommeComment` 関数を調整してください。
+インストール後、PowerShellを再起動してください。
+
+### 2. サーバー起動
+
+`start.bat` をダブルクリック。
+
+```
+✓ Liker Bottle server running on ws://localhost:3000
+```
+
+と表示されれば成功。
 
 ---
 
-## 手動デバッグ
+## OBS 設定
 
-ブラウザで source.html を開き、コンソールで:
-```javascript
-// いいねを50追加
-window.postMessage({ type: 'add_likes', value: 50 }, '*');
-// 目標を変更
-window.postMessage({ type: 'set_goal', value: 2000 }, '*');
-// リセット
-window.postMessage({ type: 'reset' }, '*');
+### ブラウザソース（瓶の表示）
+- ソース追加 → ブラウザ → ローカルファイル: `source.html`
+- 幅: **300** / 高さ: **480**
+- 「OBSを介して音声を制御する」: オフ
+- 「透過」: オン ✓
+
+### カスタムブラウザドック（操作パネル）
+- ツール → カスタムブラウザドック → 追加
+- URL: ローカルファイルパス `controller.html`
+
+---
+
+## いいね取得の仕組み
+
 ```
+優先: わんコメ (ws://localhost:11180)
+         ↓ わんコメが死んだら自動切替
+フォールバック: TikFinity → POST /like → server.ts → source.html
+```
+
+### TikFinity設定（フォールバック使用時）
+
+1. TikFinity を開く
+2. アクション設定 → イベント: **Like**
+3. アクション: **HTTP Request**
+   - URL: `http://localhost:3000/like`
+   - Method: `POST`
+   - Body: `{"likeCount": 1}`
+
+---
+
+## コントローラー機能
+
+| 機能 | 説明 |
+|------|------|
+| +1 / +10 / +50 / +100 | いいね手動追加 |
+| Reset | いいねをリセット |
+| 手動セット | 任意の数値にセット |
+| 目標 | 目標いいね数（分母）を変更 |
+| 液体の色 | 上・下グラデーションカラー変更 |
+| ガラス色 | ブルー/ピンク/グリーン/ゴールド/ホワイト |
+| 形状 | スタンダード/スリム/ラウンド |
+| 浮遊モチーフ | 💎✦🌙💧⬡❄ を自由に組み合わせ |
+
+---
+
+## 接続状態（瓶右下）
+
+| 表示 | 意味 |
+|------|------|
+| `◉ わんコメ` | わんコメ経由でいいね取得中 |
+| `◉ TikFinity` | TikFinity経由でいいね取得中 |
+| `— 待機中` | どちらも未接続 |

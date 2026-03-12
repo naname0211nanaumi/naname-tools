@@ -8,512 +8,246 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:300px; height:480px; background:transparent; overflow:hidden; }
-
-  .bottle-area {
-    width:300px; height:480px;
-    display:flex; align-items:center; justify-content:center;
-    position:relative;
-  }
-
-  /* 接続状態インジケーター（右下・小さく） */
-  #connStatus {
-    position:absolute; bottom:6px; right:10px;
-    font-family:'Cormorant Garamond', serif;
-    font-size:10px; letter-spacing:0.05em;
-    opacity:0.55; transition:opacity 0.4s;
-  }
+  .bottle-area { width:300px; height:480px; display:flex; align-items:center; justify-content:center; position:relative; }
+  #connStatus { position:absolute; bottom:6px; right:10px; font-family:'Cormorant Garamond',serif; font-size:10px; letter-spacing:0.05em; opacity:0.55; transition:opacity 0.4s; }
   #connStatus.onecomme { color:#7bcfff; }
-<br>  #connStatus.tiktok   { color:#ff7eb3; }
+  #connStatus.tiktok   { color:#ff7eb3; }
   #connStatus.none     { color:#888; }
 </style>
 </head>
 <body>
 <div class="bottle-area">
-  <svg id="bottleSvg" viewBox="0 0 240 400"
-       xmlns="http://www.w3.org/2000/svg"
-       style="width:240px;height:400px;overflow:visible;">
-  </svg>
+  <svg id="bottleSvg" viewBox="0 0 240 400" xmlns="http://www.w3.org/2000/svg" style="width:240px;height:400px;overflow:visible;"></svg>
   <div id="connStatus" class="none">—</div>
 </div>
-
 <script>
-// ============================================================
-//  状態
-// ============================================================
 const state = {
-  likes : 0,
-  goal  : 1000,
+  likes: 0, goal: 1000,
   liquidColor: { top:'#5082d2', bottom:'#0d2370' },
+  glassColor: 'blue',
+  bottleShape: 'standard',
+  floatItems: ['gem','star'],
 };
 
-// ============================================================
-//  SVG ユーティリティ
-// ============================================================
-const NS = 'http://www.w3.org/2000/svg';
-function el(tag, attrs={}) {
-  const e = document.createElementNS(NS, tag);
-  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
-  return e;
-}
+const GLASS = {
+  blue:  { g:['rgba(160,200,235,0.55)','rgba(200,228,250,0.28)','rgba(200,228,250,0.18)','rgba(200,228,250,0.28)','rgba(160,200,235,0.55)'], s:'rgba(160,210,255,0.75)' },
+  pink:  { g:['rgba(235,180,210,0.55)','rgba(250,210,230,0.28)','rgba(250,210,230,0.18)','rgba(250,210,230,0.28)','rgba(235,180,210,0.55)'], s:'rgba(255,180,220,0.75)' },
+  green: { g:['rgba(160,230,200,0.55)','rgba(200,248,228,0.28)','rgba(200,248,228,0.18)','rgba(200,248,228,0.28)','rgba(160,230,200,0.55)'], s:'rgba(150,240,200,0.75)' },
+  gold:  { g:['rgba(235,210,140,0.55)','rgba(250,235,180,0.28)','rgba(250,235,180,0.18)','rgba(250,235,180,0.28)','rgba(235,210,140,0.55)'], s:'rgba(240,210,100,0.75)' },
+  white: { g:['rgba(240,245,255,0.55)','rgba(250,252,255,0.28)','rgba(252,254,255,0.18)','rgba(252,254,255,0.28)','rgba(240,245,255,0.55)'], s:'rgba(255,255,255,0.75)' },
+};
+const SHAPES = { standard:{sx:1.0,sy:1.0}, slim:{sx:0.78,sy:1.0}, round:{sx:1.15,sy:0.92} };
+const FLOAT_DEFS = {
+  gem:  [68,230], star:[165,175], moon:[75,160],
+  drop:[160,240], hex:[80,280],   snow:[158,130],
+};
 
-// ============================================================
-//  SVG 構築
-// ============================================================
+const NS='http://www.w3.org/2000/svg';
+function el(tag,a={}){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;}
+
 function buildSVG() {
-  const svg = document.getElementById('bottleSvg');
-  svg.innerHTML = '';
+  const svg=document.getElementById('bottleSvg');
+  svg.innerHTML='';
+  const glass=GLASS[state.glassColor]||GLASS.blue;
+  const sh=SHAPES[state.bottleShape]||SHAPES.standard;
+  const sx=sh.sx,sy=sh.sy;
+  const scaleG=el('g',{transform:`translate(${120*(1-sx)},${400*(1-sy)*0.5}) scale(${sx},${sy})`});
+  const defs=el('defs');
 
-  const defs = el('defs');
-
-  // --- clipPath（瓶内部）---
-  const clip = el('clipPath', { id:'bottleClip' });
-  clip.appendChild(el('path', {
-    d:'M100,88 Q80,92 62,108 Q38,130 36,162 L34,210 Q32,255 38,278 Q50,312 76,326 Q88,332 120,333 Q152,332 164,326 Q190,312 202,278 Q208,255 206,210 L204,162 Q202,130 178,108 Q160,92 140,88 Z'
-  }));
+  // clipPath
+  const clip=el('clipPath',{id:'bottleClip'});
+  clip.appendChild(el('path',{d:'M100,88 Q80,92 62,108 Q38,130 36,162 L34,210 Q32,255 38,278 Q50,312 76,326 Q88,332 120,333 Q152,332 164,326 Q190,312 202,278 Q208,255 206,210 L204,162 Q202,130 178,108 Q160,92 140,88 Z'}));
   defs.appendChild(clip);
 
-  // --- 液体グラデ ---
-  const liqGrad = el('linearGradient', { id:'liquidGrad', x1:'0', y1:'0', x2:'0', y2:'1' });
-  const gTop = el('stop', { offset:'0%',   'stop-color':'rgba(80,130,210,0.70)', id:'gTop' });
-  const gBot = el('stop', { offset:'100%', 'stop-color':'rgba(15,35,110,0.93)',  id:'gBot' });
-  liqGrad.appendChild(gTop);
-  liqGrad.appendChild(gBot);
-  defs.appendChild(liqGrad);
+  // 液体グラデ
+  const lg=el('linearGradient',{id:'liquidGrad',x1:'0',y1:'0',x2:'0',y2:'1'});
+  lg.appendChild(el('stop',{offset:'0%','stop-color':'rgba(80,130,210,0.70)',id:'gTop'}));
+  lg.appendChild(el('stop',{offset:'100%','stop-color':'rgba(15,35,110,0.93)',id:'gBot'}));
+  defs.appendChild(lg);
 
-  // --- ガラスグラデ ---
-  const glassGrad = el('linearGradient', { id:'glassGrad', x1:'0', y1:'0', x2:'1', y2:'0' });
-  [
-    ['0%',  'rgba(160,200,235,0.55)'],
-    ['18%', 'rgba(200,228,250,0.28)'],
-    ['50%', 'rgba(200,228,250,0.18)'],
-    ['82%', 'rgba(200,228,250,0.28)'],
-    ['100%','rgba(160,200,235,0.55)'],
-  ].forEach(([o,c]) => glassGrad.appendChild(el('stop', { offset:o, 'stop-color':c })));
-  defs.appendChild(glassGrad);
+  // ガラスグラデ
+  const gg=el('linearGradient',{id:'glassGrad',x1:'0',y1:'0',x2:'1',y2:'0'});
+  ['0%','18%','50%','82%','100%'].forEach((o,i)=>gg.appendChild(el('stop',{offset:o,'stop-color':glass.g[i]})));
+  defs.appendChild(gg);
 
-  // --- クリスタルグラデ ---
-  const crystalGrad = el('radialGradient', { id:'crystalGrad', cx:'38%', cy:'32%' });
-  [
-    ['0%',  'rgba(245,252,255,0.92)'],
-    ['55%', 'rgba(160,210,252,0.65)'],
-    ['100%','rgba(80,145,215,0.42)'],
-  ].forEach(([o,c]) => crystalGrad.appendChild(el('stop', { offset:o, 'stop-color':c })));
-  defs.appendChild(crystalGrad);
+  // クリスタルグラデ
+  const cg=el('radialGradient',{id:'crystalGrad',cx:'38%',cy:'32%'});
+  [['0%','rgba(245,252,255,0.92)'],['55%','rgba(160,210,252,0.65)'],['100%','rgba(80,145,215,0.42)']].forEach(([o,c])=>cg.appendChild(el('stop',{offset:o,'stop-color':c})));
+  defs.appendChild(cg);
 
-  // --- glow filter ---
-  const filter = el('filter', { id:'glow', x:'-50%', y:'-50%', width:'200%', height:'200%' });
-  const fe = el('feGaussianBlur', { stdDeviation:'3', result:'blur' });
-  filter.appendChild(fe);
-  defs.appendChild(filter);
+  // filters
+  const gf=el('filter',{id:'glow',x:'-50%',y:'-50%',width:'200%',height:'200%'});
+  gf.appendChild(el('feGaussianBlur',{stdDeviation:'3'}));
+  defs.appendChild(gf);
 
-  // --- 波アニメーション ---
-  const waveStyle = document.createElementNS(NS, 'style');
-  waveStyle.textContent = `
-    @keyframes wave1 { 0%{d:path("M34,0 Q77,8 120,0 Q163,-8 206,0 L206,18 Q163,10 120,18 Q77,26 34,18 Z")} 50%{d:path("M34,0 Q77,-8 120,0 Q163,8 206,0 L206,18 Q163,26 120,18 Q77,10 34,18 Z")} 100%{d:path("M34,0 Q77,8 120,0 Q163,-8 206,0 L206,18 Q163,10 120,18 Q77,26 34,18 Z")} }
-    @keyframes wave2 { 0%{d:path("M34,0 Q77,-6 120,0 Q163,6 206,0 L206,14 Q163,20 120,14 Q77,8 34,14 Z")} 50%{d:path("M34,0 Q77,6 120,0 Q163,-6 206,0 L206,14 Q163,8 120,14 Q77,20 34,14 Z")} 100%{d:path("M34,0 Q77,-6 120,0 Q163,6 206,0 L206,14 Q163,20 120,14 Q77,8 34,14 Z")} }
+  const sf=el('filter',{id:'spkGlow',x:'-100%',y:'-100%',width:'300%',height:'300%'});
+  sf.appendChild(el('feGaussianBlur',{stdDeviation:'1.5',result:'b'}));
+  const fm=el('feMerge');fm.appendChild(el('feMergeNode',{in:'b'}));fm.appendChild(el('feMergeNode',{in:'SourceGraphic'}));
+  sf.appendChild(fm);defs.appendChild(sf);
+
+  // wave animations
+  const ws=document.createElementNS(NS,'style');
+  ws.textContent=`
+    @keyframes wave1{0%{d:path("M34,0 Q77,8 120,0 Q163,-8 206,0 L206,18 Q163,10 120,18 Q77,26 34,18 Z")}50%{d:path("M34,0 Q77,-8 120,0 Q163,8 206,0 L206,18 Q163,26 120,18 Q77,10 34,18 Z")}100%{d:path("M34,0 Q77,8 120,0 Q163,-8 206,0 L206,18 Q163,10 120,18 Q77,26 34,18 Z")}}
+    @keyframes wave2{0%{d:path("M34,0 Q77,-6 120,0 Q163,6 206,0 L206,14 Q163,20 120,14 Q77,8 34,14 Z")}50%{d:path("M34,0 Q77,6 120,0 Q163,-6 206,0 L206,14 Q163,8 120,14 Q77,20 34,14 Z")}100%{d:path("M34,0 Q77,-6 120,0 Q163,6 206,0 L206,14 Q163,20 120,14 Q77,8 34,14 Z")}}
+    @keyframes floatA{0%,100%{transform:translateY(0px) rotate(0deg)}50%{transform:translateY(-8px) rotate(6deg)}}
+    @keyframes floatB{0%,100%{transform:translateY(0px) rotate(0deg)}50%{transform:translateY(-6px) rotate(-5deg)}}
+    @keyframes twinkle{0%,100%{opacity:0.85}50%{opacity:0.3}}
+    @keyframes sparkle{0%,100%{opacity:0;transform:scale(0.5)}50%{opacity:1;transform:scale(1)}}
   `;
-  defs.appendChild(waveStyle);
+  defs.appendChild(ws);
   svg.appendChild(defs);
 
-  // --- 液体グループ（clip内）---
-  const liquidG = el('g', { 'clip-path':'url(#bottleClip)', id:'liquidG' });
+  // 液体
+  const liq=el('g',{'clip-path':'url(#bottleClip)',id:'liquidG'});
+  liq.appendChild(el('rect',{id:'liquidRect',x:'34',y:'88',width:'172',height:'245',fill:'url(#liquidGrad)'}));
+  liq.appendChild(el('path',{id:'waveEl1',fill:'rgba(120,170,255,0.35)',style:'animation:wave1 2.8s ease-in-out infinite'}));
+  liq.appendChild(el('path',{id:'waveEl2',fill:'rgba(80,130,220,0.22)',style:'animation:wave2 3.6s ease-in-out infinite reverse'}));
+  scaleG.appendChild(liq);
 
-  const liquidRect = el('rect', {
-    id:'liquidRect',
-    x:'34', y:'88', width:'172', height:'245',
-    fill:'url(#liquidGrad)'
-  });
-  liquidG.appendChild(liquidRect);
+  // 瓶本体
+  scaleG.appendChild(el('path',{d:'M100,88 Q80,92 62,108 Q38,130 36,162 L34,210 Q32,255 38,278 Q50,312 76,326 Q88,332 120,333 Q152,332 164,326 Q190,312 202,278 Q208,255 206,210 L204,162 Q202,130 178,108 Q160,92 140,88 Z',fill:'url(#glassGrad)',stroke:glass.s,'stroke-width':'2'}));
+  scaleG.appendChild(el('path',{d:'M108,92 Q90,96 74,112 Q52,134 50,164 L48,210 Q46,252 52,274 Q63,306 86,320 Q98,326 120,327 Q142,326 154,320 Q177,306 188,274 Q194,252 192,210 L190,164 Q188,134 166,112 Q150,96 132,92 Z',fill:'none',stroke:'rgba(220,240,255,0.12)','stroke-width':'1'}));
 
-  // 波1
-  const wave1 = el('path', {
-    id:'waveEl1',
-    fill:'rgba(120,170,255,0.35)',
-    style:'animation:wave1 2.8s ease-in-out infinite'
-  });
-  liquidG.appendChild(wave1);
-  // 波2
-  const wave2 = el('path', {
-    id:'waveEl2',
-    fill:'rgba(80,130,220,0.22)',
-    style:'animation:wave2 3.6s ease-in-out infinite reverse'
-  });
-  liquidG.appendChild(wave2);
+  // 首
+  scaleG.appendChild(el('path',{d:'M96,60 L96,88 Q108,93 120,93 Q132,93 144,88 L144,60 Z',fill:'rgba(180,210,240,0.3)',stroke:glass.s,'stroke-width':'1.2'}));
+  scaleG.appendChild(el('rect',{x:'90',y:'73',width:'60',height:'11',rx:'5',fill:'rgba(160,200,238,0.32)',stroke:glass.s,'stroke-width':'1'}));
 
-  svg.appendChild(liquidG);
+  // 蓋台座
+  scaleG.appendChild(el('ellipse',{cx:'120',cy:'60',rx:'36',ry:'10',fill:'rgba(160,205,240,0.52)',stroke:glass.s,'stroke-width':'1.2'}));
 
-  // --- 瓶本体（ガラス）---
-  svg.appendChild(el('path', {
-    d:'M100,88 Q80,92 62,108 Q38,130 36,162 L34,210 Q32,255 38,278 Q50,312 76,326 Q88,332 120,333 Q152,332 164,326 Q190,312 202,278 Q208,255 206,210 L204,162 Q202,130 178,108 Q160,92 140,88 Z',
-    fill:'url(#glassGrad)',
-    stroke:'rgba(160,210,255,0.75)',
-    'stroke-width':'2'
-  }));
-  // 内側微細アウトライン
-  svg.appendChild(el('path', {
-    d:'M108,92 Q90,96 74,112 Q52,134 50,164 L48,210 Q46,252 52,274 Q63,306 86,320 Q98,326 120,327 Q142,326 154,320 Q177,306 188,274 Q194,252 192,210 L190,164 Q188,134 166,112 Q150,96 132,92 Z',
-    fill:'none', stroke:'rgba(220,240,255,0.12)', 'stroke-width':'1'
-  }));
+  // クリスタル蓋
+  scaleG.appendChild(el('path',{d:'M90,60 L84,44 L90,22 L120,12 L150,22 L156,44 L150,60 Z',fill:'url(#crystalGrad)',stroke:glass.s,'stroke-width':'1.2'}));
+  [['90','60','120','12'],['150','60','120','12'],['84','44','120','12'],['156','44','120','12'],['90','22','120','12'],['150','22','120','12']].forEach(([x1,y1,x2,y2])=>scaleG.appendChild(el('line',{x1,y1,x2,y2,stroke:'rgba(255,255,255,0.32)','stroke-width':'0.8'})));
+  [['86','40','154','40'],['89','26','151','26']].forEach(([x1,y1,x2,y2])=>scaleG.appendChild(el('line',{x1,y1,x2,y2,stroke:'rgba(255,255,255,0.18)','stroke-width':'0.7'})));
+  scaleG.appendChild(el('circle',{cx:'120',cy:'12',r:'3.2',fill:'rgba(255,255,255,0.92)',filter:'url(#glow)'}));
 
-  // --- 首 ---
-  svg.appendChild(el('path', {
-    d:'M96,60 L96,88 Q108,93 120,93 Q132,93 144,88 L144,60 Z',
-    fill:'rgba(180,210,240,0.3)',
-    stroke:'rgba(200,228,255,0.65)',
-    'stroke-width':'1.2'
-  }));
-  // 首の段差
-  svg.appendChild(el('rect', {
-    x:'90', y:'73', width:'60', height:'11', rx:'5',
-    fill:'rgba(160,200,238,0.32)',
-    stroke:'rgba(210,235,255,0.65)',
-    'stroke-width':'1'
-  }));
-
-  // --- 蓋の台座 ---
-  svg.appendChild(el('ellipse', {
-    cx:'120', cy:'60', rx:'36', ry:'10',
-    fill:'rgba(160,205,240,0.52)',
-    stroke:'rgba(220,245,255,0.65)',
-    'stroke-width':'1.2'
-  }));
-
-  // --- クリスタルカット蓋 ---
-  svg.appendChild(el('path', {
-    d:'M90,60 L84,44 L90,22 L120,12 L150,22 L156,44 L150,60 Z',
-    fill:'url(#crystalGrad)',
-    stroke:'rgba(220,245,255,0.65)',
-    'stroke-width':'1.2'
-  }));
-  // カットライン
-  [
-    ['90','60','120','12'], ['150','60','120','12'],
-    ['84','44','120','12'], ['156','44','120','12'],
-    ['90','22','120','12'], ['150','22','120','12'],
-  ].forEach(([x1,y1,x2,y2]) =>
-    svg.appendChild(el('line', { x1,y1,x2,y2, stroke:'rgba(255,255,255,0.32)', 'stroke-width':'0.8' }))
-  );
-  [['86','40','154','40'],['89','26','151','26']].forEach(([x1,y1,x2,y2]) =>
-    svg.appendChild(el('line', { x1,y1,x2,y2, stroke:'rgba(255,255,255,0.18)', 'stroke-width':'0.7' }))
-  );
-  // 先端の輝き
-  svg.appendChild(el('circle', {
-    cx:'120', cy:'12', r:'3.2',
-    fill:'rgba(255,255,255,0.92)',
-    filter:'url(#glow)'
-  }));
-
-  // --- ガラスの光沢 ---
-  svg.appendChild(el('path', {
-    d:'M50,130 Q44,180 46,250 Q47,290 52,315',
-    fill:'none', stroke:'rgba(240,250,255,0.16)',
-    'stroke-width':'10', 'stroke-linecap':'round'
-  }));
-  svg.appendChild(el('path', {
-    d:'M56,135 Q51,185 53,245',
-    fill:'none', stroke:'rgba(255,255,255,0.09)',
-    'stroke-width':'4', 'stroke-linecap':'round'
-  }));
-
-  // --- 台座の足 ---
-  svg.appendChild(el('ellipse', {
-    cx:'120', cy:'346', rx:'46', ry:'9',
-    fill:'rgba(140,190,230,0.4)',
-    stroke:'rgba(200,228,255,0.55)',
-    'stroke-width':'1.2'
-  }));
-  svg.appendChild(el('rect', {
-    x:'96', y:'333', width:'48', height:'14', rx:'2',
-    fill:'rgba(140,190,230,0.26)',
-    stroke:'rgba(200,228,255,0.50)',
-    'stroke-width':'1'
-  }));
-
-  // --- 浮遊モチーフ（固定） ---
-  // 💎 ジェム
-  const gemG = el('g', { id:'gem', transform:'translate(68,230)' });
-  const gemPath = el('path', {
-    d:'M0,-9 L6,-3 L6,4 L0,9 L-6,4 L-6,-3 Z',
-    fill:'rgba(100,180,255,0.72)',
-    stroke:'rgba(200,240,255,0.85)', 'stroke-width':'0.8'
-  });
-  gemG.appendChild(gemPath);
-  gemG.appendChild(el('line', { x1:'-6', y1:'-3', x2:'6', y2:'-3', stroke:'rgba(255,255,255,0.45)', 'stroke-width':'0.6' }));
-  svg.appendChild(gemG);
-
-  // ✦ スター
-  const starG = el('g', { id:'star', transform:'translate(165,175)' });
-  const starPath = el('path', {
-    d:'M0,-8 L1.8,-1.8 L8,0 L1.8,1.8 L0,8 L-1.8,1.8 L-8,0 L-1.8,-1.8 Z',
-    fill:'rgba(200,230,255,0.75)',
-    stroke:'rgba(240,252,255,0.6)', 'stroke-width':'0.5'
-  });
-  starG.appendChild(starPath);
-  svg.appendChild(starG);
-
-  // --- パーセント表示（瓶中央）---
-  const textG = el('g', { id:'percentG' });
-  const percentNum = el('text', {
-    id:'percentNum',
-    x:'120', y:'222',
-    'text-anchor':'middle',
-    'dominant-baseline':'middle',
-    fill:'rgba(220,240,255,0.92)',
-    'font-family':'Cormorant Garamond, serif',
-    'font-size':'40',
-    'font-weight':'300',
-    'letter-spacing':'0.02em'
-  });
-  percentNum.textContent = '0';
-  textG.appendChild(percentNum);
-  const percentSign = el('text', {
-    id:'percentSign',
-    x:'143', y:'225',
-    'text-anchor':'start',
-    'dominant-baseline':'middle',
-    fill:'rgba(200,228,255,0.70)',
-    'font-family':'Cormorant Garamond, serif',
-    'font-size':'20',
-    'font-weight':'300'
-  });
-  percentSign.textContent = '%';
-  textG.appendChild(percentSign);
-  svg.appendChild(textG);
-}
-
-// ============================================================
-//  液体・表示更新
-// ============================================================
-function updateBottle() {
-  const rawPct = (state.likes / Math.max(1, state.goal)) * 100;
-  const pct    = Math.min(100, rawPct);
-  const displayPct = Math.round(rawPct);
-
-  // パーセント表示
-  const numEl = document.getElementById('percentNum');
-  const signEl = document.getElementById('percentSign');
-  if (numEl) numEl.textContent = String(displayPct);
-
-  // 数字幅に合わせてサインの位置を動かす
-  if (numEl && signEl) {
-    const digitCount = String(displayPct).length;
-    const baseX = 120;
-    const charW  = displayPct >= 100 ? 22 : (displayPct >= 10 ? 24 : 22);
-    signEl.setAttribute('x', String(baseX + digitCount * charW * 0.5 + 2));
-  }
-
-  // 液体の高さ（瓶内部: y=88〜333, 高さ245px）
-  const bottleTop    = 88;
-  const bottleHeight = 245;
-  const liquidH = (pct / 100) * bottleHeight;
-  const liquidY = bottleTop + bottleHeight - liquidH;
-
-  const rect = document.getElementById('liquidRect');
-  if (rect) {
-    rect.setAttribute('y', String(liquidY));
-    rect.setAttribute('height', String(liquidH));
-  }
-
-  // 波の位置
-  const wy = liquidY;
-  ['waveEl1','waveEl2'].forEach((id, i) => {
-    const w = document.getElementById(id);
-    if (w) w.setAttribute('transform', `translate(0, ${wy})`);
+  // きらきら（蓋周囲）強化版
+  [[104,28],[136,28],[120,54],[88,48],[152,48]].forEach(([x,y],i)=>{
+    const sg=el('g',{style:`animation:sparkle ${1.8+i*0.4}s ease-in-out infinite;animation-delay:${i*0.3}s`});
+    sg.appendChild(el('path',{d:`M${x},${y-5} L${x+1.5},${y-1.5} L${x+5},${y} L${x+1.5},${y+1.5} L${x},${y+5} L${x-1.5},${y+1.5} L${x-5},${y} L${x-1.5},${y-1.5} Z`,fill:'rgba(255,255,255,0.90)',filter:'url(#spkGlow)'}));
+    scaleG.appendChild(sg);
   });
 
-  // 液体色
-  const topEl = document.getElementById('gTop');
-  const botEl = document.getElementById('gBot');
-  if (topEl) topEl.setAttribute('stop-color', hexToRgba(state.liquidColor.top, 0.70));
-  if (botEl) botEl.setAttribute('stop-color', hexToRgba(state.liquidColor.bottom, 0.93));
-}
+  // 光沢
+  scaleG.appendChild(el('path',{d:'M50,130 Q44,180 46,250 Q47,290 52,315',fill:'none',stroke:'rgba(240,250,255,0.16)','stroke-width':'10','stroke-linecap':'round'}));
+  scaleG.appendChild(el('path',{d:'M56,135 Q51,185 53,245',fill:'none',stroke:'rgba(255,255,255,0.09)','stroke-width':'4','stroke-linecap':'round'}));
 
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+  // 台座
+  scaleG.appendChild(el('ellipse',{cx:'120',cy:'346',rx:'46',ry:'9',fill:'rgba(140,190,230,0.4)',stroke:'rgba(200,228,255,0.55)','stroke-width':'1.2'}));
+  scaleG.appendChild(el('rect',{x:'96',y:'333',width:'48',height:'14',rx:'2',fill:'rgba(140,190,230,0.26)',stroke:'rgba(200,228,255,0.50)','stroke-width':'1'}));
 
-// ============================================================
-//  接続状態表示
-// ============================================================
-function setStatus(mode, text) {
-  const el = document.getElementById('connStatus');
-  if (!el) return;
-  el.className = mode;
-  el.textContent = text;
-}
-
-// ============================================================
-//  ① わんコメ WebSocket（優先）
-//    ws://localhost:11180
-//    type: "systemComment", data.service:"TikTok",
-//    data.data.type:"like" で いいね枚数 data.data.likeCount
-// ============================================================
-let onecommeWs = null;
-let onecommeActive = false;
-
-function connectOneComme() {
-  try {
-    onecommeWs = new WebSocket('ws://localhost:11180');
-  } catch(e) {
-    scheduleOneCommeRetry();
-    return;
-  }
-
-  onecommeWs.onopen = () => {
-    onecommeActive = true;
-    setStatus('onecomme', '◉ わんコメ');
-    console.log('[OneComme] connected');
-  };
-
-  onecommeWs.onmessage = (ev) => {
-    let msg;
-    try { msg = JSON.parse(ev.data); } catch { return; }
-
-    // type: "comments" の中にsystemCommentが来るケース
-    if (msg.type === 'comments' && Array.isArray(msg.data)) {
-      msg.data.forEach(handleOneCommeComment);
-      return;
+  // 浮遊モチーフ
+  state.floatItems.forEach(key=>{
+    const pos=FLOAT_DEFS[key];if(!pos)return;
+    const g=el('g',{transform:`translate(${pos[0]},${pos[1]})`});
+    if(key==='gem'){
+      const ag=el('g',{style:'animation:floatA 3.2s ease-in-out infinite'});
+      ag.appendChild(el('path',{d:'M0,-9 L6,-3 L6,4 L0,9 L-6,4 L-6,-3 Z',fill:'rgba(100,180,255,0.72)',stroke:'rgba(200,240,255,0.85)','stroke-width':'0.8'}));
+      ag.appendChild(el('line',{x1:'-6',y1:'-3',x2:'6',y2:'-3',stroke:'rgba(255,255,255,0.45)','stroke-width':'0.6'}));
+      ag.appendChild(el('path',{d:'M0,-9 L0,9',stroke:'rgba(255,255,255,0.25)','stroke-width':'0.5',fill:'none'}));
+      g.appendChild(ag);
+    } else if(key==='star'){
+      const ag=el('g',{style:'animation:floatB 3.8s ease-in-out infinite'});
+      ag.appendChild(el('path',{d:'M0,-8 L1.8,-1.8 L8,0 L1.8,1.8 L0,8 L-1.8,1.8 L-8,0 L-1.8,-1.8 Z',fill:'rgba(200,230,255,0.75)',stroke:'rgba(240,252,255,0.6)','stroke-width':'0.5'}));
+      g.appendChild(ag);
+    } else if(key==='moon'){
+      const ag=el('g',{style:'animation:floatA 4.0s ease-in-out infinite'});
+      ag.appendChild(el('path',{d:'M-2,-8 Q8,-6 8,0 Q8,6 -2,8 Q4,4 4,0 Q4,-4 -2,-8 Z',fill:'rgba(230,215,180,0.75)',stroke:'rgba(255,240,180,0.8)','stroke-width':'0.6'}));
+      g.appendChild(ag);
+    } else if(key==='drop'){
+      const ag=el('g',{style:'animation:floatB 3.5s ease-in-out infinite'});
+      ag.appendChild(el('path',{d:'M0,-9 Q6,0 0,9 Q-6,0 0,-9 Z',fill:'rgba(100,200,255,0.65)',stroke:'rgba(180,235,255,0.8)','stroke-width':'0.7'}));
+      g.appendChild(ag);
+    } else if(key==='hex'){
+      const ag=el('g',{style:'animation:floatA 4.5s ease-in-out infinite'});
+      ag.appendChild(el('path',{d:'M0,-8 L7,-4 L7,4 L0,8 L-7,4 L-7,-4 Z',fill:'none',stroke:'rgba(180,220,255,0.70)','stroke-width':'1.2'}));
+      ag.appendChild(el('path',{d:'M0,-5 L4.3,-2.5 L4.3,2.5 L0,5 L-4.3,2.5 L-4.3,-2.5 Z',fill:'rgba(120,190,255,0.35)'}));
+      g.appendChild(ag);
+    } else if(key==='snow'){
+      const ag=el('g',{style:'animation:twinkle 2.5s ease-in-out infinite'});
+      [0,60,120].forEach(deg=>{const r=deg*Math.PI/180,x2=Math.cos(r)*8,y2=Math.sin(r)*8;ag.appendChild(el('line',{x1:String(-x2),y1:String(-y2),x2:String(x2),y2:String(y2),stroke:'rgba(200,235,255,0.80)','stroke-width':'1'}));});
+      ag.appendChild(el('circle',{cx:'0',cy:'0',r:'2',fill:'rgba(230,245,255,0.9)'}));
+      g.appendChild(ag);
     }
-    // type: "comment" 単体
-    if (msg.type === 'comment' && msg.data) {
-      handleOneCommeComment(msg.data);
-      return;
-    }
-    // type: "systemComment"
-    if (msg.type === 'systemComment' && msg.data) {
-      handleOneCommeComment(msg.data);
-      return;
-    }
-  };
+    scaleG.appendChild(g);
+  });
 
-  onecommeWs.onclose = () => {
-    onecommeActive = false;
-    console.log('[OneComme] disconnected – retrying in 5s');
-    setStatus('none', '— 待機中');
-    scheduleOneCommeRetry();
-  };
-
-  onecommeWs.onerror = () => {
-    // onclose が続けて呼ばれる
-  };
+  // % 表示
+  const tg=el('g',{id:'percentG'});
+  const pn=el('text',{id:'percentNum',x:'120',y:'222','text-anchor':'middle','dominant-baseline':'middle',fill:'rgba(220,240,255,0.92)','font-family':'Cormorant Garamond,serif','font-size':'40','font-weight':'300','letter-spacing':'0.02em'});
+  pn.textContent='0';tg.appendChild(pn);
+  const ps=el('text',{id:'percentSign',x:'143',y:'225','text-anchor':'start','dominant-baseline':'middle',fill:'rgba(200,228,255,0.70)','font-family':'Cormorant Garamond,serif','font-size':'20','font-weight':'300'});
+  ps.textContent='%';tg.appendChild(ps);
+  scaleG.appendChild(tg);
+  svg.appendChild(scaleG);
 }
 
-function handleOneCommeComment(d) {
-  // TikTokのいいね通知
-  // service: "TikTok", data.type: "like"
-  // または comment: "いいね" などのシステムコメント
-  const service = (d.service || '').toLowerCase();
-  const ctype   = (d.data && d.data.type) ? d.data.type.toLowerCase() : '';
-  const comment = (d.comment || '').toLowerCase();
-
-  if (service === 'tiktok') {
-    if (ctype === 'like') {
-      const count = (d.data && d.data.likeCount) ? parseInt(d.data.likeCount) : 1;
-      state.likes += count;
-      updateBottle();
-      return;
-    }
-    // フォールバック: commentにlikeが含まれる場合
-    if (comment.includes('like') || comment.includes('いいね')) {
-      state.likes += 1;
-      updateBottle();
-    }
-  }
+function updateBottle(){
+  const raw=(state.likes/Math.max(1,state.goal))*100;
+  const pct=Math.min(100,raw);
+  const disp=Math.round(raw);
+  const nn=document.getElementById('percentNum');
+  const ns=document.getElementById('percentSign');
+  if(nn)nn.textContent=String(disp);
+  if(nn&&ns){const dw=String(disp).length;const cw=disp>=100?22:24;ns.setAttribute('x',String(120+dw*cw*0.5+2));}
+  const lH=(pct/100)*245,lY=88+245-lH;
+  const r=document.getElementById('liquidRect');
+  if(r){r.setAttribute('y',String(lY));r.setAttribute('height',String(lH));}
+  ['waveEl1','waveEl2'].forEach(id=>{const w=document.getElementById(id);if(w)w.setAttribute('transform',`translate(0,${lY})`);});
+  const te=document.getElementById('gTop'),be=document.getElementById('gBot');
+  if(te)te.setAttribute('stop-color',h2r(state.liquidColor.top,0.70));
+  if(be)be.setAttribute('stop-color',h2r(state.liquidColor.bottom,0.93));
 }
 
-function scheduleOneCommeRetry() {
-  setTimeout(connectOneComme, 5000);
-}
+function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
 
-// ============================================================
-//  ② TikFinity Third-Party API（フォールバック）
-//    わんコメが接続されていないときだけ受け取る
-//    TikFinity → POST http://localhost:8832/api/features/actions/exec
-//    → server.js → ws://localhost:3000 → ここへ
-// ============================================================
-let tikfinityWs = null;
-let tikfinityActive = false;
+function setStatus(m,t){const s=document.getElementById('connStatus');if(!s)return;s.className=m;s.textContent=t;}
 
-function connectTikFinity() {
-  try {
-    tikfinityWs = new WebSocket('ws://localhost:3000');
-  } catch(e) {
-    scheduleTikFinityRetry();
-    return;
-  }
-
-  tikfinityWs.onopen = () => {
-    tikfinityActive = true;
-    if (!onecommeActive) setStatus('tiktok', '◉ TikFinity');
-    console.log('[TikFinity] connected');
+// わんコメ
+let ocWs=null,ocActive=false;
+function connectOC(){
+  try{ocWs=new WebSocket('ws://localhost:11180');}catch(e){setTimeout(connectOC,5000);return;}
+  ocWs.onopen=()=>{ocActive=true;setStatus('onecomme','◉ わんコメ');};
+  ocWs.onmessage=(ev)=>{
+    let m;try{m=JSON.parse(ev.data);}catch{return;}
+    const h=(d)=>{
+      if((d.service||'').toLowerCase()==='tiktok'){
+        if((d.data&&d.data.type||'').toLowerCase()==='like'){state.likes+=parseInt(d.data&&d.data.likeCount||1);updateBottle();}
+        else if((d.comment||'').match(/like|いいね/i)){state.likes+=1;updateBottle();}
+      }
+    };
+    if(m.type==='comments'&&Array.isArray(m.data))m.data.forEach(h);
+    else if(m.type==='comment'&&m.data)h(m.data);
+    else if(m.type==='systemComment'&&m.data)h(m.data);
   };
-
-  tikfinityWs.onmessage = (ev) => {
-    // わんコメが生きていればTikFinityは無視
-    if (onecommeActive) return;
-
-    let msg;
-    try { msg = JSON.parse(ev.data); } catch { return; }
-
-    if (msg.type === 'state' && msg.data) {
-      state.likes = msg.data.likes ?? state.likes;
-      state.goal  = msg.data.goal  ?? state.goal;
-      if (msg.data.liquidColor) state.liquidColor = msg.data.liquidColor;
-      updateBottle();
-      setStatus('tiktok', '◉ TikFinity');
-    }
-  };
-
-  tikfinityWs.onclose = () => {
-    tikfinityActive = false;
-    if (!onecommeActive) setStatus('none', '— 待機中');
-    scheduleTikFinityRetry();
-  };
-
-  tikfinityWs.onerror = () => {};
+  ocWs.onclose=()=>{ocActive=false;setStatus('none','— 待機中');setTimeout(connectOC,5000);};
+  ocWs.onerror=()=>{};
 }
 
-function scheduleTikFinityRetry() {
-  setTimeout(connectTikFinity, 8000);
+// server.ts
+let svWs=null;
+function connectSV(){
+  try{svWs=new WebSocket('ws://localhost:3000');}catch(e){setTimeout(connectSV,8000);return;}
+  svWs.onopen=()=>{if(!ocActive)setStatus('tiktok','◉ TikFinity');};
+  svWs.onmessage=(ev)=>{
+    let m;try{m=JSON.parse(ev.data);}catch{return;}
+    if(m.type==='add_likes'&&!ocActive){state.likes=Math.max(0,state.likes+(parseInt(m.value)||0));updateBottle();return;}
+    if(m.type==='set_likes'){state.likes=Math.max(0,parseInt(m.value)||0);updateBottle();return;}
+    if(m.type==='set_goal'){state.goal=Math.max(1,parseInt(m.value)||1000);updateBottle();return;}
+    if(m.type==='reset'){state.likes=0;updateBottle();return;}
+    if(m.type==='set_liquid_color'){state.liquidColor=m.value;updateBottle();return;}
+    if(m.type==='set_glass_color'){state.glassColor=m.value;buildSVG();updateBottle();return;}
+    if(m.type==='set_bottle_shape'){state.bottleShape=m.value;buildSVG();updateBottle();return;}
+    if(m.type==='set_float_items'){state.floatItems=m.value;buildSVG();updateBottle();return;}
+    if(m.type==='state'&&m.data){Object.assign(state,m.data);buildSVG();updateBottle();if(!ocActive)setStatus('tiktok','◉ TikFinity');return;}
+  };
+  svWs.onclose=()=>{if(!ocActive)setStatus('none','— 待機中');setTimeout(connectSV,8000);};
+  svWs.onerror=()=>{};
 }
 
-// ============================================================
-//  Controller（わんコメテンプレートのカスタムDock or 外部HTML）
-//  postMessage で状態を受け取れるようにする
-// ============================================================
-window.addEventListener('message', (ev) => {
-  const msg = ev.data;
-  if (!msg || typeof msg !== 'object') return;
-
-  switch (msg.type) {
-    case 'set_likes':
-      state.likes = Math.max(0, parseInt(msg.value) || 0);
-      updateBottle(); break;
-    case 'add_likes':
-      state.likes = Math.max(0, state.likes + (parseInt(msg.value) || 0));
-      updateBottle(); break;
-    case 'set_goal':
-      state.goal = Math.max(1, parseInt(msg.value) || 1000);
-      updateBottle(); break;
-    case 'reset':
-      state.likes = 0;
-      updateBottle(); break;
-    case 'set_liquid_color':
-      state.liquidColor = msg.value;
-      updateBottle(); break;
-  }
-});
-
-// ============================================================
-//  初期化
-// ============================================================
-buildSVG();
-updateBottle();
-connectOneComme();
-connectTikFinity();
+//buildSVG();updateBottle();connectOC();connectSV();
+buildSVG();updateBottle();connectSV();
 </script>
 </body>
 </html>
