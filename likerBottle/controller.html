@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Liker Bottle — Controller</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #070810;
+  --panel:  #0d1020;
+  --border: rgba(180,200,255,0.1);
+  --blue:   #a8c8f8;
+  --teal:   #8ff0d8;
+  --sub:    rgba(180,200,240,0.4);
+  --text:   #d0dcf4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--sub);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.section h2 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 14px;
+}
+
+/* 現在値表示 */
+.counter-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.counter-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px;
+  font-weight: 300;
+  color: #fff;
+  line-height: 1;
+}
+.counter-sep { color: var(--sub); font-size: 18px; }
+.counter-goal { font-size: 18px; color: var(--sub); }
+.counter-pct {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  color: var(--teal);
+  margin-left: auto;
+}
+
+/* ボタングリッド */
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.btn {
+  background: rgba(168,200,248,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 9px 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  text-align: center;
+}
+.btn:hover { background: rgba(168,200,248,0.14); border-color: rgba(168,200,248,0.3); }
+.btn.primary { background: rgba(168,200,248,0.12); border-color: rgba(168,200,248,0.35); color: var(--blue); }
+.btn.primary:hover { background: rgba(168,200,248,0.22); }
+.btn.danger { border-color: rgba(255,120,120,0.25); color: rgba(255,160,160,0.7); }
+.btn.danger:hover { background: rgba(255,100,100,0.1); border-color: rgba(255,120,120,0.5); }
+
+/* 入力行 */
+.input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.input-row input {
+  flex: 1;
+  background: rgba(168,200,248,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-row input:focus { border-color: rgba(168,200,248,0.4); }
+.input-row label { color: var(--sub); font-size: 12px; white-space: nowrap; }
+.input-row .btn { flex: 0 0 60px; }
+
+/* TikFinity ステータス */
+.tikfinity-status {
+  font-size: 12px;
+  padding: 8px 12px;
+  background: rgba(10,18,40,0.5);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.dot.connected { background: var(--teal); box-shadow: 0 0 6px var(--teal); animation: pulse-dot 2s ease-in-out infinite; }
+.dot.disconnected { background: rgba(255,100,100,0.7); }
+.dot.waiting { background: rgba(180,200,240,0.4); animation: pulse-dot 1.5s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* トースト */
+.toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: rgba(140,240,216,0.12);
+  border: 1px solid rgba(140,240,216,0.3);
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--teal);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h1>Liker Bottle</h1>
+<div class="subtitle">Controller · No server required</div>
+
+<!-- カウンター -->
+<div class="section">
+  <h2>Current Count</h2>
+  <div class="counter-display">
+    <span class="counter-val" id="displayLikes">0</span>
+    <span class="counter-sep">/</span>
+    <span class="counter-goal" id="displayGoal">1000</span>
+    <span class="counter-pct" id="displayPct">0%</span>
+  </div>
+
+  <div class="btn-grid">
+    <button class="btn" onclick="addLikes(1)">+1</button>
+    <button class="btn" onclick="addLikes(10)">+10</button>
+    <button class="btn primary" onclick="addLikes(100)">+100</button>
+    <button class="btn primary" onclick="addLikes(500)">+500</button>
+    <button class="btn primary" onclick="addLikes(1000)">+1000</button>
+  </div>
+
+  <div class="input-row" style="margin-bottom:8px;">
+    <label>手動</label>
+    <input type="number" id="manualVal" placeholder="数値を入力" min="0">
+    <button class="btn primary" onclick="setManual()">Set</button>
+  </div>
+
+  <div class="input-row">
+    <label>Goal</label>
+    <input type="number" id="goalVal" placeholder="目標いいね数" min="1">
+    <button class="btn" onclick="setGoal()">Set</button>
+    <button class="btn danger" onclick="resetLikes()">Reset</button>
+  </div>
+</div>
+
+<!-- TikFinity ステータス -->
+<div class="section">
+  <h2>TikFinity 連携</h2>
+  <div class="tikfinity-status" id="tikfinityStatus">
+    <span class="dot waiting" id="tikfinityDot"></span>
+    <span id="tikfinityText">source.html を OBS で開くと自動接続</span>
+  </div>
+  <div style="margin-top:10px; font-size:11px; color:var(--sub); line-height:1.8;">
+    TikFinity Desktop を起動 → 配信に接続<br>
+    OBS でブラウザソースに <code style="color:rgba(168,200,248,0.6);">source.html</code> を追加<br>
+    いいねが来ると自動でカウントされます
+  </div>
+</div>
+
+<!-- OBS設定メモ -->
+<div class="section">
+  <h2>OBS 設定</h2>
+  <div style="font-size:11px; color:var(--sub); line-height:2;">
+    <div>ブラウザソース：<code style="color:rgba(168,200,248,0.6);">source.html</code>　300 × 480px</div>
+    <div>✅ ローカルファイル　✅ 透過を有効化</div>
+    <div style="margin-top:6px;">コントローラー：カスタムブラウザドック</div>
+    <div>→ ドック → カスタムブラウザドック → <code style="color:rgba(168,200,248,0.6);">controller.html</code></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'likerBottle_state';
+const DEFAULT_STATE = { likes: 0, goal: 1000, liquidColor: { top: '#5082d2', bottom: '#0d2370' }, floatItems: ['gem', 'star'] };
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    return s ? { ...DEFAULT_STATE, ...JSON.parse(s) } : { ...DEFAULT_STATE };
+  } catch { return { ...DEFAULT_STATE }; }
+}
+
+function saveState(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+let state = loadState();
+
+function updateDisplay() {
+  const pct = Math.min(100, Math.round((state.likes / Math.max(1, state.goal)) * 100));
+  document.getElementById('displayLikes').textContent = state.likes.toLocaleString();
+  document.getElementById('displayGoal').textContent = state.goal.toLocaleString();
+  document.getElementById('displayPct').textContent = pct + '%';
+}
+
+function addLikes(n) {
+  state.likes = Math.max(0, state.likes + n);
+  saveState(state);
+  updateDisplay();
+  toast('+' + n);
+}
+
+function setManual() {
+  const v = parseInt(document.getElementById('manualVal').value);
+  if (isNaN(v) || v < 0) return;
+  state.likes = v;
+  saveState(state);
+  updateDisplay();
+  toast('Set: ' + v);
+  document.getElementById('manualVal').value = '';
+}
+
+function setGoal() {
+  const v = parseInt(document.getElementById('goalVal').value);
+  if (isNaN(v) || v < 1) return;
+  state.goal = v;
+  saveState(state);
+  updateDisplay();
+  toast('Goal: ' + v);
+  document.getElementById('goalVal').value = '';
+}
+
+function resetLikes() {
+  if (!confirm('いいね数をリセットしますか？')) return;
+  state.likes = 0;
+  saveState(state);
+  updateDisplay();
+  toast('Reset');
+}
+
+// source.html の TikFinity 接続状態をポーリングで表示
+// source.html 側が別キーに状態を書き込む方式
+const TIKTOK_STATUS_KEY = 'likerBottle_tikfinity';
+setInterval(() => {
+  const raw = localStorage.getItem(TIKTOK_STATUS_KEY);
+  const dot  = document.getElementById('tikfinityDot');
+  const text = document.getElementById('tikfinityText');
+  if (!raw) {
+    dot.className = 'dot waiting';
+    text.textContent = 'source.html を OBS で開くと自動接続';
+    return;
+  }
+  try {
+    const s = JSON.parse(raw);
+    const age = Date.now() - (s.ts || 0);
+    if (age > 10000) {
+      // 10秒以上更新なし → source.html が閉じている
+      dot.className = 'dot disconnected';
+      text.textContent = 'source.html が未起動';
+    } else if (s.connected) {
+      dot.className = 'dot connected';
+      text.textContent = 'TikFinity 接続中';
+    } else {
+      dot.className = 'dot waiting';
+      text.textContent = 'TikFinity 待機中（TikFinity Appを起動してください）';
+    }
+  } catch { /* ignore */ }
+}, 1500);
+
+// localStorage の変化を監視（source から書き込まれた場合も反映）
+window.addEventListener('storage', (e) => {
+  if (e.key === STORAGE_KEY) {
+    state = loadState();
+    updateDisplay();
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// goalValの初期値を設定
+document.getElementById('goalVal').placeholder = state.goal;
+updateDisplay();
+</script>
+</body>
+</html>
