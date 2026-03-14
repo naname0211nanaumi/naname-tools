@@ -16,40 +16,35 @@
   .section{margin-bottom:18px;padding:14px;background:rgba(168,200,248,0.04);border:1px solid rgba(168,200,248,0.08);border-radius:3px;}
   .sec-title{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(168,200,248,0.45);margin-bottom:10px;}
 
-  /* カウンター表示 */
   .counter-display{display:flex;align-items:baseline;gap:6px;margin-bottom:12px;}
   .count-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:#e8f0ff;line-height:1;}
   .count-goal{font-size:11px;color:rgba(200,215,245,0.35);letter-spacing:1px;}
   .progress-bar{height:2px;background:rgba(168,200,248,0.12);border-radius:1px;margin-bottom:12px;}
   .progress-fill{height:100%;background:linear-gradient(90deg,#5082d2,#a8c8f8);border-radius:1px;transition:width 0.4s ease;}
 
-  /* ボタン群 */
   .btn-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
   button{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:1px solid rgba(168,200,248,0.25);background:rgba(168,200,248,0.06);color:#a8c8f8;padding:7px 14px;border-radius:2px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
   button:hover{background:rgba(168,200,248,0.14);border-color:rgba(168,200,248,0.5);}
   button.danger{border-color:rgba(255,140,140,0.3);color:#f09898;background:rgba(255,120,120,0.06);}
   button.danger:hover{background:rgba(255,120,120,0.14);}
-  button.active{background:rgba(168,200,248,0.18);border-color:rgba(168,200,248,0.6);color:#d8eaff;}
+  button.gold{border-color:rgba(255,210,120,0.35);color:#ffd98a;background:rgba(255,210,120,0.08);}
+  button.gold:hover{background:rgba(255,210,120,0.16);}
 
-  /* 入力 */
   .input-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
   input[type=number],input[type=text]{background:rgba(168,200,248,0.06);border:1px solid rgba(168,200,248,0.18);color:#c8d8f0;font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:1px;padding:6px 10px;border-radius:2px;width:80px;outline:none;}
   input:focus{border-color:rgba(168,200,248,0.5);}
   input[type=color]{width:36px;height:30px;border:1px solid rgba(168,200,248,0.2);background:none;padding:0;cursor:pointer;border-radius:2px;}
   label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,215,245,0.5);min-width:60px;}
 
-  /* セレクタ */
   select{background:rgba(168,200,248,0.06);border:1px solid rgba(168,200,248,0.18);color:#c8d8f0;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;padding:6px 10px;border-radius:2px;outline:none;cursor:pointer;}
   select:focus{border-color:rgba(168,200,248,0.5);}
 
-  /* チェックボックスグループ */
   .check-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
   .check-item{display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(200,215,245,0.55);cursor:pointer;}
   .check-item input[type=checkbox]{accent-color:#a8c8f8;width:13px;height:13px;cursor:pointer;}
   .check-item.checked{color:#a8c8f8;}
 
-  /* ログ */
-  #log{font-size:10px;letter-spacing:0.5px;color:rgba(200,215,245,0.3);height:48px;overflow-y:auto;font-family:monospace;line-height:1.6;margin-top:6px;}
+  #log{font-size:10px;letter-spacing:0.5px;color:rgba(200,215,245,0.3);height:84px;overflow-y:auto;font-family:monospace;line-height:1.6;margin-top:6px;white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -58,6 +53,16 @@
 <div class="status">
   <div class="dot" id="dot"></div>
   <span id="statusText">接続中...</span>
+</div>
+
+<!-- エンドロール -->
+<div class="section">
+  <div class="sec-title">エンドロール</div>
+  <div class="btn-row">
+    <button class="gold" onclick="send({type:'show_endroll'})">Start Endroll</button>
+    <button onclick="send({type:'stop_endroll'})">Stop Endroll</button>
+    <button class="danger" onclick="send({type:'reset_session'})">Reset Session</button>
+  </div>
 </div>
 
 <!-- カウンター表示 -->
@@ -141,16 +146,24 @@
   </div>
 </div>
 
-<!-- ログ -->
 <div id="log"></div>
 
 <script>
 let ws = null;
 let reconnectTimer = null;
 
+const localState = {
+  likes: 0,
+  goal: 1000,
+  liquidColor: { top:'#5082d2', bottom:'#0d2370' },
+  glassColor: 'blue',
+  bottleShape: 'standard',
+  floatItems: ['gem','star']
+};
+
 function log(msg) {
   const el = document.getElementById('log');
-  const t = new Date().toTimeString().slice(0,8);
+  const t = new Date().toTimeString().slice(0, 8);
   el.textContent = `[${t}] ${msg}\n` + el.textContent;
 }
 
@@ -172,12 +185,65 @@ function connect() {
   ws.onmessage = (ev) => {
     let m;
     try { m = JSON.parse(ev.data); } catch { return; }
+
     if (m.type === 'state' && m.data) {
       syncUI(m.data);
+      return;
     }
-    if (m.type === 'add_likes') updateDisplay();
-    if (m.type === 'set_likes') updateDisplay();
-    if (m.type === 'reset')     updateDisplay();
+
+    if (m.type === 'add_likes') {
+      localState.likes = Math.max(0, localState.likes + (parseInt(m.value) || 0));
+      updateDisplay();
+      return;
+    }
+
+    if (m.type === 'set_likes') {
+      localState.likes = Math.max(0, parseInt(m.value) || 0);
+      updateDisplay();
+      return;
+    }
+
+    if (m.type === 'set_goal') {
+      localState.goal = Math.max(1, parseInt(m.value) || 1000);
+      document.getElementById('goalInput').value = localState.goal;
+      updateDisplay();
+      return;
+    }
+
+    if (m.type === 'reset') {
+      localState.likes = 0;
+      updateDisplay();
+      return;
+    }
+
+    if (m.type === 'set_liquid_color') {
+      localState.liquidColor = m.value;
+      syncUI(localState);
+      return;
+    }
+
+    if (m.type === 'set_glass_color') {
+      localState.glassColor = m.value;
+      syncUI(localState);
+      return;
+    }
+
+    if (m.type === 'set_bottle_shape') {
+      localState.bottleShape = m.value;
+      syncUI(localState);
+      return;
+    }
+
+    if (m.type === 'set_float_items') {
+      localState.floatItems = m.value;
+      syncUI(localState);
+      return;
+    }
+
+    if (m.type === 'session_reset') {
+      log('session reset');
+      return;
+    }
   };
 
   ws.onclose = () => {
@@ -185,14 +251,13 @@ function connect() {
     log('disconnected – retry in 5s');
     reconnectTimer = setTimeout(connect, 5000);
   };
+
   ws.onerror = () => {};
 }
 
-// サーバーからの状態同期
-const localState = { likes:0, goal:1000, liquidColor:{top:'#5082d2',bottom:'#0d2370'}, glassColor:'blue', bottleShape:'standard', floatItems:['gem','star'] };
-
 function syncUI(data) {
   Object.assign(localState, data);
+
   document.getElementById('dispLikes').textContent = localState.likes;
   document.getElementById('dispGoal').textContent  = localState.goal;
   document.getElementById('goalInput').value = localState.goal;
@@ -200,8 +265,9 @@ function syncUI(data) {
   document.getElementById('liqBot').value = localState.liquidColor?.bottom || '#0d2370';
   document.getElementById('glassColor').value  = localState.glassColor  || 'blue';
   document.getElementById('bottleShape').value = localState.bottleShape || 'standard';
+
   updateProgress();
-  // チェックボックス同期
+
   const items = localState.floatItems || [];
   document.querySelectorAll('#floatChecks .check-item').forEach(el => {
     const key = el.dataset.key;
@@ -211,7 +277,11 @@ function syncUI(data) {
   });
 }
 
-function updateDisplay() { syncUI(localState); }
+function updateDisplay() {
+  document.getElementById('dispLikes').textContent = localState.likes;
+  document.getElementById('dispGoal').textContent  = localState.goal;
+  updateProgress();
+}
 
 function updateProgress() {
   const pct = Math.min(100, (localState.likes / Math.max(1, localState.goal)) * 100);
@@ -220,16 +290,16 @@ function updateProgress() {
 }
 
 function send(msg) {
-  // ローカルに先反映
   if (msg.type === 'add_likes') localState.likes = Math.max(0, localState.likes + (parseInt(msg.value)||0));
   if (msg.type === 'set_likes') localState.likes = Math.max(0, parseInt(msg.value)||0);
   if (msg.type === 'set_goal')  localState.goal  = Math.max(1, parseInt(msg.value)||1000);
   if (msg.type === 'reset')     localState.likes = 0;
+
   updateProgress();
 
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(msg));
-    log(`→ ${msg.type}` + (msg.value !== undefined ? ` ${msg.value}` : ''));
+    log(`→ ${msg.type}` + (msg.value !== undefined ? ` ${JSON.stringify(msg.value)}` : ''));
   } else {
     log('× 未接続');
   }
