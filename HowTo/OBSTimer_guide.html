@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBSTimer 使い方ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2430;
+    --border: #2a3040;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --text: #e8eaf0;
+    --text-muted: #8892a4;
+    --danger: #ff4466;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  .hero {
+    position: relative;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px 50px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,229,255,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(255,107,53,0.08) 0%, transparent 60%);
+    z-index: 0;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+  }
+  .hero-content { position: relative; z-index: 1; animation: fadeUp 0.7s ease both; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 1.1rem; color: var(--text-muted); max-width: 560px; margin: 0 auto; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .section { margin-bottom: 64px; }
+  .section-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+  }
+  .section-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 24px; line-height: 1.2; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(0,229,255,0.3); }
+
+  .overview-box {
+    background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(255,107,53,0.04));
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 16px;
+    padding: 36px;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+  .overview-box p { color: var(--text-muted); font-size: 1.05rem; line-height: 1.8; }
+  .overview-box strong { color: var(--accent); }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 32px 0;
+  }
+  .flow-node {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: center;
+    min-width: 140px;
+    transition: all 0.2s;
+  }
+  .flow-node:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .flow-node .icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+  .flow-node .label { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+  .flow-node .sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+  .flow-node.accent { border-color: var(--accent); background: rgba(0,229,255,0.05); }
+  .flow-node.green { border-color: var(--accent3); background: rgba(127,255,107,0.05); }
+  .flow-arrow { font-size: 1.5rem; color: var(--text-muted); padding: 0 8px; flex-shrink: 0; }
+
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step { display: flex; gap: 20px; position: relative; padding-bottom: 32px; }
+  .step:last-child { padding-bottom: 0; }
+  .step-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .step-num {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: rgba(0,229,255,0.1);
+    color: var(--accent); font-weight: 900; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
+  }
+  .step-line {
+    flex: 1; width: 2px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    margin-top: 8px; opacity: 0.3;
+  }
+  .step:last-child .step-line { display: none; }
+  .step-body { flex: 1; }
+  .step-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+  .step-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; }
+
+  .code-block {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    margin: 12px 0;
+    overflow-x: auto;
+  }
+
+  .mockup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }
+  @media(max-width: 640px) { .mockup-row { grid-template-columns: 1fr; } }
+
+  .mockup {
+    background: #0a0c10;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .mockup-bar {
+    background: var(--surface2);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .mockup-bar-title { font-size: 0.72rem; color: var(--text-muted); margin-left: 6px; }
+  .mockup-body { padding: 18px; }
+
+  .dock-timer {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .dock-timer-name { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  .dock-timer-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .dock-input {
+    background: #161a22; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text); padding: 4px 8px; font-size: 0.8rem; width: 60px;
+  }
+  .dock-btn {
+    border: none; border-radius: 5px;
+    padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: default;
+  }
+  .btn-set { background: rgba(0,229,255,0.15); color: var(--accent); }
+  .btn-start { background: rgba(127,255,107,0.15); color: var(--accent3); }
+  .btn-stop { background: rgba(255,68,102,0.15); color: var(--danger); }
+  .btn-del { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+  .dock-add-btn {
+    width: 100%; background: rgba(0,229,255,0.08); border: 1px dashed rgba(0,229,255,0.3);
+    color: var(--accent); border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 700;
+    text-align: center; margin-top: 4px;
+  }
+
+  .display-timer { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 16px; }
+  .display-timer-title { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .display-timer-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem; font-weight: 700; color: var(--accent); line-height: 1;
+  }
+  .display-timer-time.orange { color: var(--accent2); }
+
+  .obs-screen {
+    background: #000;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+  .obs-screen-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1a2030 0%, #0a1020 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .obs-screen-bg-text { color: rgba(255,255,255,0.08); font-size: 1.5rem; font-weight: 700; }
+  .obs-timer-overlay {
+    position: absolute; top: 16px; right: 16px;
+    background: transparent;
+    padding: 12px 16px;
+  }
+  .obs-timer-item { margin-bottom: 10px; }
+  .obs-timer-item:last-child { margin-bottom: 0; }
+  .obs-timer-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
+  .obs-timer-val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #00e5ff; }
+  .obs-timer-val.warn { color: #ff6b35; }
+  .obs-badge {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(255,68,102,0.9); color: white;
+    font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+  }
+
+  .btn-guide { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+  .btn-guide-item { display: flex; align-items: flex-start; gap: 14px; }
+  .btn-guide-desc { font-size: 0.9rem; color: var(--text-muted); padding-top: 3px; }
+  .btn-guide-desc strong { color: var(--text); }
+
+  .trouble-item { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+  .trouble-q {
+    background: rgba(255,68,102,0.08); border-left: 3px solid var(--danger);
+    padding: 14px 18px; font-weight: 700; font-size: 0.95rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .trouble-a { background: var(--surface); padding: 14px 18px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; }
+  .trouble-a strong { color: var(--text); }
+
+  .tip {
+    background: rgba(127,255,107,0.05);
+    border: 1px solid rgba(127,255,107,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 16px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .tip-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 48px 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .blink { animation: blink 1.2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">OBS 配信ツール ガイド</div>
+    <h1>⏱ <span>OBSTimer</span><br>使い方ガイド</h1>
+    <p>OBSの配信画面にカウントダウンタイマーを表示・操作できるツールです。<br>このガイドでセットアップから日常利用まで完全にわかります。</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- WHAT IS IT -->
+  <div class="section">
+    <div class="section-label">このツールについて</div>
+    <div class="section-title">OBSTimerって何ができるの？</div>
+
+    <div class="overview-box">
+      <p>
+        OBSTimerは、<strong>配信中の画面にカウントダウンタイマーを表示</strong>するためのツールです。<br>
+        「休憩時間」「持ち時間」「開始まであと〇分」などを<strong>複数同時に管理・表示</strong>できます。<br>
+        操作は別のパネル（ドック）から行い、配信画面にリアルタイムで反映されます。
+      </p>
+    </div>
+
+    <div id="obs-demo-wrap" style="position:relative;border-radius:12px;overflow:hidden;">
+  <!-- 配信画面の背景イメージ -->
+  <div style="background:linear-gradient(135deg,#1a2030 0%,#0a1020 100%);aspect-ratio:16/9;position:relative;border-radius:10px;overflow:hidden;">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.08);font-size:1.5rem;font-weight:700;">🎮 配信画面のイメージ</div>
+    <div style="position:absolute;top:12px;left:12px;background:rgba(255,68,102,0.9);color:white;font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:4px;">● LIVE</div>
+    <!-- タイマーオーバーレイ（実際のindex.css準拠） -->
+    <div style="position:absolute;top:16px;right:16px;padding:12px 16px;min-width:220px;">
+      <div id="demo-display-root"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+#demo-display-root .timer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #3c3c3c;
+  margin-bottom: 8px;
+  background: #ffffff;
+}
+#demo-display-root .timer-title {
+  font-size: 14px;
+  color: #000000;
+  font-weight: bold;
+  font-family: sans-serif;
+}
+#demo-display-root .timer-digits {
+  font-size: 20px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #000000;
+  line-height: 1.1;
+}
+#demo-display-root .timer-progress-wrapper {
+  position: relative;
+  width: 160px;
+  height: 12px;
+  margin-bottom: 18px;
+}
+#demo-display-root .timer-progress-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background-color: rgb(244,244,244);
+  box-shadow: 0 0 4px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+#demo-display-root .timer-progress-fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  border-radius: 999px;
+  background-color: rgb(118,185,0);
+}
+#demo-display-root .timer-progress-icon {
+  position: absolute;
+  top: calc(50% - 4px);
+  left: 0;
+  width: 36px;
+  height: 36px;
+  transform: translate(-20%, -50%);
+  object-fit: contain;
+}
+</style>
+
+<script>
+(function() {
+  const ICON = 'data:image/png;base64,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';
+  const DEMO_TIMERS = [
+    { id: 'demo1', title: '休憩', defaultMin: 5 },
+    { id: 'demo2', title: '持ち時間', defaultMin: 3 },
+  ];
+
+  let demoState = {};
+
+  function buildDemo() {
+    const root = document.getElementById('demo-display-root');
+    if (!root) return;
+    root.innerHTML = '';
+    DEMO_TIMERS.forEach(t => {
+      const total = t.defaultMin * 60;
+      demoState[t.id] = { timeLeft: total, totalSeconds: total };
+      const div = document.createElement('div');
+      div.className = 'timer-item';
+      div.id = 'demo-item-' + t.id;
+      div.innerHTML = `
+        <div class="timer-title">${t.title}</div>
+        <div class="timer-progress-wrapper">
+          <div class="timer-progress-track" id="demo-track-${t.id}">
+            <div class="timer-progress-fill" id="demo-bar-${t.id}"></div>
+          </div>
+          <img src="${ICON}" class="timer-progress-icon" id="demo-icon-${t.id}" />
+        </div>
+        <div class="timer-digits" id="demo-num-${t.id}">00:00</div>
+      `;
+      root.appendChild(div);
+      refreshDemo(t.id);
+    });
+  }
+
+  function refreshDemo(id) {
+    const s = demoState[id];
+    if (!s) return;
+    const m = Math.floor(s.timeLeft / 60).toString().padStart(2,'0');
+    const sec = (s.timeLeft % 60).toString().padStart(2,'0');
+    const numEl = document.getElementById('demo-num-' + id);
+    if (numEl) numEl.innerText = m + ':' + sec;
+
+    const bar = document.getElementById('demo-bar-' + id);
+    const icon = document.getElementById('demo-icon-' + id);
+    if (!bar || !icon) return;
+    const total = s.totalSeconds || 1;
+    const elapsed = Math.max(0, total - s.timeLeft);
+    const ratio = Math.min(1, elapsed / total);
+    bar.style.transform = 'scaleX(' + ratio + ')';
+    const wrapper = icon.parentElement;
+    if (wrapper) {
+      const rectWidth = wrapper.clientWidth;
+      const iconWidth = icon.clientWidth || 36;
+      const maxX = rectWidth - iconWidth * 0.6;
+      icon.style.left = (maxX * ratio) + 'px';
+    }
+  }
+
+  function startDemoCountdowns() {
+    DEMO_TIMERS.forEach((t, i) => {
+      // 少しずつずらしてスタート（デモらしく）
+      setTimeout(() => {
+        setInterval(() => {
+          if (demoState[t.id].timeLeft > 0) {
+            demoState[t.id].timeLeft--;
+          } else {
+            // ループ
+            demoState[t.id].timeLeft = demoState[t.id].totalSeconds;
+          }
+          refreshDemo(t.id);
+        }, 1000);
+      }, i * 800);
+    });
+  }
+
+  // DOMContentLoaded後に実行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { buildDemo(); startDemoCountdowns(); });
+  } else {
+    buildDemo(); startDemoCountdowns();
+  }
+})();
+</script>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.82rem;margin-top:4px;">↑ こんな感じで配信画面の好きな場所にタイマーを表示できます</p>
+
+    <div style="margin-top:36px;">
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:8px;text-align:center;">🔁 仕組みのながれ</p>
+      <div class="flow">
+        <div class="flow-node accent">
+          <span class="icon">🎛️</span>
+          <div class="label">dock.html</div>
+          <div class="sub">操作パネル<br>（あなたが使う）</div>
+        </div>
+        <div class="flow-arrow">⟶</div>
+        <div class="flow-node">
+          <span class="icon">🔗</span>
+          <div class="label">OBS WebSocket</div>
+          <div class="sub">OBSの内部通信<br>（自動でつながる）</div>
+        </div>
+        <div class="flow-arrow">⟶</div>
+        <div class="flow-node green">
+          <span class="icon">📺</span>
+          <div class="label">index.html</div>
+          <div class="sub">配信画面の表示<br>（視聴者が見る）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- REQUIREMENTS -->
+  <div class="section">
+    <div class="section-label">準備するもの</div>
+    <div class="section-title">使う前に確認しよう</div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <span style="font-size:1.8rem;">✅</span>
+        <span style="font-weight:700;font-size:1.05rem;">必要なもの チェックリスト</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:1.2rem;flex-shrink:0;">🎬</span>
+          <div>
+            <div style="font-weight:700;">OBS Studio（バージョン28以降）</div>
+            <div style="color:var(--text-muted);font-size:0.88rem;">古いバージョンでは動作しません。最新版を使いましょう。</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:1.2rem;flex-shrink:0;">🔌</span>
+          <div>
+            <div style="font-weight:700;">OBS WebSocketサーバーが有効になっていること</div>
+            <div style="color:var(--text-muted);font-size:0.88rem;">OBSの「ツール → WebSocketサーバー設定」から有効にします（下の手順参照）。</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:1.2rem;flex-shrink:0;">📁</span>
+          <div>
+            <div style="font-weight:700;">OBSTimerのファイル一式</div>
+            <div style="color:var(--text-muted);font-size:0.88rem;">GitHubからダウンロードして、任意のフォルダに保存します。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <span class="tip-icon">⚠️</span>
+      <div>OBSとこのツールは<strong>同じパソコン上</strong>で使う必要があります。別のパソコンからの操作には対応していません。</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SETUP -->
+  <div class="section">
+    <div class="section-label">セットアップ</div>
+    <div class="section-title">はじめての設定手順</div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">ファイルをパソコンに保存する</div>
+          <div class="step-desc">GitHubからダウンロードしたファイル一式を、わかりやすい場所に置きます。</div>
+          <div class="code-block">
+📁 OBSTimer/<br>
+　├ 📄 index.html　　← 配信画面に表示するタイマー<br>
+　├ 📄 dock.html　　 ← タイマーを操作するパネル<br>
+　├ 📁 js/<br>
+　└ 📁 css/
+          </div>
+          <div class="tip">
+            <span class="tip-icon">📌</span>
+            <div>例えば <code style="color:var(--accent)">C:\Users\あなたの名前\OBSTimer\</code> のように保存するとわかりやすいです。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">OBSのWebSocketを有効にする</div>
+          <div class="step-desc">OBSを起動し、メニューから設定を開きます：</div>
+          <div class="code-block">OBS上部メニュー → 「ツール」 → 「WebSocketサーバー設定」</div>
+          <div style="background:var(--surface2);border-radius:10px;padding:18px;border:1px solid var(--border);margin-top:12px;">
+            <div style="font-size:0.85rem;margin-bottom:10px;font-weight:700;">確認・設定する項目</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:var(--accent3)">☑</span>
+                <span>「WebSocketサーバーを有効にする」にチェックを入れる</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:var(--accent3)">☑</span>
+                <span>ポート番号が <code style="color:var(--accent)">4455</code> になっていることを確認</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;color:var(--text-muted);">
+                <span>ℹ️</span>
+                <span>パスワード認証は不要（なしでOK）</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">操作パネル（ドック）をOBSに追加する</div>
+          <div class="step-desc">OBSに操作パネルを追加します：</div>
+          <div class="code-block">OBSメニュー → 「表示」 → 「ドック」 → 「カスタムブラウザドック」</div>
+          <div style="background:var(--surface2);border-radius:10px;padding:18px;border:1px solid var(--border);margin-top:12px;font-size:0.88rem;">
+            <div style="margin-bottom:6px;"><span style="color:var(--text-muted)">ドック名：</span> 任意（例：<code style="color:var(--accent)">OBSTimer Dock</code>）</div>
+            <div><span style="color:var(--text-muted)">URL：</span> <code style="color:var(--accent)">dock.html</code> のファイルパスを指定</div>
+          </div>
+          <div class="tip" style="margin-top:12px;">
+            <span class="tip-icon">💡</span>
+            <div>エクスプローラーで <code style="color:var(--accent)">dock.html</code> を右クリック →「パスのコピー」でパスを取得できます。先頭に <code style="color:var(--accent)">file:///</code> をつけて入力欄に貼り付けましょう。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">配信画面にタイマー表示を追加する</div>
+          <div style="background:var(--surface2);border-radius:10px;padding:18px;border:1px solid var(--border);margin-top:8px;">
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:0.88rem;">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="color:var(--accent);font-weight:700;flex-shrink:0;min-width:18px;">①</span>
+                <span>OBSの「ソース」欄の <strong>「＋」ボタン</strong> → 「ブラウザ」を選択</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="color:var(--accent);font-weight:700;flex-shrink:0;min-width:18px;">②</span>
+                <span>名前を入力（例：タイマー表示）して OK</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="color:var(--accent);font-weight:700;flex-shrink:0;min-width:18px;">③</span>
+                <span>URLに <code style="color:var(--accent)">index.html</code> のファイルパスを指定</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="color:var(--accent);font-weight:700;flex-shrink:0;min-width:18px;">④</span>
+                <span>幅：<strong>240px</strong> 程度、高さはタイマー数に合わせて調整</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="color:var(--accent);font-weight:700;flex-shrink:0;min-width:18px;">⑤</span>
+                <span>背景を透明にしたい場合は「<strong>背景を透明にする</strong>」にチェック</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- HOW TO USE -->
+  <div class="section">
+    <div class="section-label">日常の使い方</div>
+    <div class="section-title">タイマーを操作してみよう</div>
+
+    <div class="mockup-row">
+      <div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;text-align:center;">🎛 操作パネル（dock.html）の実際の画面</p>
+        <div class="mockup">
+          <div class="mockup-bar">
+            <div class="mockup-dot" style="background:#ff5f57"></div>
+            <div class="mockup-dot" style="background:#febc2e"></div>
+            <div class="mockup-dot" style="background:#28c840"></div>
+            <div class="mockup-bar-title">OBSTimer Dock</div>
+          </div>
+          <div style="padding:0;">
+
+<style>
+.ddemo-body { background:#2b2b2b; color:#efefef; font-family:sans-serif; padding:10px; border-radius:8px; }
+.ddemo-header { position:sticky; top:0; background:#2b2b2b; padding-bottom:10px; }
+.ddemo-btn-add { background:#2980b9; color:white; width:100%; padding:10px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px; }
+.ddemo-group { background:#383838; border:1px solid #444; border-radius:6px; padding:10px; margin-bottom:12px; }
+.ddemo-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.ddemo-title { background:#222; color:#fff; border:1px solid #555; flex-grow:1; padding:5px; border-radius:3px; font-size:13px; }
+.ddemo-num { width:45px; background:#222; color:#fff; border:1px solid #555; padding:5px; border-radius:3px; text-align:center; font-size:13px; }
+.ddemo-btn { cursor:pointer; border:none; border-radius:3px; padding:6px 10px; font-size:12px; flex:1; }
+.ddemo-del { background:#c0392b; color:white; padding:5px; flex:none; }
+.ddemo-start { background:#27ae60; color:white; }
+.ddemo-stop { background:#d35400; color:white; }
+.ddemo-upload { background:#7f8c8d; color:white; flex:none; padding:5px 8px; font-size:11px; }
+.ddemo-toggle-wrap { display:inline-flex; align-items:center; gap:6px; font-size:12px; }
+.ddemo-slider { position:relative; width:40px; height:20px; border-radius:999px; background:#555; display:inline-block; flex-shrink:0; }
+.ddemo-slider::before { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; }
+.ddemo-color { width:24px; height:24px; vertical-align:middle; border:none; padding:0; cursor:pointer; border-radius:3px; }
+.ddemo-system { margin-top:16px; border-top:1px solid #555; padding-top:10px; }
+.ddemo-reset { background:transparent; color:#999; width:100%; font-size:10px; border:1px solid #555; border-radius:3px; padding:6px; cursor:pointer; }
+.ddemo-icon-preview { width:24px; height:24px; object-fit:contain; vertical-align:middle; margin-left:5px; border:1px solid #ccc; background:#eee; border-radius:2px; }
+</style>
+
+<div class="ddemo-body">
+  <div class="ddemo-header">
+    <button class="ddemo-btn-add">＋ タイマーを追加</button>
+  </div>
+
+  <!-- タイマー1 -->
+  <div class="ddemo-group">
+    <div class="ddemo-row">
+      <input type="text" class="ddemo-title" value="新タイマー3" readonly>
+      <button class="ddemo-btn ddemo-del">削除</button>
+    </div>
+    <div class="ddemo-row">
+      <input type="number" class="ddemo-num" value="3" readonly> 分
+      <button class="ddemo-btn ddemo-start">開始</button>
+      <button class="ddemo-btn ddemo-stop">停止</button>
+    </div>
+    <div class="ddemo-row">
+      <span class="ddemo-toggle-wrap">
+        <span class="ddemo-slider"></span>
+        <span style="color:#efefef;font-size:12px;">透過</span>
+      </span>
+      <span style="font-size:12px;margin-left:4px;">背景</span>
+      <input type="color" class="ddemo-color" value="#ffffff">
+      <span style="font-size:12px;">文字</span>
+      <input type="color" class="ddemo-color" value="#000000">
+      <span style="font-size:12px;">ベース</span>
+      <input type="color" class="ddemo-color" value="#e0e0e0">
+      <span style="font-size:12px;">進捗</span>
+      <input type="color" class="ddemo-color" value="#76b900">
+      <button class="ddemo-btn ddemo-upload">画像指定</button>
+      <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACNAI0DASIAAhEBAxEB/8QAHQABAAICAwEBAAAAAAAAAAAAAAcIBAkDBQYBAv/EAEIQAAEDAgQEAQkECAQHAAAAAAECAwQABQYHESESEzFBCBRCUVJhcYGRsSIyM8EjQ1NicqGj0RXC0vEWZXOEkrPD/8QAGwEAAgMBAQEAAAAAAAAAAAAAAAcEBQYDAgH/xAAzEQABAwIEBQEHAwUBAAAAAAABAAIDBBEFBiExEkFRYXETIiMygZGxwVKh0RVCYmPh0v/aAAwDAQACEQMRAD8AplSlKEJSlKEJSlKEJXNBiyZ0xmHDYckSX1htpptJUpaidAkAdSTX4ZacedQyy2pxxaglCEjUqJ2AA7mrr+GLJNGCobeKcTR0rxI+j9Cyoai3oI6f9UjqfNGw71WYrikWHQ8b9Sdh1/51XengdM6wWTkJkRaMJ4WfdxbAi3K9XWOWpbToC24zShuyn971lDvsNhqa6eIfKCdltfPK4QdlYcmOHySSRqWldeS4fWHY+cN+oIF+q67EtkteI7FLsl6htzIEtvgeaX3HYg9iDuCNwRS/osw1MFWZ5DxB24/jpZXEtEx0fC3QhavqVJGe+VV1yyxJyVcyXZJaibfO4fvD9mvTYOJ7juNx7I3pm09RHURiWI3BVE9hY7hdulKUrsvKUpShCUpShCUpShCkHJTK+fmhdLjb7fdYlvchR0vkyELUFgrCdBw++pKe8JeMR+DiXD6/4ucn/Ia+eA93hzDvrXr2jX5PN/3q5FYXHMcrKKtdFE4cNhyHRWtJSRSxBzhqqVveFHMNOvLu2GnP+6dH1brEc8LWZyfursDn8M8j6pFXfpVWM14gOY+ikHD4e6r94csgv+C55xLjBMWVe2lkQWGlhxqMP2mvQrPb1Rv16WBpSqWtrZq2UyzG5+3hSoomxN4WpSsedNiwgyZTob57yWW9e61dBWRUYscGhxGh2XoPaSWg6hdNjTDNmxfhyVYL9ETJhSU6KHRSFD7q0HzVA7g/kTVQrz4WMwGrxKZtUi0SoCXCI8h2WGlOI7FSNCUn0j09KutSrLDsYqsPBEJ0PI6hcZqZk2rlSVnwq5lLP25mHG/fNWfo3Waz4Tcdq/Gv2G0e515X/wA6ubSrA5rxA8x9FyGHwqm07wp4lg2yXOk4psvBGYceUlDbxJCElRA2Hoqu52rZrmA5ycBYhd104LVKV/RVWso1qct4lUV7JHTm9rW0t1VfXQMhIDV8pSlaZQUpSlCFP3gXd4M27i2fPsj38nWjV1KpB4I18GdCk+vaZKf5oP5Vd+ljmwWxD5BXuHn3PzSlKVmlOSlK67EdzRaLLJnq0Km06NpPnLOyR866wQvnlbFGLucQB5K5yythYZHmwAuVHGal3Mu+JgsOENQdtQf1p3J+Gw+dSDhC7C9YfjTSRzdOB4DssbH59fjUISFrccU44oqWslSlHuT1NetymvHkd7Xa3VaMzR9jXs4Bt8xqPgKb+Y8ssbgTI4Rd0Av5H9/1+L5WS3wXHHHFnPlPsym3j9P8fNSzSlKTaZiUpShC8tm65ycqcWu66cNlln+kqtaxrY7ns5y8mcYK/wCTvp+adPzrXFTByaPcSHv+FTYmfbalKUrZKtSv2w06+8hlltbjjiglCEDVSidgAB1NckCJKnzWYUKO7JkvrDbTTSCpa1E6AADck1dTw35FRsEtM4mxQ01JxKtPEy1spFvB7DsXfSroOg7mqvFMVhw6LjfqTsOv/O67wU7pnWCx/C1krKwVpi/EpW3fJDCm2YQO0VtY35npcI7dE+/pP9KUq62tlrZjNKdT+3ZaCKJsTeFqUpXDMlxobBelvtstjzlq0/3qMxjnuDWi5K9uc1o4nGwXNUaZrXXnzmrU0r9HHHG7p3WRsPgPrXaXzHjTfE1aY/NV05zw0T8E9T8dKjuc+7JkOyH1lbrqitaj3Jpm5NyxUwVIrKtnDYeyDvc8yOVhffW6wuZcdhlgNNTuvc6kbW6XWG5XCh1xh9t9lZQ42oLQodiDqDXM5WK7TXaARYpeuJBuFYDDl0bvNki3JvQc5H20+qsbKHz1rsagvCOMZ+GwthtpuTEWvjU0skEHoSlXbp7ak7DmN7DeilpEnySUf1EghJJ9h6KpE5hyhW4dM+SKMuhuSCNbDoeYt127psYNmSlrY2skeBJbUHS57ctem69NSlKx60q6zFNkg4kw5cLBcw4YdwjqYe5auFXCe4PYjY1QLOzKu+ZZ37kTAqXaZCj5DcEI0Q6PVV6qwOqfiNRWxCurxXh+z4psMqx32C3NgSU8Lja+x7KSeqVDqCNxV1g2MyYbJ1Ydx+R3+6i1VKJx3WsGlShnzk9eMtLtzkcyfh+SsiJO4d0nry3dPurA+Cuo7gRfTSpqmKpjEsRuCqB7HMdwuGqvH4YMpbBhPD8PFi5UO83q4MBxuYyoLZjIUPuNH1uyldeoGg11m+qCZA5y3XLW6CHK5s/DklzWTD4vtNE9XWteivSOiu++hF6cNXy04kscW9WSc1NgSkcTTzZ2PpBHUKB2IO4NLPMNDVwVJknPEHbH8drK9opY3M4W6ELsqxp8+JAa5kuQhoHoCd1e4dTWTXDLixpbRaksNuoPZQ1/2qkg9L1B61+Hnbf5XUiX1OA+nbi5X2Xj7xjNwhTdsY5Y/aujU/BPT51464SpMx4vSn3HnPWWrXT3eivb3jBiVhTlsf4D+ydOo+Cv714u6QJlvd5cyO4yrsVDY+49DTjy2/Bi21DYO53+P99fpoltjbcS4r1V+Ht8P7fnVda53rGcrJc71jOVtGLMPWO5WK7WU5WK7UtiivWO5WM7WS5WM4CSABqTsB6alsUV67/DuOsQWLhbaleVxU7ciSSoAfunqn6eypMwzmXh+7cLMxw2uSduF8/oyfYvp89KjzDmXV/vJS6+0LdFO/MkA8RH7qOvz0qTsMZf4dsfC6I3l0sfr5ICtD+6noPr7aVmcZcruDri83+u2/8Akfh87uW+yzHj4IsbRf5327f3eNgvVgggEHUHcGvtKUoEylhX21W2+WiTabvDZmwZSC28w6nVK0/ke4I3B3FUF8RGXUHLfHH+GW27MzYcpvnsslYMiMknZDoH8j5w30FWd8RWeEHAEV2w2FbMzE7qOh0U3BBGy3B3X3CPidtAaQ3a4zrtcpFyuUt6XMkuFx551ZUtaj1JJreZToquO8zjaM8uvft55+FUYhLG72RqQsWpHyOzZveWV842eOZZZKx5db1K0C+3Gj1XAO/Q9D7I4pWxqKeOojMcouCq1j3MPE3dbOcGYnsmMMPRr9YJqJcJ8bKGykK7oWnzVDuPqNDXc1SjwQ3O5M5rPWpmY8iBJt7zkiOFfYcUgDgUR6QT1676VdelNjGHDD6owtNxuPB6rQ003rM4ilcchlmQypl9pDrauqVp1BrkpVY1xabjddyARYrx17wJEkcTlseMVz9mvVTZ/MfzqNrhHdiSnor6eF1pZQsegip6qN82LVypTN3aT9h4ct7TssDY/EbfCmXkzM1RLVCjq38QcPZJ3uOV+dxffmsPmbA4Y4DU07bEbgbW627dl4BysV2spyuJph2TJajMIK3XVhCEjuSdBTaa4NFzsEu3Ak2C73BmC5WJG1SlSUxYSF8BXw8SlnuEjp8TUo4dwlY7FouHDC5A6yHvtufA9B8NK7CwW1q0WeNbmdCllABV6yuqj8TrWdSFzDmusxOZ7GSEQ3NgNLjvzN97HRNvBsvUtBE17mAyW1J1se3S3ZKUpWTWiSoC8SWfDGD238LYSfbkYiUCiRJTopED2ehTvs6J777VJ+c0+fasp8UXG1ynIs2NbHXGXmzoptQHUHsdNd61uurW64pxxalrUSVKUdSSe5NavLODxVjjPNqGnbqe/btz+9fXVLoxwN5r9y5D8uU7KlPOPvvLK3HHFFSlqJ1JJO5JPeuKlKZAFlSJSlKEKePA63x5xyl+pZpB+a2x+dXaqmPgSa1zPvDvqWVY+bzX9qudSwzWb4gfAV7h49ylKUrNqclYF/tzd2s8mA5oOaj7Cj5qhuk/Os+ldIZnwSNljNnNII8heJY2ysLHi4IsVXqU24y8tl1JQ42opUk9iDoRXr8o7P5Vd3bs8jVqIOFvXu4ofkPqK+5q2dUe9Nz47ZKJ2xCR+tG2nxGh+dSDhS1JsthjQABzEp4nSO6zur+3wpu5jzMx+BMfCbOnFvAHx/8An53S5wXAnNxZzZB7MRv5/T/PyXaUpSk8mSlKUoQvIZ1Nc7KDGCPTZZR+TZP5VrcrZhmc1zstsUNevZ5Y/oqrWgaYGTT7mUdx9lT4mPaavlKUrZqsSlKUIVh/A3Mt8DGWIZNwnRIaP8MShKpD6WwSXk7AqI16Va53GWEGvxcV2FH8VxZH+atZYOlNfd8qzOJZbZX1BndIRe2luinQVxhZwgLZS7mLl+1+JjjDSffc2f8AVWI7mtlo2ft48w78JyT9K1wUqGMmwc5D9Auv9Tf+lbQMOX6y4jtouVhukS5wyst86M4Fp4h1T7DuNq7Ktd+R+aN3yzxMJcfjlWmSUpuEHi0DqR0Un0LTvofgdjV+8KYgtGKcPxL9Y5iJcCWjjbcTsR6UqHmqB2IPQ1mMZwaTDZOrDsfwe/3U6mqmzjus+VFjyuV5Q0lzlOpdb181Y6GualKpy9xAaToFJDQCSBqUryd0zKy/tVzkWy5YyskSbHXwPMuyglTavQfQfZUYeJ7O1GDIjuFMLyErxG+jSQ+g6i3oI/8AaR0Hmjc76VSt1xx11Trq1LWslSlKOpJPUk9zWowfLLqyL1pyWtO3U9/HTqoFTXCN3CzVbIWszsuHfuY8w0ffcmx9TWW1jzA7v4WMsOr91zZ/1VrQr7rVscmw8pT9Ao/9Td+lbJMWYkwzNwjemGMR2Z1TtukIARPaJJLShp96tbZ60193yr5V1g+DtwwPAfxcVuVtlFqakzkEi1kpSlXKjJSlKEJSlKEJSlKEJUo+H7Nu45aYg5b3Nl4fmLHl0QHdJ6c1v0LA/wDIbHsRF1K4VNNHUxGKUXBXpj3MdxN3W0Wx3W3Xy0RbvaZjUyDKbDjDzZ1StJ+h7EHcEEGok8Sec8fL61qslkdbexPKb1QNlJhIPR1Y9Y+ak+87aA1hygzmxTlvbrjbbaGpsKU2ossSSSiM+Rs6kfVPRW2vSo+vFyn3e6Sbnc5TsubKcLrzzqtVLUepJrH0WU/Tqy6Y3jG3fz459VZS4hxR2buVxTZMibLely33H5Dyy4664oqUtROpUSepJ71w0pW2AtoFVpSlK+oSlKUISlKUIX//2Q==" class="ddemo-icon-preview">
+    </div>
+  </div>
+
+  <!-- タイマー2 -->
+  <div class="ddemo-group">
+    <div class="ddemo-row">
+      <input type="text" class="ddemo-title" value="新タイマー" readonly>
+      <button class="ddemo-btn ddemo-del">削除</button>
+    </div>
+    <div class="ddemo-row">
+      <input type="number" class="ddemo-num" value="3" readonly> 分
+      <button class="ddemo-btn ddemo-start">開始</button>
+      <button class="ddemo-btn ddemo-stop">停止</button>
+    </div>
+    <div class="ddemo-row">
+      <span class="ddemo-toggle-wrap">
+        <span class="ddemo-slider"></span>
+        <span style="color:#efefef;font-size:12px;">透過</span>
+      </span>
+      <span style="font-size:12px;margin-left:4px;">背景</span>
+      <input type="color" class="ddemo-color" value="#ffffff">
+      <span style="font-size:12px;">文字</span>
+      <input type="color" class="ddemo-color" value="#000000">
+      <span style="font-size:12px;">ベース</span>
+      <input type="color" class="ddemo-color" value="#e0e0e0">
+      <span style="font-size:12px;">進捗</span>
+      <input type="color" class="ddemo-color" value="#76b900">
+      <button class="ddemo-btn ddemo-upload">画像指定</button>
+      <img src="data:image/png;base64,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" class="ddemo-icon-preview">
+    </div>
+  </div>
+
+  <div class="ddemo-system">
+    <button class="ddemo-reset">設定を完全初期化</button>
+  </div>
+</div>
+
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;text-align:center;">📺 配信画面の表示（index.html）</p>
+        <div class="mockup">
+          <div class="mockup-bar">
+            <div class="mockup-dot" style="background:#ff5f57"></div>
+            <div class="mockup-dot" style="background:#febc2e"></div>
+            <div class="mockup-dot" style="background:#28c840"></div>
+            <div class="mockup-bar-title">視聴者が見る画面</div>
+          </div>
+          <div id="guide-demo-root-wrap" style="background:#2b2b2b;padding:16px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+            <div id="guide-demo-root"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px;">
+      <div style="font-weight:700;margin-bottom:16px;">各ボタンの説明</div>
+      <div class="btn-guide">
+        <div class="btn-guide-item">
+          <button style="background:#27ae60;color:white;border:none;border-radius:3px;padding:6px 12px;font-size:12px;min-width:56px;flex-shrink:0;cursor:default;">開始</button>
+          <div class="btn-guide-desc"><strong>カウントダウンを開始</strong>します。押すと配信画面のタイマーが動き始めます。</div>
+        </div>
+        <div class="btn-guide-item">
+          <button style="background:#d35400;color:white;border:none;border-radius:3px;padding:6px 12px;font-size:12px;min-width:56px;flex-shrink:0;cursor:default;">停止</button>
+          <div class="btn-guide-desc"><strong>カウントダウンを一時停止</strong>します。再度「開始」を押すと再開できます。</div>
+        </div>
+        <div class="btn-guide-item">
+          <button style="background:#c0392b;color:white;border:none;border-radius:3px;padding:6px 12px;font-size:12px;min-width:56px;flex-shrink:0;cursor:default;">削除</button>
+          <div class="btn-guide-desc"><strong>そのタイマーを削除</strong>します。削除前に確認ダイアログが表示されます。</div>
+        </div>
+        <div class="btn-guide-item">
+          <button style="background:#2980b9;color:white;border:none;border-radius:3px;padding:6px 12px;font-size:12px;min-width:100px;flex-shrink:0;cursor:default;">＋ タイマーを追加</button>
+          <div class="btn-guide-desc"><strong>新しいタイマーを追加</strong>します。複数のタイマーを同時に管理できます。</div>
+        </div>
+        <div class="btn-guide-item">
+          <button style="background:#7f8c8d;color:white;border:none;border-radius:3px;padding:6px 12px;font-size:12px;min-width:56px;flex-shrink:0;cursor:default;">画像指定</button>
+          <div class="btn-guide-desc"><strong>プログレスバーのアイコン画像を変更</strong>します。好きな画像ファイルを選んで設定できます。</div>
+        </div>
+        <div class="btn-guide-item">
+          <div style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;background:#383838;border-radius:4px;padding:5px 8px;">
+            <span style="font-size:11px;color:#efefef;">透過</span>
+            <span style="display:inline-block;width:36px;height:18px;border-radius:999px;background:#27ae60;position:relative;flex-shrink:0;"><span style="position:absolute;top:2px;right:2px;width:14px;height:14px;background:#fff;border-radius:50%;display:block;"></span></span>
+          </div>
+          <div class="btn-guide-desc"><strong>タイマーの背景を透明にする</strong>スイッチです。配信画面に馴染ませたい場合にONにします。</div>
+        </div>
+        <div class="btn-guide-item">
+          <div style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;background:#383838;border-radius:4px;padding:5px 8px;flex-wrap:wrap;max-width:180px;">
+            <span style="font-size:11px;color:#efefef;">背景</span><input type="color" value="#ffffff" style="width:20px;height:20px;border:none;padding:0;cursor:default;border-radius:2px;" disabled>
+            <span style="font-size:11px;color:#efefef;">文字</span><input type="color" value="#000000" style="width:20px;height:20px;border:none;padding:0;cursor:default;border-radius:2px;" disabled>
+            <span style="font-size:11px;color:#efefef;">ベース</span><input type="color" value="#e0e0e0" style="width:20px;height:20px;border:none;padding:0;cursor:default;border-radius:2px;" disabled>
+            <span style="font-size:11px;color:#efefef;">進捗</span><input type="color" value="#76b900" style="width:20px;height:20px;border:none;padding:0;cursor:default;border-radius:2px;" disabled>
+          </div>
+          <div class="btn-guide-desc"><strong>タイマーの色をカスタマイズ</strong>できます。背景・文字・プログレスバーのベース色・進捗色をそれぞれ自由に変更できます。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip" style="margin-top:20px;">
+      <span class="tip-icon">💾</span>
+      <div>設定したタイマーは<strong>自動保存</strong>されます。OBSを再起動しても消えません！全部消してやり直したい場合はDock下部の「設定を完全初期化」ボタンを使いましょう。</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="section">
+    <div class="section-label">困ったとき</div>
+    <div class="section-title">トラブルシューティング</div>
+
+    <div class="trouble-item">
+      <div class="trouble-q"><span>😟</span>タイマーが配信画面に表示されない / 反映されない</div>
+      <div class="trouble-a">
+        <strong>まずWebSocketの設定を確認してください。</strong><br><br>
+        OBSのメニューから <strong>「ツール」→「WebSocketサーバー設定」</strong> を開き、以下の画面が表示されたら <strong>「WebSocketサーバーを有効にする」にチェックが入っているか</strong> 確認してください。<br><br>
+        <div style="text-align:center;margin:12px 0;">
+          <img src="data:image/png;base64,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" style="max-width:100%;border-radius:8px;border:1px solid var(--border);" alt="WebSocketサーバー設定画面" />
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">↑ 「WebSocketサーバーを有効にする」にチェックが入っていればOKです</div>
+        </div>
+        チェックが入っていなかった場合はチェックを入れて <strong>「適用」</strong> を押してください。<br><br>
+        それでも表示されない場合は以下も確認してみましょう：<br>
+        <strong>① </strong> Dock側で少なくとも1つタイマーが作成されているか確認。<br>
+        <strong>② </strong> <code style="color:var(--accent)">dock.html</code> と <code style="color:var(--accent)">index.html</code> の両方をリロード（F5キー）する。<br>
+        <strong>③ </strong> OBSとタイマーツールが<strong>同じパソコン上</strong>で動いているか確認。
+      </div>
+    </div>
+
+    <div class="trouble-item">
+      <div class="trouble-q"><span>😟</span>タイマー設定をすべてリセットしたい</div>
+      <div class="trouble-a">
+        Dock下部の<strong>「設定を完全初期化」ボタン</strong>を押すと、すべてのタイマー設定が削除されて初期状態に戻ります。<br>
+        ※ この操作は取り消せないので注意してください。
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SUMMARY -->
+  <div class="section">
+    <div class="section-label">まとめ</div>
+    <div class="section-title">使い方の流れ（おさらい）</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+      <div class="card" style="text-align:center;padding:22px 16px;">
+        <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+        <div style="font-weight:700;margin-bottom:6px;">① ファイルを保存</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">好きなフォルダに<br>OBSTimerを置く</div>
+      </div>
+      <div class="card" style="text-align:center;padding:22px 16px;">
+        <div style="font-size:2rem;margin-bottom:8px;">⚙️</div>
+        <div style="font-weight:700;margin-bottom:6px;">② OBSを設定</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">WebSocketを有効に<br>ドックを追加</div>
+      </div>
+      <div class="card" style="text-align:center;padding:22px 16px;">
+        <div style="font-size:2rem;margin-bottom:8px;">📺</div>
+        <div style="font-weight:700;margin-bottom:6px;">③ 表示を追加</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">ブラウザソースに<br>index.htmlを登録</div>
+      </div>
+      <div class="card" style="text-align:center;padding:22px 16px;">
+        <div style="font-size:2rem;margin-bottom:8px;">▶️</div>
+        <div style="font-weight:700;margin-bottom:6px;">④ 配信で使う</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">ドックで操作して<br>タイマーを表示</div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px;background:linear-gradient(135deg,rgba(0,229,255,0.05),rgba(127,255,107,0.03));border:1px solid rgba(0,229,255,0.15);border-radius:12px;padding:28px;text-align:center;">
+      <div style="font-size:1.8rem;margin-bottom:10px;">🎉</div>
+      <div style="font-weight:700;font-size:1.1rem;margin-bottom:8px;">設定は最初だけ！あとは毎回の配信で使えます</div>
+      <div style="color:var(--text-muted);font-size:0.92rem;">タイマー設定は自動保存されるので、一度セットしてしまえば次回からすぐ使えます。</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ENVIRONMENT -->
+  <div class="section">
+    <div class="section-label">動作環境</div>
+    <div class="section-title">動作確認済み環境</div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:1.4rem;flex-shrink:0;">🖥️</span>
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--text-muted);margin-bottom:2px;">OS</div>
+            <div style="font-weight:500;">Windows 11 Home</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:1.4rem;flex-shrink:0;">🎬</span>
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--text-muted);margin-bottom:2px;">OBS Studio</div>
+            <div style="font-weight:500;">OBS Studio 32.0.4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">ℹ️</span>
+      <div>上記以外の環境での動作は保証できません。OBS Studio 28以降であれば基本的に動作しますが、環境によって挙動が異なる場合があります。</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- CHANGELOG -->
+  <div class="section">
+    <div class="section-label">リリース情報</div>
+    <div class="section-title">更新履歴</div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      <div style="display:flex;gap:20px;align-items:flex-start;padding-bottom:24px;">
+        <div style="flex-shrink:0;text-align:center;">
+          <div style="background:rgba(0,229,255,0.1);border:2px solid var(--accent);border-radius:8px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;color:var(--accent);white-space:nowrap;">v1.0.0</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;white-space:nowrap;">2026/03/06</div>
+        </div>
+        <div style="flex:1;padding-top:4px;">
+          <div style="font-weight:700;margin-bottom:6px;">初回公開リリース</div>
+          <div style="color:var(--text-muted);font-size:0.9rem;">OBSTimerの初回公開バージョン。複数タイマーの追加・管理、プログレスバー表示、カラーカスタマイズ機能を搭載。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TERMS -->
+  <div class="section">
+    <div class="section-label">ご利用にあたって</div>
+    <div class="section-title">利用規約</div>
+
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="font-size:1.6rem;flex-shrink:0;">🚫</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">無断転載禁止</div>
+            <div style="color:var(--text-muted);font-size:0.9rem;">このツールおよびガイドの内容を、作者の許可なく他の場所へ転載・掲載することを禁止します。</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="font-size:1.6rem;flex-shrink:0;">✋</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">自作発言禁止</div>
+            <div style="color:var(--text-muted);font-size:0.9rem;">このツールを自分が制作したものとして発言・公開することを禁止します。</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="font-size:1.6rem;flex-shrink:0;">💰</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">二次配布・販売禁止</div>
+            <div style="color:var(--text-muted);font-size:0.9rem;">このツールを無断で再配布したり、販売・有償頒布することを禁止します。</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tip" style="margin-top:8px;">
+      <span class="tip-icon">💬</span>
+      <div>ご不明な点や利用相談がある場合は、作者までお気軽にお問い合わせください。</div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+#guide-demo-root .timer-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 4px 12px; border-radius: 8px;
+  border: 1px solid #3c3c3c; margin-bottom: 8px; background: #ffffff;
+}
+#guide-demo-root .timer-title {
+  font-size: 14px; color: #000000; font-weight: bold; font-family: sans-serif;
+}
+#guide-demo-root .timer-digits {
+  font-size: 20px; font-family: 'Courier New', monospace;
+  font-weight: bold; color: #000000; line-height: 1.1;
+}
+#guide-demo-root .timer-progress-wrapper {
+  position: relative; width: 160px; height: 12px; margin-bottom: 18px;
+}
+#guide-demo-root .timer-progress-track {
+  position: absolute; inset: 0; border-radius: 999px;
+  background-color: rgb(244,244,244); box-shadow: 0 0 4px rgba(0,0,0,0.8); overflow: hidden;
+}
+#guide-demo-root .timer-progress-fill {
+  position: absolute; inset: 0; width: 100%;
+  transform-origin: left center; transform: scaleX(0);
+  border-radius: 999px; background-color: rgb(118,185,0);
+}
+#guide-demo-root .timer-progress-icon {
+  position: absolute; top: calc(50% - 4px); left: 0;
+  width: 36px; height: 36px; transform: translate(-20%, -50%); object-fit: contain;
+}
+</style>
+<script>
+(function() {
+  const ICON = 'data:image/png;base64,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';
+  const DEMO_TIMERS = [
+    { id: 'demo1', title: '休憩', defaultMin: 5 },
+    { id: 'demo2', title: '持ち時間', defaultMin: 3 },
+  ];
+  let demoState = {};
+
+  function buildDemo() {
+    const root = document.getElementById('guide-demo-root');
+    if (!root) return;
+    root.innerHTML = '';
+    DEMO_TIMERS.forEach(t => {
+      const total = t.defaultMin * 60;
+      demoState[t.id] = { timeLeft: total, totalSeconds: total };
+      const div = document.createElement('div');
+      div.className = 'timer-item';
+      div.innerHTML = `
+        <div class="timer-title">${t.title}</div>
+        <div class="timer-progress-wrapper">
+          <div class="timer-progress-track">
+            <div class="timer-progress-fill" id="gdemo-bar-${t.id}"></div>
+          </div>
+          <img src="${ICON}" class="timer-progress-icon" id="gdemo-icon-${t.id}" />
+        </div>
+        <div class="timer-digits" id="gdemo-num-${t.id}">00:00</div>
+      `;
+      root.appendChild(div);
+      refreshDemo(t.id);
+    });
+  }
+
+  function refreshDemo(id) {
+    const s = demoState[id];
+    if (!s) return;
+    const m = Math.floor(s.timeLeft / 60).toString().padStart(2,'0');
+    const sec = (s.timeLeft % 60).toString().padStart(2,'0');
+    const numEl = document.getElementById('gdemo-num-' + id);
+    if (numEl) numEl.innerText = m + ':' + sec;
+    const bar = document.getElementById('gdemo-bar-' + id);
+    const icon = document.getElementById('gdemo-icon-' + id);
+    if (!bar || !icon) return;
+    const total = s.totalSeconds || 1;
+    const elapsed = Math.max(0, total - s.timeLeft);
+    const ratio = Math.min(1, elapsed / total);
+    bar.style.transform = 'scaleX(' + ratio + ')';
+    const wrapper = icon.parentElement;
+    if (wrapper) {
+      const rectWidth = wrapper.clientWidth;
+      const iconWidth = icon.clientWidth || 36;
+      const maxX = rectWidth - iconWidth * 0.6;
+      icon.style.left = (maxX * ratio) + 'px';
+    }
+  }
+
+  function startDemoCountdowns() {
+    DEMO_TIMERS.forEach((t, i) => {
+      setTimeout(() => {
+        setInterval(() => {
+          if (demoState[t.id].timeLeft > 0) {
+            demoState[t.id].timeLeft--;
+          } else {
+            demoState[t.id].timeLeft = demoState[t.id].totalSeconds;
+          }
+          refreshDemo(t.id);
+        }, 1000);
+      }, i * 1200);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { buildDemo(); startDemoCountdowns(); });
+  } else {
+    buildDemo(); startDemoCountdowns();
+  }
+})();
+</script>
+</body>
+</html>
