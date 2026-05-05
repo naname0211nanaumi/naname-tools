@@ -2,174 +2,281 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<title>妨害表 Overlay</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ============================================
+     基本：透過背景・OBS Browser Source想定
+     ============================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: transparent;
+    font-family: "Mochiy Pop One", "Yusei Magic", "Hiragino Maru Gothic Pro",
+                 "ヒラギノ丸ゴ ProN", "Comic Sans MS", sans-serif;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  background: transparent;
-  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
-  overflow: hidden;
-  user-select: none;
-}
+  /* ===== カラー変数 ===== */
+  :root {
+    --sky-blue: #5fc1e8;
+    --sky-blue-dark: #3aa8d4;
+    --sky-blue-light: #a5dcef;
+    --pink: #f4b3c2;
+    --pink-dark: #e88aa2;
+    --pink-light: #fcd9e0;
+    --frame-white: #ffffff;
+    --text-shadow-strong: 2px 2px 0 #2a6a85, -2px -2px 0 #2a6a85,
+                          2px -2px 0 #2a6a85, -2px 2px 0 #2a6a85,
+                          0 2px 0 #2a6a85, 2px 0 0 #2a6a85;
+  }
 
-.container {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+  /* ===== ヘッダー（タイトル＋WIN残カウンタ） ===== */
+  .header {
+    margin: 12px;
+    background: var(--sky-blue);
+    border: 4px solid var(--frame-white);
+    border-radius: 12px;
+    padding: 8px 16px 10px;
+    position: relative;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  }
 
-.header {
-  text-align: center;
-}
-.header-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);
-}
-.header-subtitle {
-  font-size: 14px;
-  color: #fff;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-}
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+  }
 
-.grid {
-  display: grid;
-  gap: 5px;
-}
+  .title {
+    font-size: 38px;
+    font-weight: 900;
+    color: var(--frame-white);
+    text-shadow: var(--text-shadow-strong);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
 
-.block {
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  cursor: default;
-}
+  .win-counter {
+    background: var(--frame-white);
+    border: 3px solid var(--sky-blue-dark);
+    border-radius: 10px;
+    padding: 4px 10px;
+    text-align: center;
+    line-height: 1.1;
+    color: #2a6a85;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .win-counter-label {
+    font-size: 14px;
+    display: block;
+  }
+  .win-counter-num {
+    font-size: 22px;
+    color: #ff3a7a;
+    display: inline-block;
+  }
+  .win-counter-unit {
+    font-size: 14px;
+    display: inline-block;
+  }
 
-.block-name {
-  text-align: center;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 4px 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
+  .subtitle {
+    text-align: center;
+    color: var(--frame-white);
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    text-shadow: 1px 1px 0 #2a6a85;
+  }
 
-.block-image {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  min-height: 60px;
-}
+  /* ===== ブロックグリッド ===== */
+  .grid {
+    margin: 0 12px;
+    display: grid;
+    gap: 8px;
+  }
 
-.block-image img {
-  max-width: 100%;
-  max-height: 72px;
-  object-fit: contain;
-  display: block;
-}
+  .block {
+    /* background / border はインラインスタイルで上書き */
+    background: var(--sky-blue-light);
+    border: 3px solid var(--frame-white);
+    border-radius: 12px;
+    aspect-ratio: 1 / 1;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.12);
+  }
 
-.block-band {
-  text-align: center;
-  font-size: 11px;
-  font-weight: bold;
-  background: #f472b6;
-  color: #fff;
-  padding: 3px 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  .block-image {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    transition: transform 0.15s;
+  }
 
-.footer {
-  text-align: center;
-}
-.win-row {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  font-size: 18px;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-}
+  .block-name {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    /* background / color / border はインラインスタイルで上書き */
+    background: var(--sky-blue);
+    color: var(--frame-white);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 6px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+    line-height: 1.15;
+    border: 2px solid var(--frame-white);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 22px;
+  }
 
-/* フラッシュアニメーション（gift_received） */
-@keyframes blockPulse {
-  0%   { filter: brightness(1); }
-  20%  { filter: brightness(2.2) saturate(1.5); }
-  40%  { filter: brightness(1); }
-  60%  { filter: brightness(2.2) saturate(1.5); }
-  80%  { filter: brightness(1); }
-  100% { filter: brightness(1); }
-}
-.flash {
-  animation: blockPulse 0.6s ease-in-out;
-}
+  /* お助け帯（左上にナナメに）- 固定ピンク、変更不要 */
+  .block-band {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--pink-dark);
+    color: var(--frame-white);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 14px;
+    transform: rotate(-30deg) translate(-30%, 30%);
+    transform-origin: top left;
+    text-shadow: 1px 1px 0 #8a3a52;
+    border: 2px solid var(--frame-white);
+    border-radius: 4px;
+    z-index: 2;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
 
-/* スライドフェード */
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.fading-out { animation: fadeOut 0.3s forwards; }
-.fading-in  { animation: fadeIn 0.3s forwards; }
+  /* ===== 現在のWIN数フッター ===== */
+  .footer {
+    margin: 12px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+  }
+
+  .footer-rules {
+    background: var(--sky-blue);
+    border: 4px solid var(--frame-white);
+    border-radius: 12px;
+    min-height: 80px;
+    padding: 8px 12px;
+    color: var(--frame-white);
+    font-weight: 800;
+    text-shadow: 1px 1px 0 #2a6a85;
+    font-size: 14px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  }
+
+  .footer-win {
+    background: var(--sky-blue);
+    border: 4px solid var(--frame-white);
+    border-radius: 12px;
+    min-height: 80px;
+    padding: 4px 8px;
+    color: var(--frame-white);
+    text-align: center;
+    text-shadow: 1px 1px 0 #2a6a85;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .footer-win-label {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .footer-win-num {
+    font-size: 36px;
+    font-weight: 900;
+    color: #fff14a;
+    text-shadow: 2px 2px 0 #b8830f;
+    line-height: 1;
+  }
+
+  /* ===== ギフト受信エフェクト ===== */
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+  }
+  .block.flash .block-image {
+    animation: pulse 0.6s ease;
+  }
+
+  /* ===== スライドフェード ===== */
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .grid.fading-out { animation: fadeOut 0.3s forwards; }
+  .grid.fading-in  { animation: fadeIn 0.3s forwards; }
 </style>
 </head>
 <body>
-<div class="container" id="container">
-  <div class="header" id="header"></div>
-  <div class="grid"   id="grid"></div>
-  <div class="footer" id="footer"></div>
+
+<div class="header">
+  <div class="title-row">
+    <div class="title" id="title">GTA山登り</div>
+    <div class="win-counter">
+      <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
+      <span class="win-counter-num" id="winCount">43</span><span
+        class="win-counter-unit" id="winCounterUnit">個</span>
+    </div>
+  </div>
+  <div class="subtitle" id="subtitle">-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1</div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  <div class="footer-rules" id="footerRules"></div>
+  <div class="footer-win">
+    <div class="footer-win-label" id="currentWinLabel">現在のWIN数</div>
+    <div class="footer-win-num" id="currentWin">0</div>
+  </div>
 </div>
 
 <script>
-let db = null;
+const $ = (id) => document.getElementById(id);
+
+// ===== State =====
+let currentSet = null;
+let currentSlideIntervalSec = 3;
 let currentPage = 0;
 let slideTimer = null;
-let transitioning = false;
+let isTransitioning = false;
 
-// ===== WebSocket =====
-function connect() {
-  const ws = new WebSocket('ws://' + location.host);
-
-  ws.addEventListener('message', (ev) => {
-    const msg = JSON.parse(ev.data);
-    if (msg.type === 'set_updated') {
-      db = msg.data;
-      currentPage = 0;
-      stopSlide();
-      render();
-      startSlide();
-    } else if (msg.type === 'gift_received') {
-      flashBlock(msg.blockId);
-    }
-  });
-
-  ws.addEventListener('close', () => setTimeout(connect, 3000));
-  ws.addEventListener('error', () => ws.close());
-}
-connect();
-
-// ===== ユーティリティ =====
-function activeSet() {
-  return db?.sets?.find(s => s.id === db.activeSetId) ?? null;
-}
-
-function blockColor(block, set) {
-  const base = block.obstacleType === 'obstacle' ? set.obstacleColor : set.helpColor;
-  const ov = block.colorOverride ?? {};
+// ===== カラーユーティリティ =====
+function getBlockColor(b, set) {
+  const base = b.obstacleType === "help" ? set.helpColor : set.obstacleColor;
+  if (!base) return null;
+  const ov = b.colorOverride ?? {};
   return {
     bg:          ov.bg          ?? base.bg,
     text:        ov.text        ?? base.text,
@@ -179,164 +286,162 @@ function blockColor(block, set) {
 }
 
 // ===== 描画 =====
-function render() {
-  const set = activeSet();
-  if (!set) return;
+function render(set) {
+  $("title").textContent = set.title || "";
+  $("subtitle").textContent = set.subtitle || "";
+  $("winCounterLabel").textContent = set.winCounterLabel || "";
+  $("winCount").textContent = set.winCount ?? 0;
+  $("winCounterUnit").textContent = set.winCounterUnit || "";
+  $("currentWinLabel").textContent = set.currentWinLabel || "現在のWIN数";
+  $("currentWin").textContent = set.currentWin ?? 0;
+  $("footerRules").textContent = "";
 
-  renderHeader(set);
-  renderFooter(set);
-
-  const grid = document.getElementById('grid');
-  grid.style.gridTemplateColumns = `repeat(${set.layoutColumns}, 1fr)`;
+  const cols = Math.max(1, Math.min(10, set.layoutColumns || 7));
+  $("grid").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
   renderPage(set);
 }
 
-function renderHeader(set) {
-  const el = document.getElementById('header');
-  const hasContent = set.title || set.subtitle;
-  el.style.display = hasContent ? '' : 'none';
-  el.innerHTML = '';
-  if (set.title) {
-    const t = document.createElement('div');
-    t.className = 'header-title';
-    t.textContent = set.title;
-    el.appendChild(t);
-  }
-  if (set.subtitle) {
-    const s = document.createElement('div');
-    s.className = 'header-subtitle';
-    s.textContent = set.subtitle;
-    el.appendChild(s);
-  }
-}
-
-function renderFooter(set) {
-  const el = document.getElementById('footer');
-  el.innerHTML = '';
-  const row = document.createElement('div');
-  row.className = 'win-row';
-
-  const label = document.createElement('span');
-  label.textContent = set.winCounterLabel;
-
-  const count = document.createElement('span');
-  count.id = 'win-count';
-  count.textContent = set.winCount;
-
-  const unit = document.createElement('span');
-  unit.textContent = set.winCounterUnit;
-
-  row.appendChild(label);
-  row.appendChild(count);
-  row.appendChild(unit);
-  el.appendChild(row);
-}
-
 function renderPage(set) {
-  const enabled = set.blocks.filter(b => b.enabled);
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
   const maxPerPage = set.layoutColumns * 2;
   const totalPages = Math.max(1, Math.ceil(enabled.length / maxPerPage));
-  const page = Math.min(currentPage, totalPages - 1);
-
+  const page = currentPage % totalPages;
   const slice = enabled.slice(page * maxPerPage, (page + 1) * maxPerPage);
 
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
+  const grid = $("grid");
+  grid.innerHTML = "";
 
-  for (const block of slice) {
-    grid.appendChild(makeBlockEl(block, set));
+  for (const b of slice) {
+    grid.appendChild(makeBlockEl(b, set));
   }
 }
 
-function makeBlockEl(block, set) {
-  const c = blockColor(block, set);
-  const border = `${c.borderWidth}px solid ${c.border}`;
+function makeBlockEl(b, set) {
+  const color = getBlockColor(b, set);
+  const imgScale = b.imageScale ?? 1.0;
 
-  const wrap = document.createElement('div');
-  wrap.className = 'block';
-  wrap.dataset.blockId = block.id;
-  wrap.style.cssText = `background:${c.bg};border:${border};`;
+  const div = document.createElement("div");
+  div.className = "block";
+  div.dataset.blockId = b.id;
 
-  const name = document.createElement('div');
-  name.className = 'block-name';
-  name.textContent = block.obstacleName;
-  name.style.cssText = `background:${c.bg};color:${c.text};border-bottom:${border};`;
-  wrap.appendChild(name);
-
-  const imgWrap = document.createElement('div');
-  imgWrap.className = 'block-image';
-  if (block.gift?.giftImageURL) {
-    const img = document.createElement('img');
-    img.src = block.gift.giftImageURL;
-    img.style.transform = `scale(${block.imageScale ?? 1})`;
-    imgWrap.appendChild(img);
-  }
-  wrap.appendChild(imgWrap);
-
-  if (block.bandEnabled && block.bandText) {
-    const band = document.createElement('div');
-    band.className = 'block-band';
-    band.textContent = block.bandText;
-    wrap.appendChild(band);
+  if (color) {
+    div.style.background = color.bg;
+    div.style.border = `${color.borderWidth}px solid ${color.border}`;
   }
 
-  return wrap;
-}
+  // お助け帯（固定ピンク）
+  if (b.bandEnabled && b.bandText) {
+    const band = document.createElement("div");
+    band.className = "block-band";
+    band.textContent = b.bandText;
+    div.appendChild(band);
+  }
 
-// ===== フラッシュ =====
-function flashBlock(blockId) {
-  const el = document.querySelector(`[data-block-id="${blockId}"]`);
-  if (!el) return;
-  el.classList.remove('flash');
-  void el.offsetWidth;
-  el.classList.add('flash');
-  el.addEventListener('animationend', () => el.classList.remove('flash'), { once: true });
+  // ギフト画像
+  if (b.gift?.giftImageURL) {
+    const img = document.createElement("img");
+    img.className = "block-image";
+    img.src = b.gift.giftImageURL;
+    img.style.transform = `scale(${imgScale})`;
+    img.alt = "";
+    div.appendChild(img);
+  }
+
+  // 妨害名ラベル
+  const nameEl = document.createElement("div");
+  nameEl.className = "block-name";
+  nameEl.textContent = b.obstacleName || "";
+  if (color) {
+    nameEl.style.background = color.bg;
+    nameEl.style.color = color.text;
+    nameEl.style.borderColor = color.border;
+    nameEl.style.borderWidth = `${color.borderWidth}px`;
+    nameEl.style.borderStyle = "solid";
+  }
+  div.appendChild(nameEl);
+
+  return div;
 }
 
 // ===== スライド =====
-function startSlide() {
-  const set = activeSet();
-  if (!set || !db) return;
-
-  const enabled = set.blocks.filter(b => b.enabled);
+function startSlide(set, intervalSec) {
+  stopSlide();
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
   const maxPerPage = set.layoutColumns * 2;
   if (enabled.length <= maxPerPage) return;
 
-  const ms = Math.max(1, db.slideIntervalSec ?? 3) * 1000;
-  slideTimer = setInterval(slidePage, ms);
+  const ms = Math.max(1, intervalSec ?? 3) * 1000;
+  slideTimer = setInterval(() => slidePage(set), ms);
 }
 
 function stopSlide() {
   clearInterval(slideTimer);
   slideTimer = null;
-  transitioning = false;
+  isTransitioning = false;
 }
 
-function slidePage() {
-  if (transitioning) return;
-  const set = activeSet();
-  if (!set) return;
-
-  const enabled = set.blocks.filter(b => b.enabled);
+function slidePage(set) {
+  if (isTransitioning) return;
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
   const maxPerPage = set.layoutColumns * 2;
   const totalPages = Math.max(1, Math.ceil(enabled.length / maxPerPage));
 
-  const grid = document.getElementById('grid');
-  transitioning = true;
+  const grid = $("grid");
+  isTransitioning = true;
+  grid.classList.add("fading-out");
 
-  grid.classList.add('fading-out');
   setTimeout(() => {
-    grid.classList.remove('fading-out');
+    grid.classList.remove("fading-out");
     currentPage = (currentPage + 1) % totalPages;
     renderPage(set);
-    grid.classList.add('fading-in');
+    grid.classList.add("fading-in");
     setTimeout(() => {
-      grid.classList.remove('fading-in');
-      transitioning = false;
+      grid.classList.remove("fading-in");
+      isTransitioning = false;
     }, 300);
   }, 300);
 }
+
+// ===== 全体更新 =====
+function applyUpdate(set, slideIntervalSec) {
+  currentSet = set;
+  currentSlideIntervalSec = slideIntervalSec ?? 3;
+  currentPage = 0;
+  stopSlide();
+  render(set);
+  startSlide(set, currentSlideIntervalSec);
+}
+
+// ===== 初回ロード =====
+fetch("/api/active-set")
+  .then((r) => r.json())
+  .then((data) => {
+    // サーバーが { ...set, slideIntervalSec } を返す
+    const { slideIntervalSec, ...set } = data;
+    applyUpdate(set, slideIntervalSec);
+  })
+  .catch((e) => console.error("load failed", e));
+
+// ===== WebSocket =====
+const ws = new WebSocket(`ws://${location.host}/`);
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.type === "set_updated") {
+    applyUpdate(msg.data, msg.slideIntervalSec);
+  } else if (msg.type === "gift_received") {
+    const el = document.querySelector(`[data-block-id="${msg.blockId}"]`);
+    if (el) {
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+    }
+  }
+};
+ws.onclose = () => {
+  setTimeout(() => location.reload(), 2000);
+};
 </script>
+
 </body>
 </html>

@@ -1,16 +1,16 @@
 {
-  "activeSetId": "set1",
+  "activeSetId": "set_gta_climb",
   "slideIntervalSec": 3,
   "sets": [
     {
-      "id": "set1",
-      "name": "デフォルトセット",
-      "title": "妨害表",
-      "subtitle": "",
-      "winCounterLabel": "WIN",
-      "winCount": 0,
-      "winCounterUnit": "回",
-      "currentWinLabel": "現在のWIN",
+      "id": "set_gta_climb",
+      "name": "GTA山登りセット",
+      "title": "GTA山登り",
+      "subtitle": "-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1",
+      "winCounterLabel": "ホラゲ残り",
+      "winCount": 43,
+      "winCounterUnit": "個",
+      "currentWinLabel": "現在のWIN数",
       "currentWin": 0,
       "layoutColumns": 7,
       "obstacleColor": {
@@ -25,7 +25,60 @@
         "border": "#ffffff",
         "borderWidth": 3
       },
-      "blocks": []
+      "blocks": [
+        {
+          "id": "blk_001",
+          "obstacleName": "妨害名",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Rose",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "imageScale": 1.0
+        },
+        {
+          "id": "blk_002",
+          "obstacleName": "妨害名",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Doughnut",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "imageScale": 1.0
+        },
+        {
+          "id": "blk_003",
+          "obstacleName": "妨害名",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Floating Octopus",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/022d496f79aa50d3042f0660d37ed48a.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "imageScale": 1.0
+        },
+        {
+          "id": "blk_004",
+          "obstacleName": "お助け名",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Rose",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "imageScale": 1.0
+        }
+      ]
     }
   ]
 }

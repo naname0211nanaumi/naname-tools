@@ -1,21 +1,28 @@
-const PORT = 8788;
-const DB_PATH = new URL("../data/sets.json", import.meta.url).pathname;
-const PUBLIC_DIR = new URL("../public", import.meta.url).pathname;
+// server/main.ts
+// 妨害表ツール - サーバー本体
 
-type ColorConfig = {
+import { fetchGifts } from "./streamtoearn.ts";
+
+const PORT = 8788;
+const DATA_PATH = "./data/sets.json";
+
+// ============================================================
+// 型定義
+// ============================================================
+interface ColorConfig {
   bg: string;
   text: string;
   border: string;
   borderWidth: number;
-};
+}
 
-type GiftMapping = {
+interface GiftMapping {
   giftName: string;
   giftId?: string;
   giftImageURL: string;
-};
+}
 
-type Block = {
+interface Block {
   id: string;
   obstacleName: string;
   obstacleType: "obstacle" | "help";
@@ -30,9 +37,9 @@ type Block = {
     border?: string;
     borderWidth?: number;
   };
-};
+}
 
-type ObstacleSet = {
+interface ObstacleSet {
   id: string;
   name: string;
   title: string;
@@ -46,13 +53,13 @@ type ObstacleSet = {
   obstacleColor: ColorConfig;
   helpColor: ColorConfig;
   blocks: Block[];
-};
+}
 
-type DB = {
+interface DB {
   activeSetId: string;
   slideIntervalSec: number;
   sets: ObstacleSet[];
-};
+}
 
 const DEFAULT_OBSTACLE_COLOR: ColorConfig = {
   bg: "#a5dcef",
@@ -68,172 +75,216 @@ const DEFAULT_HELP_COLOR: ColorConfig = {
   borderWidth: 3,
 };
 
-let db: DB = { activeSetId: "", slideIntervalSec: 3, sets: [] };
+// ============================================================
+// データ層
+// ============================================================
+async function loadDB(): Promise<DB> {
+  const text = await Deno.readTextFile(DATA_PATH);
+  const db = JSON.parse(text) as DB;
+  // 既存データへのマイグレーション
+  if (!db.slideIntervalSec) db.slideIntervalSec = 3;
+  for (const set of db.sets) {
+    if (!set.obstacleColor) set.obstacleColor = { ...DEFAULT_OBSTACLE_COLOR };
+    if (!set.helpColor) set.helpColor = { ...DEFAULT_HELP_COLOR };
+  }
+  return db;
+}
 
-async function loadDB(): Promise<void> {
-  try {
-    const text = await Deno.readTextFile(DB_PATH);
-    db = JSON.parse(text) as DB;
-    if (!db.slideIntervalSec) db.slideIntervalSec = 3;
-    for (const set of db.sets) {
-      if (!set.obstacleColor) set.obstacleColor = { ...DEFAULT_OBSTACLE_COLOR };
-      if (!set.helpColor) set.helpColor = { ...DEFAULT_HELP_COLOR };
+async function saveDB(db: DB): Promise<void> {
+  await Deno.writeTextFile(DATA_PATH, JSON.stringify(db, null, 2));
+}
+
+// ============================================================
+// WebSocket
+// ============================================================
+const sockets = new Set<WebSocket>();
+
+function broadcast(message: unknown): void {
+  const text = JSON.stringify(message);
+  for (const ws of sockets) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(text);
     }
-  } catch {
-    console.log("[DB] sets.json not found, using defaults");
   }
 }
 
-async function saveDB(): Promise<void> {
-  await Deno.writeTextFile(DB_PATH, JSON.stringify(db, null, 2));
-}
-
-const clients = new Set<WebSocket>();
-
-function broadcast(msg: unknown): void {
-  const json = JSON.stringify(msg);
-  for (const ws of clients) {
-    try {
-      ws.send(json);
-    } catch {
-      clients.delete(ws);
-    }
-  }
-}
-
-function getActiveSet(): ObstacleSet | undefined {
-  return db.sets.find((s) => s.id === db.activeSetId);
-}
-
-function safeJsonParse(text: string): Record<string, unknown> | null {
-  try {
-    const parsed = JSON.parse(text);
-    return parsed && typeof parsed === "object"
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function getContentType(path: string): string {
-  if (path.endsWith(".html")) return "text/html; charset=utf-8";
-  if (path.endsWith(".css")) return "text/css; charset=utf-8";
-  if (path.endsWith(".js")) return "application/javascript; charset=utf-8";
-  if (path.endsWith(".json")) return "application/json; charset=utf-8";
-  if (path.endsWith(".png")) return "image/png";
-  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
-  return "application/octet-stream";
-}
-
-async function serveStatic(filePath: string): Promise<Response> {
-  try {
-    const data = await Deno.readFile(`${PUBLIC_DIR}/${filePath}`);
-    return new Response(data, {
-      headers: { "content-type": getContentType(filePath) },
-    });
-  } catch {
-    return new Response("Not Found", { status: 404 });
-  }
-}
-
-function log(msg: string): void {
-  console.log(`[${new Date().toISOString()}] ${msg}`);
-}
-
-await loadDB();
-log(`Starting obstacle-table server on port ${PORT}`);
-
-Deno.serve({ port: PORT }, async (req) => {
+// ============================================================
+// ルーティング
+// ============================================================
+async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
+  const path = url.pathname;
 
-  // ===== WebSocket =====
-  if (req.headers.get("upgrade")?.toLowerCase() === "websocket") {
+  // WebSocket
+  if (req.headers.get("upgrade") === "websocket") {
     const { socket, response } = Deno.upgradeWebSocket(req);
-    socket.onopen = () => {
-      clients.add(socket);
-      log(`[WS] open clients=${clients.size}`);
-      try {
-        socket.send(JSON.stringify({ type: "set_updated", data: db }));
-      } catch {
-        clients.delete(socket);
-      }
-    };
-    socket.onmessage = () => {};
-    socket.onclose = () => {
-      clients.delete(socket);
-      log(`[WS] close`);
-    };
-    socket.onerror = () => clients.delete(socket);
+    socket.onopen = () => sockets.add(socket);
+    socket.onclose = () => sockets.delete(socket);
+    socket.onerror = () => sockets.delete(socket);
     return response;
   }
 
-  // ===== API: DB取得 =====
-  if (url.pathname === "/api/db" && req.method === "GET") {
-    return new Response(JSON.stringify(db), {
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
+  // ===== Webhook =====
+  if (path === "/webhook" && req.method === "POST") {
+    return await handleWebhook(req);
   }
 
-  // ===== API: DB保存 =====
-  if (url.pathname === "/api/db" && req.method === "POST") {
-    const text = await req.text();
-    const newDB = safeJsonParse(text) as unknown as DB | null;
-    if (!newDB || !Array.isArray(newDB.sets)) {
-      return new Response("Bad Request", { status: 400 });
-    }
-    db = newDB;
-    if (!db.slideIntervalSec) db.slideIntervalSec = 3;
-    await saveDB();
-    broadcast({ type: "set_updated", data: db });
-    log("[API] DB saved and broadcasted");
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
+  // ===== API: アクティブセット取得（slideIntervalSec含む） =====
+  if (path === "/api/active-set" && req.method === "GET") {
+    const db = await loadDB();
+    const set = db.sets.find((s) => s.id === db.activeSetId);
+    if (!set) return new Response("Active set not found", { status: 404 });
+    return Response.json({ ...set, slideIntervalSec: db.slideIntervalSec });
   }
 
-  // ===== TikFinity Webhook =====
-  if (url.pathname === "/webhook" && req.method === "POST") {
-    let body: Record<string, unknown> = {};
+  // ===== API: 全セット取得 =====
+  if (path === "/api/sets" && req.method === "GET") {
+    const db = await loadDB();
+    return Response.json(db);
+  }
+
+  // ===== API: DB全体保存（admin保存ボタン） =====
+  if (path === "/api/sets" && req.method === "POST") {
+    const incoming = await req.json() as DB;
+    await saveDB(incoming);
+
+    // overlayへアクティブセット変更を配信（slideIntervalSec付き）
+    const activeSet = incoming.sets.find((s) => s.id === incoming.activeSetId);
+    broadcast({
+      type: "set_updated",
+      data: activeSet,
+      slideIntervalSec: incoming.slideIntervalSec ?? 3,
+    });
+
+    return Response.json({ ok: true });
+  }
+
+  // ===== API: streamtoearn ギフト一覧 =====
+  if (path === "/api/gifts" && req.method === "GET") {
+    const force = url.searchParams.get("refresh") === "1";
     try {
-      const text = await req.text();
-      body = safeJsonParse(text) ??
-        Object.fromEntries(new URLSearchParams(text).entries());
-    } catch { /* ignore */ }
-
-    const giftName = String(body.giftName ?? "").trim();
-    if (giftName) {
-      const activeSet = getActiveSet();
-      if (activeSet) {
-        const block = activeSet.blocks.find(
-          (b) => b.enabled && b.gift.giftName === giftName,
-        );
-        if (block) {
-          if (!block.gift.giftId && body.giftId) {
-            block.gift.giftId = String(body.giftId);
-            await saveDB();
-          }
-          broadcast({ type: "gift_received", blockId: block.id, giftName });
-          log(`[WEBHOOK] gift_received: ${giftName} → block ${block.id}`);
-        }
-      }
+      const gifts = await fetchGifts(force);
+      return Response.json({ gifts });
+    } catch (e) {
+      return Response.json(
+        { error: String(e), gifts: [] },
+        { status: 500 },
+      );
     }
-
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
   }
 
   // ===== 静的ファイル =====
-  if (url.pathname === "/" || url.pathname === "/overlay") {
-    return serveStatic("overlay.html");
+  if (path === "/" || path === "/overlay") {
+    return await serveFile("./public/overlay.html", "text/html");
   }
-  if (url.pathname === "/admin") {
-    return serveStatic("admin.html");
+  if (path === "/admin") {
+    return await serveFile("./public/admin.html", "text/html");
   }
-
-  const filePath = url.pathname.replace(/^\//, "");
-  if (filePath) return serveStatic(filePath);
 
   return new Response("Not Found", { status: 404 });
-});
+}
+
+async function serveFile(
+  path: string,
+  contentType: string,
+): Promise<Response> {
+  try {
+    const content = await Deno.readTextFile(path);
+    return new Response(content, {
+      headers: { "content-type": `${contentType}; charset=utf-8` },
+    });
+  } catch {
+    return new Response("File not found", { status: 404 });
+  }
+}
+
+// ============================================================
+// TikFinity Webhook
+// ============================================================
+interface TikFinityPayload {
+  event?: string;
+  data?: {
+    giftId?: number | string;
+    giftName?: string;
+    diamondCount?: number;
+    repeatCount?: number;
+    repeatEnd?: boolean;
+    user?: {
+      nickname?: string;
+      uniqueId?: string;
+    };
+  };
+  // 直フィールド版
+  giftId?: number | string;
+  giftName?: string;
+  diamondCount?: number;
+}
+
+async function handleWebhook(req: Request): Promise<Response> {
+  try {
+    const payload = await req.json() as TikFinityPayload;
+    const giftId = String(payload.data?.giftId ?? payload.giftId ?? "");
+    const giftName = payload.data?.giftName ?? payload.giftName ?? "";
+    const diamonds = payload.data?.diamondCount ?? payload.diamondCount ?? 0;
+    const userName = payload.data?.user?.nickname ?? "anonymous";
+
+    if (!giftName) {
+      return Response.json({ ok: false, reason: "no giftName" });
+    }
+
+    const db = await loadDB();
+    const activeSet = db.sets.find((s) => s.id === db.activeSetId);
+    if (!activeSet) {
+      return Response.json({ ok: false, reason: "no active set" });
+    }
+
+    const block = activeSet.blocks.find(
+      (b) => b.enabled && b.gift.giftName === giftName,
+    );
+
+    // giftIdの自動補完（初回受信時）
+    if (block && giftId && !block.gift.giftId) {
+      block.gift.giftId = giftId;
+      await saveDB(db);
+      console.log(
+        `[gift-id-bound] ${giftName} → giftId=${giftId} (auto-saved)`,
+      );
+    }
+
+    if (block) {
+      broadcast({
+        type: "gift_received",
+        blockId: block.id,
+        giftName,
+        giftId,
+        diamonds,
+        userName,
+        obstacleName: block.obstacleName,
+        obstacleType: block.obstacleType,
+        timestamp: Date.now(),
+      });
+      console.log(
+        `[GIFT] ${userName} → ${giftName}(${diamonds}💎) → ${block.obstacleName}`,
+      );
+    } else {
+      console.log(
+        `[GIFT-UNMAPPED] ${userName} → ${giftName}(id:${giftId}, ${diamonds}💎)`,
+      );
+    }
+
+    return Response.json({ ok: true });
+  } catch (e) {
+    console.error("Webhook error:", e);
+    return Response.json({ ok: false, error: String(e) }, { status: 500 });
+  }
+}
+
+// ============================================================
+// 起動
+// ============================================================
+console.log(`妨害表ツール起動: http://localhost:${PORT}`);
+console.log(`  Overlay: http://localhost:${PORT}/overlay`);
+console.log(`  Admin:   http://localhost:${PORT}/admin`);
+console.log(`  Webhook: http://localhost:${PORT}/webhook`);
+
+Deno.serve({ port: PORT }, handler);
