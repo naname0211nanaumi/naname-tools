@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>妨害表 Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Yusei+Magic&display=swap" rel="stylesheet">
 <style>
   /* ============================================
      基本：透過背景・OBS Browser Source想定
@@ -55,9 +58,12 @@
     font-size: 38px;
     font-weight: 900;
     color: var(--frame-white);
-    text-shadow: var(--text-shadow-strong);
+    -webkit-text-stroke: 2px #2a6a85;
+    text-shadow: 3px 3px 0 #2a6a85, -1px -1px 0 #2a6a85,
+                 1px -1px 0 #2a6a85, -1px 1px 0 #2a6a85;
     letter-spacing: 0.05em;
     line-height: 1;
+    paint-order: stroke fill;
   }
 
   .win-counter {
@@ -92,7 +98,9 @@
     font-weight: 700;
     margin-top: 2px;
     letter-spacing: 0.02em;
+    -webkit-text-stroke: 1px #2a6a85;
     text-shadow: 1px 1px 0 #2a6a85;
+    paint-order: stroke fill;
   }
 
   /* ===== ブロックグリッド ===== */
@@ -137,7 +145,9 @@
     text-align: center;
     padding: 2px 4px;
     border-radius: 6px;
+    -webkit-text-stroke: 0.5px rgba(0,0,0,0.5);
     text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+    paint-order: stroke fill;
     line-height: 1.15;
     border: 2px solid var(--frame-white);
     display: flex;
