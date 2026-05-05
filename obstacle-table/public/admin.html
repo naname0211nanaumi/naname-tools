@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>妨害表 Admin</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 16px;
+  font-size: 14px;
+}
+
+h2 { font-size: 16px; font-weight: bold; color: #a5dcef; margin-bottom: 12px; border-bottom: 1px solid #334; padding-bottom: 6px; }
+h3 { font-size: 14px; font-weight: bold; color: #ccc; margin: 10px 0 6px; }
+
+.section {
+  background: #16213e;
+  border: 1px solid #2a3a5e;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+label { display: block; font-size: 12px; color: #aaa; margin-bottom: 3px; }
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  background: #0f1a30;
+  border: 1px solid #2a3a5e;
+  border-radius: 5px;
+  color: #e0e0e0;
+  padding: 5px 8px;
+  font-size: 13px;
+  width: 100%;
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus { outline: 2px solid #a5dcef; }
+
+input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid #2a3a5e;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #0f1a30;
+  vertical-align: middle;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #a5dcef;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #a5dcef;
+  vertical-align: middle;
+}
+
+.row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.col { flex: 1; min-width: 80px; }
+.col-auto { flex: 0 0 auto; }
+
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:active { opacity: 0.7; }
+.btn-primary { background: #a5dcef; color: #1a1a2e; }
+.btn-success { background: #6ee7b7; color: #1a1a2e; }
+.btn-danger  { background: #f87171; color: #fff; }
+.btn-warn    { background: #fbbf24; color: #1a1a2e; }
+.btn-gray    { background: #4b5563; color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.color-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.color-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 100px;
+}
+.color-input-pair {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.color-input-pair input[type="text"] {
+  width: 80px;
+}
+
+.block-card {
+  background: #0f1a30;
+  border: 1px solid #2a3a5e;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.block-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.block-title {
+  font-weight: bold;
+  color: #a5dcef;
+  flex: 1;
+  min-width: 100px;
+}
+
+.block-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .block-body { grid-template-columns: 1fr; }
+}
+
+.override-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #2a3a5e;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.tag-obstacle { background: #a5dcef33; color: #a5dcef; border: 1px solid #a5dcef55; }
+.tag-help     { background: #fcd9e033; color: #fcd9e0; border: 1px solid #fcd9e055; }
+
+.status-bar {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  background: #16213e;
+  border: 1px solid #2a3a5e;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #aaa;
+  z-index: 100;
+}
+.status-bar.ok   { color: #6ee7b7; border-color: #6ee7b755; }
+.status-bar.err  { color: #f87171; border-color: #f8717155; }
+
+.set-selector-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.set-selector-row select { flex: 1; }
+
+.win-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- グローバル設定 -->
+<div class="section" id="global-section">
+  <h2>グローバル設定</h2>
+  <div class="row">
+    <div class="col" style="max-width:160px;">
+      <label>スライド間隔（秒）</label>
+      <input type="number" id="g-slideIntervalSec" min="1" max="60" step="1" value="3">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" onclick="saveGlobal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- セット選択 -->
+<div class="section">
+  <h2>セット</h2>
+  <div class="set-selector-row">
+    <select id="set-selector" onchange="onSetChange()"></select>
+    <button class="btn btn-success" onclick="newSet()">＋ 新規セット</button>
+    <button class="btn btn-gray"    onclick="duplicateSet()">複製</button>
+  </div>
+</div>
+
+<!-- セット編集 -->
+<div class="section" id="set-editor" style="display:none">
+  <h2 id="set-editor-title">セット編集</h2>
+
+  <!-- 基本情報 -->
+  <div class="row" style="margin-bottom:10px;">
+    <div class="col">
+      <label>セット名（管理用）</label>
+      <input type="text" id="s-name">
+    </div>
+    <div class="col">
+      <label>タイトル（overlay表示）</label>
+      <input type="text" id="s-title">
+    </div>
+    <div class="col">
+      <label>サブタイトル</label>
+      <input type="text" id="s-subtitle">
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:10px;">
+    <div class="col" style="max-width:80px;">
+      <label>列数</label>
+      <input type="number" id="s-columns" min="1" max="10">
+    </div>
+    <div class="col">
+      <label>WINラベル</label>
+      <input type="text" id="s-winCounterLabel">
+    </div>
+    <div class="col" style="max-width:80px;">
+      <label>WIN数</label>
+      <input type="number" id="s-winCount" min="0">
+    </div>
+    <div class="col">
+      <label>WIN単位</label>
+      <input type="text" id="s-winCounterUnit">
+    </div>
+    <div class="col">
+      <label>現WIN ラベル</label>
+      <input type="text" id="s-currentWinLabel">
+    </div>
+    <div class="col" style="max-width:80px;">
+      <label>現WIN</label>
+      <input type="number" id="s-currentWin" min="0">
+    </div>
+  </div>
+
+  <!-- WINカウンター操作 -->
+  <div class="win-controls">
+    <button class="btn btn-success btn-sm" onclick="winDelta(1)">WIN +1</button>
+    <button class="btn btn-warn    btn-sm" onclick="winDelta(-1)">WIN -1</button>
+    <button class="btn btn-gray    btn-sm" onclick="winReset()">WIN リセット</button>
+  </div>
+
+  <!-- カラー設定 -->
+  <h3 style="margin-top:14px;">妨害ブロック デフォルトカラー</h3>
+  <div id="obstacle-color-fields"></div>
+
+  <h3 style="margin-top:12px;">お助けブロック デフォルトカラー</h3>
+  <div id="help-color-fields"></div>
+
+  <!-- 保存/削除 -->
+  <div class="row" style="margin-top:14px;">
+    <button class="btn btn-primary" onclick="saveSet()">セット保存</button>
+    <button class="btn btn-success" onclick="setActive()" id="btn-set-active">このセットをアクティブに</button>
+    <button class="btn btn-danger"  onclick="deleteSet()">セット削除</button>
+  </div>
+</div>
+
+<!-- ブロック一覧 -->
+<div class="section" id="blocks-section" style="display:none">
+  <h2>ブロック</h2>
+  <button class="btn btn-success" style="margin-bottom:10px;" onclick="addBlock()">＋ ブロック追加</button>
+  <div id="block-list"></div>
+</div>
+
+<div class="status-bar" id="status-bar">接続中…</div>
+
+<script>
+// ===== State =====
+let db = null;
+let currentSetId = null;
+
+// ===== WebSocket =====
+function connect() {
+  const ws = new WebSocket('ws://' + location.host);
+  ws.addEventListener('open', () => setStatus('接続済み', 'ok'));
+  ws.addEventListener('message', (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.type === 'set_updated') {
+      db = msg.data;
+      if (!currentSetId) currentSetId = db.activeSetId;
+      renderAll();
+    }
+  });
+  ws.addEventListener('close', () => { setStatus('切断 (再接続中…)', 'err'); setTimeout(connect, 3000); });
+  ws.addEventListener('error', () => ws.close());
+}
+connect();
+
+// ===== Helpers =====
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = 'status-bar ' + cls;
+}
+
+function uuid() {
+  return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function currentSet() {
+  return db?.sets?.find(s => s.id === currentSetId) ?? null;
+}
+
+async function postDB() {
+  const resp = await fetch('/api/db', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(db),
+  });
+  if (resp.ok) setStatus('保存しました', 'ok');
+  else setStatus('保存エラー', 'err');
+}
+
+// ===== Render =====
+function renderAll() {
+  renderGlobal();
+  renderSetSelector();
+  renderSetEditor();
+  renderBlocks();
+}
+
+function renderGlobal() {
+  document.getElementById('g-slideIntervalSec').value = db?.slideIntervalSec ?? 3;
+}
+
+function renderSetSelector() {
+  const sel = document.getElementById('set-selector');
+  const prev = sel.value || currentSetId;
+  sel.innerHTML = '';
+  for (const s of (db?.sets ?? [])) {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.name + (s.id === db.activeSetId ? ' ★' : '');
+    sel.appendChild(opt);
+  }
+  if (prev && db?.sets?.find(s => s.id === prev)) {
+    sel.value = prev;
+    currentSetId = prev;
+  } else if (db?.sets?.length) {
+    currentSetId = db.sets[0].id;
+    sel.value = currentSetId;
+  }
+}
+
+// ===== カラー入力ペア =====
+function makeColorFields(containerId, prefix, colorObj) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'color-row';
+
+  const fields = [
+    { key: 'bg',    label: '背景色' },
+    { key: 'text',  label: 'テキスト色' },
+    { key: 'border',label: 'ボーダー色' },
+  ];
+
+  for (const f of fields) {
+    const div = document.createElement('div');
+    div.className = 'color-field';
+    div.innerHTML = `<label>${f.label}</label>
+      <div class="color-input-pair">
+        <input type="color" id="${prefix}-${f.key}-picker" value="${colorObj[f.key] ?? '#ffffff'}">
+        <input type="text" id="${prefix}-${f.key}-text" value="${colorObj[f.key] ?? '#ffffff'}" maxlength="7" style="width:82px;">
+      </div>`;
+    wrap.appendChild(div);
+
+    // sync picker ↔ text
+    setTimeout(() => {
+      const picker = document.getElementById(`${prefix}-${f.key}-picker`);
+      const text   = document.getElementById(`${prefix}-${f.key}-text`);
+      picker.addEventListener('input', () => { text.value = picker.value; });
+      text.addEventListener('change', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      });
+    }, 0);
+  }
+
+  // borderWidth
+  const bwDiv = document.createElement('div');
+  bwDiv.className = 'color-field';
+  bwDiv.innerHTML = `<label>ボーダー太さ (px)</label>
+    <input type="number" id="${prefix}-borderWidth" min="0" max="20" value="${colorObj.borderWidth ?? 3}" style="width:70px;">`;
+  wrap.appendChild(bwDiv);
+
+  container.appendChild(wrap);
+}
+
+function readColorFields(prefix) {
+  return {
+    bg:          document.getElementById(`${prefix}-bg-text`).value,
+    text:        document.getElementById(`${prefix}-text-text`).value,
+    border:      document.getElementById(`${prefix}-border-text`).value,
+    borderWidth: parseInt(document.getElementById(`${prefix}-borderWidth`).value, 10) || 0,
+  };
+}
+
+function renderSetEditor() {
+  const set = currentSet();
+  const editorEl   = document.getElementById('set-editor');
+  const blocksEl   = document.getElementById('blocks-section');
+
+  if (!set) {
+    editorEl.style.display = 'none';
+    blocksEl.style.display = 'none';
+    return;
+  }
+
+  editorEl.style.display = '';
+  blocksEl.style.display = '';
+
+  document.getElementById('set-editor-title').textContent = 'セット編集: ' + set.name;
+  document.getElementById('btn-set-active').textContent =
+    set.id === db.activeSetId ? '★ アクティブ' : 'このセットをアクティブに';
+
+  document.getElementById('s-name').value            = set.name;
+  document.getElementById('s-title').value           = set.title;
+  document.getElementById('s-subtitle').value        = set.subtitle;
+  document.getElementById('s-columns').value         = set.layoutColumns;
+  document.getElementById('s-winCounterLabel').value = set.winCounterLabel;
+  document.getElementById('s-winCount').value        = set.winCount;
+  document.getElementById('s-winCounterUnit').value  = set.winCounterUnit;
+  document.getElementById('s-currentWinLabel').value = set.currentWinLabel;
+  document.getElementById('s-currentWin').value      = set.currentWin;
+
+  makeColorFields('obstacle-color-fields', 'oc', set.obstacleColor);
+  makeColorFields('help-color-fields',     'hc', set.helpColor);
+}
+
+// ===== ブロック描画 =====
+function renderBlocks() {
+  const set = currentSet();
+  const container = document.getElementById('block-list');
+  container.innerHTML = '';
+  if (!set) return;
+
+  set.blocks.forEach((block, idx) => {
+    container.appendChild(makeBlockCard(block, idx, set));
+  });
+}
+
+function makeBlockCard(block, idx, set) {
+  const card = document.createElement('div');
+  card.className = 'block-card';
+  card.id = `block-card-${block.id}`;
+
+  const hasOverride = !!block.colorOverride;
+
+  card.innerHTML = `
+    <div class="block-header">
+      <span class="block-title">#${idx + 1} ${block.obstacleName || '（未設定）'}</span>
+      <span class="tag tag-${block.obstacleType}">${block.obstacleType === 'obstacle' ? '妨害' : 'お助け'}</span>
+      <label style="display:flex;align-items:center;gap:4px;margin:0;">
+        <input type="checkbox" ${block.enabled ? 'checked' : ''} onchange="toggleField('${block.id}','enabled',this.checked)"> 有効
+      </label>
+      <button class="btn btn-danger btn-sm" onclick="deleteBlock('${block.id}')">削除</button>
+    </div>
+
+    <div class="block-body">
+      <div>
+        <label>妨害名</label>
+        <input type="text" value="${esc(block.obstacleName)}" onchange="setBlockField('${block.id}','obstacleName',this.value)" onblur="saveAndRefresh()">
+      </div>
+      <div>
+        <label>タイプ</label>
+        <select onchange="setBlockField('${block.id}','obstacleType',this.value);saveAndRefresh()">
+          <option value="obstacle" ${block.obstacleType === 'obstacle' ? 'selected' : ''}>妨害</option>
+          <option value="help"     ${block.obstacleType === 'help'     ? 'selected' : ''}>お助け</option>
+        </select>
+      </div>
+      <div>
+        <label>ギフト名（TikFinity giftName）</label>
+        <input type="text" value="${esc(block.gift?.giftName ?? '')}" onchange="setGiftField('${block.id}','giftName',this.value)" onblur="saveAndRefresh()">
+      </div>
+      <div>
+        <label>ギフト画像URL</label>
+        <input type="text" value="${esc(block.gift?.giftImageURL ?? '')}" onchange="setGiftField('${block.id}','giftImageURL',this.value)" onblur="saveAndRefresh()">
+      </div>
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" ${block.bandEnabled ? 'checked' : ''} onchange="toggleField('${block.id}','bandEnabled',this.checked)"> お助け帯を表示
+        </label>
+      </div>
+      <div>
+        <label>帯テキスト</label>
+        <input type="text" value="${esc(block.bandText ?? '')}" onchange="setBlockField('${block.id}','bandText',this.value)" onblur="saveAndRefresh()">
+      </div>
+      <div>
+        <label>画像スケール: <span id="scale-val-${block.id}">${block.imageScale ?? 1}</span></label>
+        <input type="range" min="0.5" max="1.5" step="0.05" value="${block.imageScale ?? 1}"
+          oninput="document.getElementById('scale-val-${block.id}').textContent=this.value"
+          onchange="setBlockField('${block.id}','imageScale',parseFloat(this.value));saveAndRefresh()">
+      </div>
+    </div>
+
+    <div class="override-section">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="ov-check-${block.id}" ${hasOverride ? 'checked' : ''}
+          onchange="toggleOverride('${block.id}',this.checked)">
+        個別カラーオーバーライド
+      </label>
+      <div id="ov-fields-${block.id}" style="${hasOverride ? '' : 'display:none;'}margin-top:8px;">
+        ${hasOverride ? makeOverrideFieldsHTML(block) : ''}
+      </div>
+    </div>
+  `;
+
+  return card;
+}
+
+function makeOverrideFieldsHTML(block) {
+  const ov = block.colorOverride ?? {};
+  const set = currentSet();
+  const base = block.obstacleType === 'obstacle' ? set.obstacleColor : set.helpColor;
+
+  function fieldHTML(key, label) {
+    const val = ov[key] ?? base[key] ?? '#ffffff';
+    return `<div class="color-field">
+      <label>${label}</label>
+      <div class="color-input-pair">
+        <input type="color" id="ov-${block.id}-${key}-picker" value="${val}"
+          oninput="document.getElementById('ov-${block.id}-${key}-text').value=this.value">
+        <input type="text" id="ov-${block.id}-${key}-text" value="${val}" maxlength="7" style="width:82px;"
+          onchange="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('ov-${block.id}-${key}-picker').value=this.value">
+      </div>
+    </div>`;
+  }
+
+  return `<div class="color-row">
+    ${fieldHTML('bg',     '背景色')}
+    ${fieldHTML('text',   'テキスト色')}
+    ${fieldHTML('border', 'ボーダー色')}
+    <div class="color-field">
+      <label>ボーダー太さ (px)</label>
+      <input type="number" id="ov-${block.id}-borderWidth" min="0" max="20"
+        value="${ov.borderWidth ?? base.borderWidth ?? 3}" style="width:70px;">
+    </div>
+  </div>
+  <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveOverride('${block.id}')">カラー適用</button>`;
+}
+
+// ===== アクション =====
+function onSetChange() {
+  currentSetId = document.getElementById('set-selector').value;
+  renderSetEditor();
+  renderBlocks();
+}
+
+function saveGlobal() {
+  db.slideIntervalSec = parseInt(document.getElementById('g-slideIntervalSec').value, 10) || 3;
+  postDB();
+}
+
+function saveSet() {
+  const set = currentSet();
+  if (!set) return;
+
+  set.name             = document.getElementById('s-name').value;
+  set.title            = document.getElementById('s-title').value;
+  set.subtitle         = document.getElementById('s-subtitle').value;
+  set.layoutColumns    = parseInt(document.getElementById('s-columns').value, 10) || 7;
+  set.winCounterLabel  = document.getElementById('s-winCounterLabel').value;
+  set.winCount         = parseInt(document.getElementById('s-winCount').value, 10) || 0;
+  set.winCounterUnit   = document.getElementById('s-winCounterUnit').value;
+  set.currentWinLabel  = document.getElementById('s-currentWinLabel').value;
+  set.currentWin       = parseInt(document.getElementById('s-currentWin').value, 10) || 0;
+  set.obstacleColor    = readColorFields('oc');
+  set.helpColor        = readColorFields('hc');
+
+  postDB();
+}
+
+function setActive() {
+  const set = currentSet();
+  if (!set) return;
+  db.activeSetId = set.id;
+  postDB();
+}
+
+function newSet() {
+  const id = uuid();
+  const s = {
+    id,
+    name: '新しいセット',
+    title: '妨害表',
+    subtitle: '',
+    winCounterLabel: 'WIN',
+    winCount: 0,
+    winCounterUnit: '回',
+    currentWinLabel: '現在のWIN',
+    currentWin: 0,
+    layoutColumns: 7,
+    obstacleColor: { bg: '#a5dcef', text: '#ffffff', border: '#ffffff', borderWidth: 3 },
+    helpColor:     { bg: '#fcd9e0', text: '#ffffff', border: '#ffffff', borderWidth: 3 },
+    blocks: [],
+  };
+  db.sets.push(s);
+  currentSetId = id;
+  if (!db.activeSetId) db.activeSetId = id;
+  postDB();
+}
+
+function duplicateSet() {
+  const set = currentSet();
+  if (!set) return;
+  const copy = JSON.parse(JSON.stringify(set));
+  copy.id   = uuid();
+  copy.name = copy.name + ' (コピー)';
+  copy.blocks = copy.blocks.map(b => ({ ...b, id: uuid() }));
+  db.sets.push(copy);
+  currentSetId = copy.id;
+  postDB();
+}
+
+function deleteSet() {
+  if (!currentSet()) return;
+  if (!confirm('このセットを削除しますか？')) return;
+  db.sets = db.sets.filter(s => s.id !== currentSetId);
+  if (db.activeSetId === currentSetId) db.activeSetId = db.sets[0]?.id ?? '';
+  currentSetId = db.sets[0]?.id ?? null;
+  postDB();
+}
+
+function winDelta(d) {
+  const set = currentSet();
+  if (!set) return;
+  set.winCount = Math.max(0, (set.winCount ?? 0) + d);
+  document.getElementById('s-winCount').value = set.winCount;
+  postDB();
+}
+
+function winReset() {
+  const set = currentSet();
+  if (!set) return;
+  set.winCount = 0;
+  document.getElementById('s-winCount').value = 0;
+  postDB();
+}
+
+function addBlock() {
+  const set = currentSet();
+  if (!set) return;
+  set.blocks.push({
+    id: uuid(),
+    obstacleName: '新しいブロック',
+    obstacleType: 'obstacle',
+    gift: { giftName: '', giftImageURL: '' },
+    enabled: true,
+    bandEnabled: false,
+    bandText: '',
+    imageScale: 1,
+  });
+  postDB();
+}
+
+function deleteBlock(blockId) {
+  const set = currentSet();
+  if (!set) return;
+  set.blocks = set.blocks.filter(b => b.id !== blockId);
+  postDB();
+}
+
+function setBlockField(blockId, field, value) {
+  const set = currentSet();
+  const block = set?.blocks?.find(b => b.id === blockId);
+  if (block) block[field] = value;
+}
+
+function setGiftField(blockId, field, value) {
+  const set = currentSet();
+  const block = set?.blocks?.find(b => b.id === blockId);
+  if (block) {
+    if (!block.gift) block.gift = { giftName: '', giftImageURL: '' };
+    block.gift[field] = value;
+  }
+}
+
+function toggleField(blockId, field, value) {
+  setBlockField(blockId, field, value);
+  postDB();
+}
+
+function saveAndRefresh() {
+  postDB();
+}
+
+function toggleOverride(blockId, enabled) {
+  const set = currentSet();
+  const block = set?.blocks?.find(b => b.id === blockId);
+  if (!block) return;
+
+  const fieldsDiv = document.getElementById(`ov-fields-${blockId}`);
+  if (enabled) {
+    const base = block.obstacleType === 'obstacle' ? set.obstacleColor : set.helpColor;
+    block.colorOverride = { ...base };
+    fieldsDiv.innerHTML = makeOverrideFieldsHTML(block);
+    fieldsDiv.style.display = '';
+  } else {
+    delete block.colorOverride;
+    fieldsDiv.innerHTML = '';
+    fieldsDiv.style.display = 'none';
+    postDB();
+  }
+}
+
+function saveOverride(blockId) {
+  const set = currentSet();
+  const block = set?.blocks?.find(b => b.id === blockId);
+  if (!block) return;
+
+  block.colorOverride = {
+    bg:          document.getElementById(`ov-${blockId}-bg-text`).value,
+    text:        document.getElementById(`ov-${blockId}-text-text`).value,
+    border:      document.getElementById(`ov-${blockId}-border-text`).value,
+    borderWidth: parseInt(document.getElementById(`ov-${blockId}-borderWidth`).value, 10) || 0,
+  };
+  postDB();
+}
+
+// XSS対策
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

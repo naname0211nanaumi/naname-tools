@@ -1,0 +1,31 @@
+{
+  "activeSetId": "set1",
+  "slideIntervalSec": 3,
+  "sets": [
+    {
+      "id": "set1",
+      "name": "デフォルトセット",
+      "title": "妨害表",
+      "subtitle": "",
+      "winCounterLabel": "WIN",
+      "winCount": 0,
+      "winCounterUnit": "回",
+      "currentWinLabel": "現在のWIN",
+      "currentWin": 0,
+      "layoutColumns": 7,
+      "obstacleColor": {
+        "bg": "#a5dcef",
+        "text": "#ffffff",
+        "border": "#ffffff",
+        "borderWidth": 3
+      },
+      "helpColor": {
+        "bg": "#fcd9e0",
+        "text": "#ffffff",
+        "border": "#ffffff",
+        "borderWidth": 3
+      },
+      "blocks": []
+    }
+  ]
+}
