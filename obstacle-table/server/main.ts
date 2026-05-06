@@ -37,6 +37,10 @@ interface Block {
     border?: string;
     borderWidth?: number;
   };
+  bandColor?: {
+    bg: string;
+    text: string;
+  };
 }
 
 interface ObstacleSet {
@@ -173,6 +177,26 @@ async function handler(req: Request): Promise<Response> {
     }
   }
 
+  // ===== API: local assets images =====
+  if (path === "/api/local-images" && req.method === "GET") {
+    try {
+      const images = [];
+      for await (const entry of Deno.readDir("./assets/images")) {
+        if (!entry.isFile) continue;
+        const name = entry.name;
+        const ext = name.split(".").pop()?.toLowerCase();
+        if (!ext || !["png", "jpg", "jpeg", "gif", "svg"].includes(ext)) continue;
+        images.push({
+          name,
+          imageURL: `/assets/images/${encodeURIComponent(name)}`,
+        });
+      }
+      return Response.json({ images });
+    } catch (e) {
+      return Response.json({ images: [], error: String(e) }, { status: 500 });
+    }
+  }
+
   // ===== 静的ファイル =====
   if (path === "/" || path === "/overlay") {
     return await serveFile("./public/overlay.html", "text/html");
@@ -181,7 +205,36 @@ async function handler(req: Request): Promise<Response> {
     return await serveFile("./public/admin.html", "text/html");
   }
 
+  if (path.startsWith("/assets/")) {
+    return await serveAsset(path);
+  }
+
   return new Response("Not Found", { status: 404 });
+}
+
+async function serveAsset(path: string): Promise<Response> {
+  const decoded = decodeURIComponent(path);
+  if (!decoded.startsWith("/assets/")) {
+    return new Response("Forbidden", { status: 403 });
+  }
+  const filePath = `.${decoded}`;
+  if (filePath.includes("..")) {
+    return new Response("Forbidden", { status: 403 });
+  }
+  try {
+    const data = await Deno.readFile(filePath);
+    const ext = filePath.split(".").pop()?.toLowerCase();
+    const contentType = ext === "svg" ? "image/svg+xml"
+      : ext === "png" ? "image/png"
+      : ext === "jpg" || ext === "jpeg" ? "image/jpeg"
+      : ext === "gif" ? "image/gif"
+      : "application/octet-stream";
+    return new Response(data, {
+      headers: { "content-type": contentType },
+    });
+  } catch {
+    return new Response("File not found", { status: 404 });
+  }
 }
 
 async function serveFile(

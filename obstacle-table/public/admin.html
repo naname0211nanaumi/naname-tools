@@ -266,6 +266,13 @@
       <input type="number" id="slideIntervalSec" min="1" max="60" step="1" value="3"
              style="width: 80px;" oninput="markDirty()">
     </div>
+    <div style="min-width: 180px;">
+      <label>ページ切替アニメーション</label>
+      <select id="transitionType" style="width: 100%;" oninput="markDirty()">
+        <option value="fade">フェード</option>
+        <option value="slide">スライド</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -329,6 +336,9 @@
   <!-- お助けカラー -->
   <h3>お助けブロック デフォルトカラー</h3>
   <div class="color-row" id="helpColorRow"></div>
+
+  <h3>帯カラー</h3>
+  <div class="color-row" id="bandColorRow"></div>
 </div>
 
 <!-- ブロック一覧 -->
@@ -347,6 +357,7 @@
         <th>名前</th>
         <th class="col-type">タイプ</th>
         <th>ギフト</th>
+        <th>画像サイズ</th>
         <th>帯</th>
         <th class="col-actions"></th>
       </tr>
@@ -428,10 +439,12 @@ function emptySet(id, name) {
     winCount: 0,
     winCounterUnit: "",
     currentWinLabel: "現在のWIN数",
-    currentWin: 0,
+    currentWin: null,
     layoutColumns: 7,
+    transitionType: "fade",
     obstacleColor: { bg: "#a5dcef", text: "#ffffff", border: "#ffffff", borderWidth: 3 },
     helpColor:     { bg: "#fcd9e0", text: "#ffffff", border: "#ffffff", borderWidth: 3 },
+    bandColor:     { bg: "#e88aa2", text: "#ffffff" },
     blocks: [],
   };
 }
@@ -570,6 +583,46 @@ function readColorFields(prefix) {
   return { bg, text, border, borderWidth: bw };
 }
 
+function makeBandColorFields(containerId, prefix, colorObj) {
+  const container = $(containerId);
+  container.innerHTML = "";
+
+  const fields = [
+    { key: "bg", label: "背景色" },
+    { key: "text", label: "テキスト色" },
+  ];
+
+  for (const f of fields) {
+    const val = colorObj?.[f.key] ?? "#ffffff";
+    const div = document.createElement("div");
+    div.className = "color-field";
+    div.innerHTML = `
+      <label>${f.label}</label>
+      <div class="color-pair">
+        <input type="color" id="${prefix}-${f.key}-p" value="${escapeAttr(val)}">
+        <input type="text"  id="${prefix}-${f.key}-t" value="${escapeAttr(val)}"
+               maxlength="7" style="width:82px;" oninput="markDirty()">
+      </div>`;
+    container.appendChild(div);
+
+    setTimeout(() => {
+      const picker = $(`${prefix}-${f.key}-p`);
+      const text   = $(`${prefix}-${f.key}-t`);
+      if (!picker || !text) return;
+      picker.addEventListener("input", () => { text.value = picker.value; markDirty(); });
+      text.addEventListener("change", () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      });
+    }, 0);
+  }
+}
+
+function readBandColorFields(prefix) {
+  const bg   = $(`${prefix}-bg-t`)?.value   ?? "#ffffff";
+  const text = $(`${prefix}-text-t`)?.value ?? "#ffffff";
+  return { bg, text };
+}
+
 // ============================================================
 // セット情報の双方向バインド
 // ============================================================
@@ -579,6 +632,7 @@ function renderCurrentSet() {
 
   // グローバル
   $("slideIntervalSec").value = db.slideIntervalSec ?? 3;
+  $("transitionType").value = s.transitionType || "fade";
 
   $("setName").value         = s.name || "";
   $("title").value           = s.title || "";
@@ -587,11 +641,12 @@ function renderCurrentSet() {
   $("winCount").value        = s.winCount ?? 0;
   $("winCounterUnit").value  = s.winCounterUnit || "";
   $("currentWinLabel").value = s.currentWinLabel || "";
-  $("currentWin").value      = s.currentWin ?? 0;
+  $("currentWin").value      = s.currentWin ?? "";
   $("layoutColumns").value   = s.layoutColumns ?? 7;
 
   makeColorFields("obstacleColorRow", "oc", s.obstacleColor);
   makeColorFields("helpColorRow",     "hc", s.helpColor);
+  makeBandColorFields("bandColorRow", "bc", s.bandColor);
 
   renderBlocks();
 }
@@ -608,10 +663,16 @@ function pullSetFromInputs() {
   s.winCount         = parseInt($("winCount").value || "0", 10);
   s.winCounterUnit   = $("winCounterUnit").value;
   s.currentWinLabel  = $("currentWinLabel").value;
-  s.currentWin       = parseInt($("currentWin").value || "0", 10);
+  s.transitionType   = $("transitionType").value || "fade";
+  const currentWinInput = $("currentWin").value.trim();
+  const currentWinValue = currentWinInput === "" ? null : parseInt(currentWinInput, 10);
+  s.currentWin       = currentWinValue === null || Number.isNaN(currentWinValue)
+    ? null
+    : currentWinValue;
   s.layoutColumns    = parseInt($("layoutColumns").value || "7", 10);
   s.obstacleColor    = readColorFields("oc");
   s.helpColor        = readColorFields("hc");
+  s.bandColor        = readBandColorFields("bc");
 }
 
 // ============================================================
@@ -656,6 +717,11 @@ function renderBlocks() {
         </div>
       </td>
       <td>
+        <input type="number" min="0.1" step="0.05" style="width:70px;"
+               value="${(typeof b.imageScale === 'number' ? b.imageScale : 1).toFixed(2)}"
+               onchange="updateBlockField(${i}, 'imageScale', parseFloat(this.value) || 1)">
+      </td>
+      <td>
         <label style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
           <input type="checkbox" ${b.bandEnabled ? "checked" : ""}
                  onchange="updateBlockField(${i}, 'bandEnabled', this.checked)">
@@ -665,6 +731,14 @@ function renderBlocks() {
                style="width: 70px; margin-top: 2px;"
                placeholder="お助け"
                onchange="updateBlockField(${i}, 'bandText', this.value)">
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <input type="color" value="${escapeAttr(b.bandColor?.bg ?? '#e88aa2')}"
+                 title="帯背景色"
+                 onchange="updateBlockBandColor(${i}, 'bg', this.value)">
+          <input type="color" value="${escapeAttr(b.bandColor?.text ?? '#ffffff')}"
+                 title="帯文字色"
+                 onchange="updateBlockBandColor(${i}, 'text', this.value)">
+        </div>
       </td>
       <td class="col-actions">
         <button class="small ghost" onclick="moveBlock(${i}, -1)">↑</button>
@@ -687,7 +761,7 @@ function renderBlocks() {
       const ov = b.colorOverride ?? {};
 
       overrideRow.innerHTML = `
-        <td colspan="8">
+        <td colspan="9">
           <div class="override-panel">
             <h4>カラーオーバーライド</h4>
             <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;cursor:pointer;">
@@ -803,6 +877,7 @@ function addBlock(type) {
     enabled: true,
     bandEnabled: type === "help",
     bandText: type === "help" ? "お助け" : "",
+    bandColor: { bg: "#e88aa2", text: "#ffffff" },
     imageScale: 1.0,
   });
   renderBlocks();
@@ -838,16 +913,45 @@ function updateBlockField(i, key, val) {
   markDirty();
 }
 
+function updateBlockBandColor(i, key, value) {
+  const block = db.sets[currentSetIndex].blocks[i];
+  if (!block) return;
+  block.bandColor = {
+    bg: block.bandColor?.bg ?? "#e88aa2",
+    text: block.bandColor?.text ?? "#ffffff",
+    [key]: value,
+  };
+  markDirty();
+}
+
 // ============================================================
 // ギフトピッカー
+const EXTRA_GIFTS = [
+  {
+    name: "フォローアイコン",
+    imageURL: "https://app.streamtoearn.io/assets/icons/follow.svg",
+    coins: "",
+    giftId: "follow-icon",
+  },
+];
 // ============================================================
 async function loadGifts(forceRefresh) {
   const url = forceRefresh ? "/api/gifts?refresh=1" : "/api/gifts";
   $("giftGrid").innerHTML = "読み込み中...";
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    allGifts = data.gifts || [];
+    const [giftsRes, localRes] = await Promise.all([
+      fetch(url),
+      fetch("/api/local-images"),
+    ]);
+    const data = await giftsRes.json();
+    const localData = await localRes.json();
+    const localGifts = (localData.images || []).map((img) => ({
+      name: img.name,
+      imageURL: img.imageURL,
+      coins: "",
+      giftId: `local-${img.name}`,
+    }));
+    allGifts = [...EXTRA_GIFTS, ...localGifts, ...(data.gifts || [])];
     filterGifts();
   } catch (e) {
     $("giftGrid").innerHTML = "<div style='color:#ff7a7a'>取得失敗: " + e + "</div>";

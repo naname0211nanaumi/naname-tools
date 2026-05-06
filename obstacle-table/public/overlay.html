@@ -21,18 +21,28 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  body {
+    margin: 0 34px;
+  }
+
   /* ===== カラー変数 ===== */
   :root {
-    --sky-blue: #5fc1e8;
-    --sky-blue-dark: #3aa8d4;
+    --sky-blue: #46c0ff;
     --sky-blue-light: #a5dcef;
     --pink: #f4b3c2;
     --pink-dark: #e88aa2;
     --pink-light: #fcd9e0;
-    --frame-white: #ffffff;
+    --frame-white: #e7f8fc;
     --text-shadow-strong: 2px 2px 0 #2a6a85, -2px -2px 0 #2a6a85,
                           2px -2px 0 #2a6a85, -2px 2px 0 #2a6a85,
                           0 2px 0 #2a6a85, 2px 0 0 #2a6a85;
+  }
+
+  /* ===== タイトルとヘッダーのラップ ===== */
+  .title-header-wrap {
+    position: relative;
+    overflow: visible;
+    margin: 8px 0 0;
   }
 
   /* ===== タイトル行（青ボックスの外・上に配置） ===== */
@@ -41,39 +51,51 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin: 8px 12px 4px;
+    margin: 0 0 4px;
+    position: absolute;
+    z-index: 2;
+    top: -5px;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   /* ===== ヘッダー（サブタイトルのみ） ===== */
   .header {
-    margin: 0 12px 8px;
+    height: 84px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin: 60px 0 0;
     background: var(--sky-blue);
-    border: 4px solid var(--frame-white);
     border-radius: 12px;
     padding: 8px 16px;
+    position: relative;
+    z-index: 1;
   }
 
   .title {
-    font-size: 38px;
+    font-size: 56px;
     font-weight: 900;
     color: var(--frame-white);
-    -webkit-text-stroke: 2px #2a6a85;
+    -webkit-text-stroke: 10px #46c0ff;
     letter-spacing: 0.05em;
     line-height: 1;
     paint-order: stroke fill;
+    flex: none;
   }
 
   .win-counter {
     position: relative;
     background: var(--frame-white);
-    border: 3px solid var(--sky-blue-dark);
+    border: 3px solid var(--sky-blue);
     border-radius: 10px;
     padding: 4px 10px;
     text-align: center;
     line-height: 1.1;
-    color: #2a6a85;
+    color: #1b1b1b;
     font-weight: 800;
     flex-shrink: 0;
+    margin-bottom: 16px;
   }
   /* 吹き出し尻尾（外側・ボーダー色） */
   .win-counter::before {
@@ -85,7 +107,7 @@
     height: 0;
     border-style: solid;
     border-width: 15px 12px 0 0;
-    border-color: var(--sky-blue-dark) transparent transparent transparent;
+    border-color: var(--sky-blue) transparent transparent transparent;
   }
   /* 吹き出し尻尾（内側・白） */
   .win-counter::after {
@@ -101,23 +123,23 @@
     z-index: 1;
   }
   .win-counter-label {
-    font-size: 14px;
+    font-size: 24px;
     display: block;
   }
   .win-counter-num {
-    font-size: 22px;
+    font-size: 28px;
     color: #ff3a7a;
     display: inline-block;
   }
   .win-counter-unit {
-    font-size: 14px;
+    font-size: 20px;
     display: inline-block;
   }
 
   .subtitle {
     text-align: center;
     color: var(--frame-white);
-    font-size: 16px;
+    font-size: 28px;
     font-weight: 700;
     margin-top: 2px;
     letter-spacing: 0.02em;
@@ -127,9 +149,10 @@
 
   /* ===== ブロックグリッド ===== */
   .grid {
-    margin: 0 12px;
+    margin: 8px 0 0;
     display: grid;
     gap: 8px;
+    height: 284px;
   }
 
   .block {
@@ -147,8 +170,8 @@
   }
 
   .block-image {
-    width: 90%;
-    height: 90%;
+    width: 100%;
+    height: auto;
     object-fit: contain;
     transition: transform 0.15s;
   }
@@ -158,19 +181,16 @@
     left: 4px;
     right: 4px;
     bottom: 4px;
-    /* background / color / border はインラインスタイルで上書き */
-    background: var(--sky-blue);
+    /* background / color はインラインスタイルで上書き */
     color: var(--frame-white);
-    font-size: 13px;
+    font-size: 24px;
     font-weight: 800;
     text-align: center;
     padding: 2px 4px;
     border-radius: 6px;
-    -webkit-text-stroke: 0.5px rgba(0,0,0,0.5);
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+    -webkit-text-stroke: 4px #4d4d4d;
     paint-order: stroke fill;
     line-height: 1.15;
-    border: 2px solid var(--frame-white);
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -184,28 +204,30 @@
     left: 0;
     background: var(--pink-dark);
     color: var(--frame-white);
-    font-size: 11px;
+    font-size: 16px;
     font-weight: 800;
     padding: 2px 14px;
-    transform: rotate(-30deg) translate(-30%, 30%);
+    transform: rotate(-40deg) translate(-44%, 56%);
     transform-origin: top left;
     text-shadow: 1px 1px 0 #8a3a52;
     border: 2px solid var(--frame-white);
     border-radius: 4px;
     z-index: 2;
+    width: 100px;
+    text-align: center;
   }
 
   /* ===== 現在のWIN数フッター ===== */
   .footer {
-    margin: 12px;
+    margin: 23px 0 12px;
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 12px;
+    height: 124px;
   }
 
   .footer-rules {
     background: var(--sky-blue);
-    border: 4px solid var(--frame-white);
     border-radius: 12px;
     min-height: 80px;
     padding: 8px 12px;
@@ -217,7 +239,6 @@
 
   .footer-win {
     background: var(--sky-blue);
-    border: 4px solid var(--frame-white);
     border-radius: 12px;
     min-height: 80px;
     padding: 4px 8px;
@@ -229,12 +250,18 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative;
   }
 
   .footer-win-label {
-    font-size: 14px;
+    font-size: 28px;
     font-weight: 800;
     margin-bottom: 4px;
+    position: absolute;
+    top: -24px;
+    color: var(--frame-white);
+    -webkit-text-stroke: 4px #46c0ff;
+    paint-order: stroke fill
   }
 
   .footer-win-num {
@@ -263,22 +290,34 @@
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(-25%); opacity: 0; }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(25%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
   .grid.fading-out { animation: fadeOut 0.3s forwards; }
   .grid.fading-in  { animation: fadeIn 0.3s forwards; }
+  .grid.sliding-out { animation: slideOutLeft 0.3s forwards; }
+  .grid.sliding-in  { animation: slideInRight 0.3s forwards; }
 </style>
 </head>
 <body>
 
-<div class="title-row">
-  <div class="title" id="title">GTA山登り</div>
-  <div class="win-counter">
-    <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
-    <span class="win-counter-num" id="winCount">43</span><span
-      class="win-counter-unit" id="winCounterUnit">個</span>
+<div class="title-header-wrap">
+  <div class="title-row">
+    <div class="title" id="title">GTA山登り</div>
+    <div class="win-counter">
+      <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
+      <span class="win-counter-num" id="winCount">43</span><span
+        class="win-counter-unit" id="winCounterUnit">個</span>
+    </div>
   </div>
-</div>
-<div class="header">
-  <div class="subtitle" id="subtitle">-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1</div>
+  <div class="header">
+    <div class="subtitle" id="subtitle">-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1</div>
+  </div>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -287,7 +326,7 @@
   <div class="footer-rules" id="footerRules"></div>
   <div class="footer-win">
     <div class="footer-win-label" id="currentWinLabel">現在のWIN数</div>
-    <div class="footer-win-num" id="currentWin">0</div>
+    <div class="footer-win-num" id="currentWin"></div>
   </div>
 </div>
 
@@ -303,12 +342,22 @@ let isTransitioning = false;
 
 // ===== カラーユーティリティ =====
 function getBlockColor(b, set) {
-  const base = b.obstacleType === "help" ? set.helpColor : set.obstacleColor;
-  if (!base) return null;
+  const defaultObstacleColor = {
+    bg: "#e7f8fc",
+    text: "#ffffff",
+    border: "#76defa",
+    borderWidth: 4,
+  };
+  const defaultHelpColor = {
+    bg: "#faf7fc",
+    text: "#ffffff",
+    border: "#df9285",
+    borderWidth: 4,
+  };
+  const base = b.obstacleType === "help" ? (set.helpColor || defaultHelpColor) : (set.obstacleColor || defaultObstacleColor);
   const ov = b.colorOverride ?? {};
   return {
     bg:          ov.bg          ?? base.bg,
-    text:        ov.text        ?? base.text,
     border:      ov.border      ?? base.border,
     borderWidth: ov.borderWidth ?? base.borderWidth,
   };
@@ -319,10 +368,12 @@ function render(set) {
   $("title").textContent = set.title || "";
   $("subtitle").textContent = set.subtitle || "";
   $("winCounterLabel").textContent = set.winCounterLabel || "";
-  $("winCount").textContent = set.winCount ?? 0;
+  $("winCount").textContent = set.winCount ?? "";
   $("winCounterUnit").textContent = set.winCounterUnit || "";
   $("currentWinLabel").textContent = set.currentWinLabel || "現在のWIN数";
-  $("currentWin").textContent = set.currentWin ?? 0;
+  $("currentWin").textContent = set.currentWin !== null && set.currentWin !== undefined && set.currentWin !== ""
+    ? set.currentWin
+    : "";
   $("footerRules").textContent = "";
 
   const cols = Math.max(1, Math.min(10, set.layoutColumns || 7));
@@ -354,16 +405,17 @@ function makeBlockEl(b, set) {
   div.className = "block";
   div.dataset.blockId = b.id;
 
-  if (color) {
-    div.style.background = color.bg;
-    div.style.border = `${color.borderWidth}px solid ${color.border}`;
-  }
+  div.style.background = color.bg;
+  div.style.border = `${color.borderWidth}px solid ${color.border}`;
 
   // お助け帯（固定ピンク）
   if (b.bandEnabled && b.bandText) {
     const band = document.createElement("div");
     band.className = "block-band";
     band.textContent = b.bandText;
+    const bandColor = b.bandColor || set.bandColor || { bg: "var(--pink-dark)", text: "#ffffff" };
+    band.style.background = bandColor.bg;
+    band.style.color = bandColor.text;
     div.appendChild(band);
   }
 
@@ -381,13 +433,6 @@ function makeBlockEl(b, set) {
   const nameEl = document.createElement("div");
   nameEl.className = "block-name";
   nameEl.textContent = b.obstacleName || "";
-  if (color) {
-    nameEl.style.background = color.bg;
-    nameEl.style.color = color.text;
-    nameEl.style.borderColor = color.border;
-    nameEl.style.borderWidth = `${color.borderWidth}px`;
-    nameEl.style.borderStyle = "solid";
-  }
   div.appendChild(nameEl);
 
   return div;
@@ -417,16 +462,20 @@ function slidePage(set) {
   const totalPages = Math.max(1, Math.ceil(enabled.length / maxPerPage));
 
   const grid = $("grid");
+  const transitionType = (set.transitionType || "fade").toLowerCase();
+  const outClass = transitionType === "slide" ? "sliding-out" : "fading-out";
+  const inClass = transitionType === "slide" ? "sliding-in" : "fading-in";
+
   isTransitioning = true;
-  grid.classList.add("fading-out");
+  grid.classList.add(outClass);
 
   setTimeout(() => {
-    grid.classList.remove("fading-out");
+    grid.classList.remove(outClass);
     currentPage = (currentPage + 1) % totalPages;
     renderPage(set);
-    grid.classList.add("fading-in");
+    grid.classList.add(inClass);
     setTimeout(() => {
-      grid.classList.remove("fading-in");
+      grid.classList.remove(inClass);
       isTransitioning = false;
     }, 300);
   }, 300);
