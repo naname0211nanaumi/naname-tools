@@ -35,23 +35,23 @@
                           0 2px 0 #2a6a85, 2px 0 0 #2a6a85;
   }
 
-  /* ===== ヘッダー（タイトル＋WIN残カウンタ） ===== */
-  .header {
-    margin: 12px;
-    background: var(--sky-blue);
-    border: 4px solid var(--frame-white);
-    border-radius: 12px;
-    padding: 8px 16px 10px;
-    position: relative;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-  }
-
+  /* ===== タイトル行（青ボックスの外・上に配置） ===== */
   .title-row {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    position: relative;
+    margin: 8px 12px 4px;
+  }
+
+  /* ===== ヘッダー（サブタイトルのみ） ===== */
+  .header {
+    margin: 0 12px 8px;
+    background: var(--sky-blue);
+    border: 4px solid var(--frame-white);
+    border-radius: 12px;
+    padding: 8px 16px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
   }
 
   .title {
@@ -250,15 +250,15 @@
 </head>
 <body>
 
-<div class="header">
-  <div class="title-row">
-    <div class="title" id="title">GTA山登り</div>
-    <div class="win-counter">
-      <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
-      <span class="win-counter-num" id="winCount">43</span><span
-        class="win-counter-unit" id="winCounterUnit">個</span>
-    </div>
+<div class="title-row">
+  <div class="title" id="title">GTA山登り</div>
+  <div class="win-counter">
+    <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
+    <span class="win-counter-num" id="winCount">43</span><span
+      class="win-counter-unit" id="winCounterUnit">個</span>
   </div>
+</div>
+<div class="header">
   <div class="subtitle" id="subtitle">-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1</div>
 </div>
 
