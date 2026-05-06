@@ -67,6 +67,7 @@
   }
 
   .win-counter {
+    position: relative;
     background: var(--frame-white);
     border: 3px solid var(--sky-blue-dark);
     border-radius: 10px;
@@ -76,6 +77,31 @@
     color: #2a6a85;
     font-weight: 800;
     flex-shrink: 0;
+  }
+  /* 吹き出し尻尾（外側・ボーダー色） */
+  .win-counter::before {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 14px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 15px 12px 0 0;
+    border-color: var(--sky-blue-dark) transparent transparent transparent;
+  }
+  /* 吹き出し尻尾（内側・白） */
+  .win-counter::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 16px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 11px 9px 0 0;
+    border-color: var(--frame-white) transparent transparent transparent;
+    z-index: 1;
   }
   .win-counter-label {
     font-size: 14px;
