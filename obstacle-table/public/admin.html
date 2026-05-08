@@ -379,6 +379,7 @@
     <div class="modal-header">
       <h3>ギフトを選択</h3>
       <input type="text" id="giftSearch" placeholder="名前で検索..." style="flex: 0 0 240px;" oninput="filterGifts()">
+      <input type="text" id="giftCoinFilter" placeholder="コイン数(例:100, <50, >200)..." style="flex: 0 0 200px;" oninput="filterGifts()">
       <button class="ghost small" onclick="loadGifts(true)">🔄 更新</button>
       <button class="ghost small" onclick="closeGiftModal()">閉じる</button>
     </div>
@@ -960,7 +961,41 @@ async function loadGifts(forceRefresh) {
 
 function filterGifts() {
   const q = $("giftSearch").value.toLowerCase().trim();
-  const filtered = q ? allGifts.filter((g) => g.name.toLowerCase().includes(q)) : allGifts;
+  const coinQuery = $("giftCoinFilter").value.trim();
+  
+  let filtered = allGifts;
+  
+  // 名前で絞り込み
+  if (q) {
+    filtered = filtered.filter((g) => g.name.toLowerCase().includes(q));
+  }
+  
+  // コイン数で絞り込み
+  if (coinQuery) {
+    filtered = filtered.filter((g) => {
+      const coins = parseInt(g.coins, 10);
+      if (isNaN(coins)) return true; // コイン情報がない場合は表示
+      
+      // 比較演算子をチェック
+      if (coinQuery.startsWith(">=")) {
+        const target = parseInt(coinQuery.substring(2).trim(), 10);
+        return !isNaN(target) && coins >= target;
+      } else if (coinQuery.startsWith(">")) {
+        const target = parseInt(coinQuery.substring(1).trim(), 10);
+        return !isNaN(target) && coins > target;
+      } else if (coinQuery.startsWith("<=")) {
+        const target = parseInt(coinQuery.substring(2).trim(), 10);
+        return !isNaN(target) && coins <= target;
+      } else if (coinQuery.startsWith("<")) {
+        const target = parseInt(coinQuery.substring(1).trim(), 10);
+        return !isNaN(target) && coins < target;
+      } else {
+        // 部分一致（例：100で1000, 10000も該当）
+        return g.coins.toString().includes(coinQuery);
+      }
+    });
+  }
+  
   const grid = $("giftGrid");
   grid.innerHTML = "";
   for (const g of filtered) {
@@ -982,6 +1017,7 @@ function filterGifts() {
 function openGiftPicker(blockIdx) {
   pendingGiftPickBlockIndex = blockIdx;
   $("giftSearch").value = "";
+  $("giftCoinFilter").value = "";
   filterGifts();
   $("giftModal").classList.add("open");
 }

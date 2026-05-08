@@ -1,14 +1,14 @@
 {
-  "activeSetId": "set_gta_climb",
+  "activeSetId": "set_1778198065617",
   "slideIntervalSec": 10,
   "sets": [
     {
       "id": "set_gta_climb",
       "name": "GTA山登りセット",
       "title": "GTA山登り",
-      "subtitle": "-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1",
+      "subtitle": "-15WINごとにホラゲー+1 / +1WINごとにホラゲー-1",
       "winCounterLabel": "ホラゲ残り",
-      "winCount": 43,
+      "winCount": 135,
       "winCounterUnit": "個",
       "currentWinLabel": "現在のWIN数",
       "currentWin": null,
@@ -624,6 +624,445 @@
         "text": "#ffffff"
       },
       "transitionType": "slide"
+    },
+    {
+      "id": "set_1778198065617",
+      "name": "埋め立て妨害【ネアさん】",
+      "title": "マイクラ埋め立て妨害",
+      "subtitle": "-5WINごとにホラゲー+1 / +5WINごとにホラゲー-1",
+      "winCounterLabel": "ホラゲ残り",
+      "winCount": 135,
+      "winCounterUnit": "個",
+      "currentWinLabel": "現在のWIN数",
+      "currentWin": null,
+      "layoutColumns": 7,
+      "transitionType": "fade",
+      "obstacleColor": {
+        "bg": "#a5dcef",
+        "text": "#ffffff",
+        "border": "#ffffff",
+        "borderWidth": 3
+      },
+      "helpColor": {
+        "bg": "#fcd9e0",
+        "text": "#ffffff",
+        "border": "#ffffff",
+        "borderWidth": 3
+      },
+      "bandColor": {
+        "bg": "#e88aa2",
+        "text": "#ffffff"
+      },
+      "blocks": [
+        {
+          "id": "blk_taddts",
+          "obstacleName": "枠内ランダムTNT",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "フォローアイコン",
+            "giftImageURL": "https://app.streamtoearn.io/assets/icons/follow.svg"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 0.8
+        },
+        {
+          "id": "blk_otvsb3",
+          "obstacleName": "足元TNT",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "300いいね.png",
+            "giftImageURL": "/assets/images/300%E3%81%84%E3%81%84%E3%81%AD.png"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_gvqxky",
+          "obstacleName": "TNT中",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "10kいいね.png",
+            "giftImageURL": "/assets/images/10k%E3%81%84%E3%81%84%E3%81%AD.png"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_av1c3e",
+          "obstacleName": "枠内ランダムTNT",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Heart Me",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/d56945782445b0b8c8658ed44f894c7b~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_k5wmf8",
+          "obstacleName": "足元TNT",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Rose",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_e52ig9",
+          "obstacleName": "足元TNT小",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Rosa",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/eb77ead5c3abb6da6034d3cf6cfeb438~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_uxhuv6",
+          "obstacleName": "TNT中",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Hat and Mustache",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/2f1e4f3f5c728ffbfa35705b480fdc92~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_45j4p9",
+          "obstacleName": "TNTロケット",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Hand Hearts",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/6cd022271dc4669d182cad856384870f~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_rf9sbs",
+          "obstacleName": "TNT大",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Corgi",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/148eef0884fdb12058d1c6897d1e02b9~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_awem0k",
+          "obstacleName": "TNT特大",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "DJ Glasses",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/d4aad726e2759e54a924fbcd628ea143.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_efvmtj",
+          "obstacleName": "TNT打ち上げ大",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Rosie the Rose Bean",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/3cbaea405cc61e8eaab6f5a14d127511.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_4n7102",
+          "obstacleName": "枠縦+1",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Love You",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/134e51c00f46e01976399883ca4e4798~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_n1p1d8",
+          "obstacleName": "枠横+1",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Massage for You",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/3ebdd3746d91eb06bdd4a04c49c3b04a.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_leuxeo",
+          "obstacleName": "ドッカンリセット",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Money Gun",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/e0589e95a2b41970f0f30f6202f5fce6~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_pvd5po",
+          "obstacleName": "-1WIN",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Glowing Jellyfish",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/96d9226ef1c33784a24d0779ad3029d3.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_h0qpxh",
+          "obstacleName": "-3WIN",
+          "obstacleType": "obstacle",
+          "gift": {
+            "giftName": "Stroke Me",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/833ae87028fde28ef0cc284badc9fc77.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": false,
+          "bandText": "",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_1ha2fm",
+          "obstacleName": "1段埋め",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Friendship Necklace",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/e033c3f28632e233bebac1668ff66a2f.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_cqdvv8",
+          "obstacleName": "5段埋め",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Doughnut",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_pe3hxu",
+          "obstacleName": "全段埋め",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Mishka Bear",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/d78ed6496fd57286b42ac033acbee299.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_yed3rt",
+          "obstacleName": "枠縦-1",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Coffee Magic",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/0cb623f44c34f77fe14c2e11bfe4ee62.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_fhdxs8",
+          "obstacleName": "枠横+1",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Hearts",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/934b5a10dee8376df5870a61d2ea5cb6.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_yg4c07",
+          "obstacleName": "お助け名",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Future Encounter",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/af980f4ec9ed73f3229df8dfb583abe6.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_jej4oe",
+          "obstacleName": "-3WIN",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Galaxy",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/79a02148079526539f7599150da9fd28.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        },
+        {
+          "id": "blk_tyrel5",
+          "obstacleName": "+3WIN",
+          "obstacleType": "help",
+          "gift": {
+            "giftName": "Unicorn",
+            "giftImageURL": "https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/resource/fb15a2c7704d5be98ae53f713f8ae7db.png~tplv-obj.webp"
+          },
+          "enabled": true,
+          "bandEnabled": true,
+          "bandText": "お助け",
+          "bandColor": {
+            "bg": "#e88aa2",
+            "text": "#ffffff"
+          },
+          "imageScale": 1
+        }
+      ]
     }
   ]
 }
