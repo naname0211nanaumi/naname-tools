@@ -251,11 +251,81 @@
   }
   .status-text { flex: 1; color: #aaa; font-size: 13px; }
   .status-text.dirty { color: #ffb74a; font-weight: 600; }
+
+  /* ===== タブ ===== */
+  .tab-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #2a2d4e;
+    padding-bottom: 0;
+  }
+  .tab-btn {
+    background: transparent;
+    color: #a5b0d0;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 8px 18px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: -2px;
+  }
+  .tab-btn:hover { background: #22253a; color: #e8eaf0; }
+  .tab-btn.active { color: #a5dcef; border-bottom-color: #a5dcef; background: transparent; }
+
+  /* ===== トピックタブ ===== */
+  .topic-add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .topic-add-row input { flex: 1; }
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #22253a;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 4px solid #4a5dc7;
+    transition: opacity 0.2s;
+  }
+  .topic-item.done {
+    opacity: 0.5;
+    border-left-color: #4ac765;
+  }
+  .topic-item.done .topic-text {
+    text-decoration: line-through;
+    color: #888;
+  }
+  .topic-text { flex: 1; font-size: 14px; }
+  .overlay-view-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .overlay-view-btns button.active-view {
+    background: #4ac765;
+  }
+  .overlay-view-btns button.active-view:hover {
+    background: #5ad775;
+  }
 </style>
 </head>
 <body>
 
 <h1>妨害表 Admin</h1>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tabBtn-obstacle" onclick="switchTab('obstacle')">🎮 妨害表</button>
+  <button class="tab-btn" id="tabBtn-topics" onclick="switchTab('topics')">💬 トピック</button>
+</nav>
+
+<!-- ===== 妨害表タブ ===== -->
+<div id="tab-obstacle">
 
 <!-- グローバル設定 -->
 <div class="panel">
@@ -365,6 +435,37 @@
     <tbody id="blocksBody"></tbody>
   </table>
 </div>
+
+</div><!-- /#tab-obstacle -->
+
+<!-- ===== トピックタブ ===== -->
+<div id="tab-topics" hidden>
+
+  <div class="panel">
+    <h2>オーバーレイ表示切替</h2>
+    <div class="overlay-view-btns" id="overlayViewBtns">
+      <button onclick="switchOverlayView('obstacle')" data-view="obstacle">🎮 妨害表を表示</button>
+      <button onclick="switchOverlayView('topics')" data-view="topics">💬 トピックを表示</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>トピック追加</h2>
+    <div class="topic-add-row">
+      <input type="text" id="topicInput" placeholder="話すトピックを入力（例: 今日の配信の目標）"
+             onkeydown="if(event.key==='Enter') addTopic()">
+      <button onclick="addTopic()">追加</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>トピック一覧</h2>
+    <div id="topicsList">
+      <p style="color:#888; font-size:13px;">トピックはまだありません</p>
+    </div>
+  </div>
+
+</div><!-- /#tab-topics -->
 
 <!-- 保存バー -->
 <div class="status-bar">
@@ -1084,6 +1185,95 @@ init();
 window.addEventListener("beforeunload", (e) => {
   if (dirty) { e.preventDefault(); e.returnValue = ""; }
 });
+
+// ============================================================
+// タブ切替
+// ============================================================
+function switchTab(name) {
+  ["obstacle", "topics"].forEach((t) => {
+    $("tab-" + t).hidden = (t !== name);
+    const btn = document.getElementById("tabBtn-" + t);
+    if (btn) btn.classList.toggle("active", t === name);
+  });
+  if (name === "topics") loadTopics();
+}
+
+// ============================================================
+// トピック管理
+// ============================================================
+let currentOverlayView = "obstacle";
+
+async function loadTopics() {
+  const res = await fetch("/api/topics");
+  const data = await res.json();
+  currentOverlayView = data.overlayView || "obstacle";
+  renderTopics(data.topics || []);
+  updateOverlayViewBtns();
+}
+
+function renderTopics(topics) {
+  const el = $("topicsList");
+  if (!topics.length) {
+    el.innerHTML = '<p style="color:#888; font-size:13px;">トピックはまだありません</p>';
+    return;
+  }
+  el.innerHTML = topics.map((t) => `
+    <div class="topic-item${t.done ? " done" : ""}" id="topic-${t.id}">
+      <span class="topic-text">${escapeHtml(t.text)}</span>
+      <button class="small ${t.done ? "ghost" : "save"}" onclick="toggleTopic('${t.id}', ${!t.done})">
+        ${t.done ? "↩ 未完了に戻す" : "✓ 完了"}
+      </button>
+      <button class="small danger" onclick="deleteTopic('${t.id}')">削除</button>
+    </div>
+  `).join("");
+}
+
+async function addTopic() {
+  const input = $("topicInput");
+  const text = input.value.trim();
+  if (!text) return;
+  await fetch("/api/topics", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  input.value = "";
+  loadTopics();
+}
+
+async function toggleTopic(id, done) {
+  await fetch("/api/topics/" + id, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ done }),
+  });
+  loadTopics();
+}
+
+async function deleteTopic(id) {
+  await fetch("/api/topics/" + id, { method: "DELETE" });
+  loadTopics();
+}
+
+async function switchOverlayView(view) {
+  await fetch("/api/overlay-view", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ view }),
+  });
+  currentOverlayView = view;
+  updateOverlayViewBtns();
+}
+
+function updateOverlayViewBtns() {
+  document.querySelectorAll(".overlay-view-btns button").forEach((btn) => {
+    btn.classList.toggle("active-view", btn.dataset.view === currentOverlayView);
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 </script>
 
 </body>
