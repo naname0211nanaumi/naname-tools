@@ -63,6 +63,7 @@ interface Topic {
   id: string;
   text: string;
   done: boolean;
+  active: boolean;
   createdAt: number;
 }
 
@@ -189,6 +190,7 @@ async function handler(req: Request): Promise<Response> {
       id: `topic_${Date.now()}`,
       text: text.trim(),
       done: false,
+      active: false,
       createdAt: Date.now(),
     };
     db.topics.push(topic);
@@ -197,14 +199,19 @@ async function handler(req: Request): Promise<Response> {
     return Response.json({ ok: true, topic });
   }
 
-  // ===== API: トピック更新（done切替） =====
+  // ===== API: トピック更新（done / active 切替） =====
   if (path.startsWith("/api/topics/") && req.method === "PATCH") {
     const id = path.split("/api/topics/")[1];
-    const { done } = await req.json() as { done: boolean };
+    const patch = await req.json() as { done?: boolean; active?: boolean };
     const db = await loadDB();
     const topic = db.topics.find((t) => t.id === id);
     if (!topic) return Response.json({ ok: false, reason: "not found" }, { status: 404 });
-    topic.done = done;
+    if (patch.done !== undefined) topic.done = patch.done;
+    if (patch.active !== undefined) {
+      // active は同時に1つだけ
+      if (patch.active) db.topics.forEach((t) => { t.active = t.id === id; });
+      else topic.active = false;
+    }
     await saveDB(db);
     broadcast({ type: "topics_updated", topics: db.topics });
     return Response.json({ ok: true });

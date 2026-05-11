@@ -347,6 +347,23 @@
     border-radius: 10px;
   }
   .topic-row:last-child { margin-bottom: 0; }
+  .topic-row.active-topic {
+    background: rgba(160, 90, 255, 0.55);
+    border: 2.5px solid rgba(230, 190, 255, 0.9);
+    transform: scale(1.02);
+    transform-origin: left center;
+  }
+  .topic-row.active-topic .topic-label {
+    font-size: 23px;
+    color: #fff;
+    -webkit-text-stroke: 3px rgba(60, 10, 100, 0.9);
+  }
+  .topic-row.active-topic .topic-check {
+    background: rgba(200, 120, 255, 0.7);
+    border-color: rgba(240, 210, 255, 0.9);
+    color: #fff;
+    font-size: 16px;
+  }
   .topic-row.done {
     background: rgba(70, 50, 90, 0.3);
     border-color: rgba(140, 110, 170, 0.3);
@@ -633,8 +650,8 @@ function renderTopics(topics) {
     return;
   }
   board.innerHTML = topics.map((t) => `
-    <div class="topic-row${t.done ? " done" : ""}">
-      <div class="topic-check">${t.done ? "✓" : "✦"}</div>
+    <div class="topic-row${t.done ? " done" : ""}${t.active ? " active-topic" : ""}">
+      <div class="topic-check">${t.done ? "✓" : t.active ? "🎙" : "✦"}</div>
       <div class="topic-label">${escapeHtml(t.text)}</div>
       ${t.done ? '<div class="topic-done-badge">完了</div>' : ""}
     </div>
