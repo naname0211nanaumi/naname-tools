@@ -1333,6 +1333,19 @@ function renderTopics(topics) {
   `).join("");
 }
 
+async function addTopic() {
+  const input = $("topicInput");
+  const text = input.value.trim();
+  if (!text) return;
+  await fetch("/api/topics", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  input.value = "";
+  loadTopics();
+}
+
 async function setActiveTopic(id, active) {
   await fetch("/api/topics/" + id, {
     method: "PATCH",
