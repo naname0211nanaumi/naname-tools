@@ -67,11 +67,17 @@ interface Topic {
   createdAt: number;
 }
 
+interface Memo {
+  text: string;
+  visible: boolean;
+}
+
 interface DB {
   activeSetId: string;
   slideIntervalSec: number;
   overlayView: "obstacle" | "topics";
   topics: Topic[];
+  memo: Memo;
   sets: ObstacleSet[];
 }
 
@@ -99,6 +105,7 @@ async function loadDB(): Promise<DB> {
   if (!db.slideIntervalSec) db.slideIntervalSec = 3;
   if (!db.overlayView) db.overlayView = "obstacle";
   if (!db.topics) db.topics = [];
+  if (!db.memo) db.memo = { text: "", visible: false };
   for (const set of db.sets) {
     if (!set.obstacleColor) set.obstacleColor = { ...DEFAULT_OBSTACLE_COLOR };
     if (!set.helpColor) set.helpColor = { ...DEFAULT_HELP_COLOR };
@@ -224,6 +231,23 @@ async function handler(req: Request): Promise<Response> {
     db.topics = db.topics.filter((t) => t.id !== id);
     await saveDB(db);
     broadcast({ type: "topics_updated", topics: db.topics });
+    return Response.json({ ok: true });
+  }
+
+  // ===== API: メモ取得 =====
+  if (path === "/api/memo" && req.method === "GET") {
+    const db = await loadDB();
+    return Response.json(db.memo);
+  }
+
+  // ===== API: メモ更新 =====
+  if (path === "/api/memo" && req.method === "POST") {
+    const patch = await req.json() as Partial<Memo>;
+    const db = await loadDB();
+    if (patch.text !== undefined) db.memo.text = patch.text;
+    if (patch.visible !== undefined) db.memo.visible = patch.visible;
+    await saveDB(db);
+    broadcast({ type: "memo_updated", memo: db.memo });
     return Response.json({ ok: true });
   }
 

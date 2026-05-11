@@ -485,6 +485,20 @@
 <div id="tab-topics" hidden>
 
   <div class="panel">
+    <h2>メモボード</h2>
+    <div style="margin-bottom:8px;">
+      <label>メモ内容（複数行OK）</label>
+      <textarea id="memoText" rows="4"
+        style="width:100%;background:#2a2d3e;color:#e8eaf0;border:1px solid #3a3d4e;border-radius:4px;padding:8px;font-size:13px;resize:vertical;font-family:inherit;"
+        placeholder="配信中に表示したいメモを入力"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="saveMemo()">💾 メモを保存</button>
+      <button id="memoVisibleBtn" onclick="toggleMemoVisible()">👁 表示する</button>
+    </div>
+  </div>
+
+  <div class="panel">
     <h2>オーバーレイ表示切替</h2>
     <div class="overlay-view-btns" id="overlayViewBtns">
       <button onclick="switchOverlayView('obstacle')" data-view="obstacle">🎮 妨害表を表示</button>
@@ -1252,6 +1266,49 @@ async function loadTopics() {
   currentOverlayView = data.overlayView || "obstacle";
   renderTopics(data.topics || []);
   updateOverlayViewBtns();
+  loadMemo();
+}
+
+// ============================================================
+// メモボード
+// ============================================================
+let memoVisible = false;
+
+async function loadMemo() {
+  const res = await fetch("/api/memo");
+  const memo = await res.json();
+  $("memoText").value = memo.text || "";
+  memoVisible = memo.visible || false;
+  updateMemoBtn();
+}
+
+function updateMemoBtn() {
+  const btn = $("memoVisibleBtn");
+  if (memoVisible) {
+    btn.textContent = "🙈 非表示にする";
+    btn.style.background = "#c74a5d";
+  } else {
+    btn.textContent = "👁 表示する";
+    btn.style.background = "";
+  }
+}
+
+async function saveMemo() {
+  await fetch("/api/memo", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: $("memoText").value }),
+  });
+}
+
+async function toggleMemoVisible() {
+  memoVisible = !memoVisible;
+  await fetch("/api/memo", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ visible: memoVisible }),
+  });
+  updateMemoBtn();
 }
 
 function renderTopics(topics) {

@@ -422,9 +422,39 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   #topics-view.active { animation: topicsFadeIn 0.4s ease; }
+
+  /* ===== メモボード ===== */
+  #memo-board {
+    display: none;
+    position: fixed;
+    top: 3%;
+    left: 5%;
+    right: 5%;
+    background: rgba(50, 20, 80, 0.82);
+    border: 2px solid rgba(200, 150, 255, 0.6);
+    border-radius: 14px;
+    padding: 14px 18px;
+    z-index: 20;
+  }
+  #memo-board.visible { display: block; }
+
+  .memo-text {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f0e4ff;
+    -webkit-text-stroke: 3px rgba(40, 10, 70, 0.85);
+    paint-order: stroke fill;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
 </style>
 </head>
 <body>
+
+<div id="memo-board">
+  <div class="memo-text" id="memoText"></div>
+</div>
 
 <div id="obstacle-view">
 <div class="title-header-wrap">
@@ -679,6 +709,18 @@ fetch("/api/topics")
   })
   .catch((e) => console.error("topics load failed", e));
 
+fetch("/api/memo")
+  .then((r) => r.json())
+  .then((memo) => applyMemo(memo))
+  .catch((e) => console.error("memo load failed", e));
+
+function applyMemo(memo) {
+  const board = $("memo-board");
+  const textEl = $("memoText");
+  textEl.textContent = memo.text || "";
+  board.classList.toggle("visible", !!memo.visible);
+}
+
 // ===== WebSocket =====
 const ws = new WebSocket(`ws://${location.host}/`);
 ws.onmessage = (e) => {
@@ -696,6 +738,8 @@ ws.onmessage = (e) => {
     renderTopics(msg.topics);
   } else if (msg.type === "overlay_view") {
     setOverlayView(msg.view);
+  } else if (msg.type === "memo_updated") {
+    applyMemo(msg.memo);
   }
 };
 ws.onclose = () => {
