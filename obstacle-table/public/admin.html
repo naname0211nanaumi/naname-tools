@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>妨害表 Admin</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px 20px 80px;
+    background: #1a1d2e;
+    color: #e8eaf0;
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", sans-serif;
+    font-size: 14px;
+  }
+  h1 { margin: 0 0 12px; font-size: 20px; }
+  h2 { margin: 16px 0 8px; font-size: 16px; color: #a5dcef; }
+  h3 { margin: 12px 0 6px; font-size: 14px; color: #a5b0d0; }
+  label { display: block; font-size: 12px; color: #aaa; margin-bottom: 2px; }
+
+  .top-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #4a5dc7;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  button:hover { background: #5a6dd7; }
+  button.danger { background: #c74a5d; }
+  button.danger:hover { background: #d75a6d; }
+  button.save { background: #4ac765; font-size: 15px; padding: 10px 20px; }
+  button.save:hover { background: #5ad775; }
+  button.ghost {
+    background: transparent;
+    color: #a5dcef;
+    border: 1px solid #4a5dc7;
+  }
+  button.ghost:hover { background: #2a3050; }
+  button.small { padding: 4px 8px; font-size: 12px; }
+
+  select, input[type="text"], input[type="number"] {
+    background: #2a2d3e;
+    color: #e8eaf0;
+    border: 1px solid #3a3d4e;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  input[type="text"], input[type="number"] { width: 100%; }
+
+  input[type="color"] {
+    width: 32px;
+    height: 28px;
+    padding: 1px 2px;
+    border: 1px solid #3a3d4e;
+    border-radius: 4px;
+    background: #2a2d3e;
+    cursor: pointer;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #a5dcef;
+  }
+
+  .panel {
+    background: #22253a;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* カラーフィールド */
+  .color-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .color-field label { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+  .color-pair {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .color-pair input[type="text"] {
+    width: 82px;
+  }
+
+  /* ブロックテーブル */
+  .blocks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #22253a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .blocks-table th, .blocks-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #2a2d3e;
+    vertical-align: middle;
+    font-size: 12px;
+  }
+  .blocks-table th {
+    background: #2a2d4e;
+    font-weight: 600;
+    font-size: 11px;
+    color: #a5b0d0;
+  }
+  .blocks-table tr.disabled { opacity: 0.4; }
+  .blocks-table tr.color-override-row td {
+    background: #1a1d2e;
+    padding: 8px 12px;
+  }
+
+  .col-handle { width: 30px; cursor: grab; text-align: center; color: #777; }
+  .col-enabled { width: 50px; text-align: center; }
+  .col-image { width: 60px; }
+  .col-type { width: 90px; }
+  .col-actions { width: 100px; text-align: right; white-space: nowrap; }
+
+  .block-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    background: #1a1d2e;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .block-thumb-empty {
+    width: 44px;
+    height: 44px;
+    background: #1a1d2e;
+    border: 1px dashed #555;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #777;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* カラーオーバーライドパネル（テーブル内展開行） */
+  .override-panel {
+    background: #1e2138;
+    border: 1px solid #3a3d5e;
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .override-panel h4 {
+    font-size: 12px;
+    color: #a5b0d0;
+    margin: 0 0 8px;
+  }
+  .override-color-row {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+  }
+
+  /* ギフトピッカーモーダル */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #22253a;
+    width: min(900px, 92vw);
+    max-height: 85vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 12px 16px;
+    background: #2a2d4e;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .modal-header h3 { margin: 0; font-size: 16px; flex: 1; color: #e8eaf0; }
+  .modal-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .gift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+  .gift-card {
+    background: #1a1d2e;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.1s;
+  }
+  .gift-card:hover { border-color: #4a5dc7; }
+  .gift-card img { width: 60px; height: 60px; object-fit: contain; }
+  .gift-card .gift-name { font-size: 11px; margin-top: 2px; color: #ddd; word-break: break-word; }
+  .gift-card .gift-coins { font-size: 11px; color: #ffd24a; font-weight: 700; }
+
+  /* ステータスバー */
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 20px;
+    background: #2a2d4e;
+    border-top: 1px solid #3a3d5e;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 50;
+  }
+  .status-text { flex: 1; color: #aaa; font-size: 13px; }
+  .status-text.dirty { color: #ffb74a; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>妨害表 Admin</h1>
+
+<!-- グローバル設定 -->
+<div class="panel">
+  <h2>グローバル設定</h2>
+  <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+    <div style="min-width: 160px;">
+      <label>スライド間隔（秒）</label>
+      <input type="number" id="slideIntervalSec" min="1" max="60" step="1" value="3"
+             style="width: 80px;" oninput="markDirty()">
+    </div>
+    <div style="min-width: 180px;">
+      <label>ページ切替アニメーション</label>
+      <select id="transitionType" style="width: 100%;" oninput="markDirty()">
+        <option value="fade">フェード</option>
+        <option value="slide">スライド</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- セット選択 -->
+<div class="top-bar">
+  <label style="margin: 0;">セット:</label>
+  <select id="setSelector" onchange="onSetSelect()"></select>
+  <button class="ghost small" onclick="addSet()">＋ 新規セット</button>
+  <button class="ghost small" onclick="duplicateSet()">複製</button>
+  <button class="ghost small" onclick="setActiveSet()">このセットをOBSに表示</button>
+  <button class="danger small" onclick="deleteSet()">セット削除</button>
+  <span id="activeIndicator" style="margin-left: 8px; color: #4ac765; font-weight: 700;"></span>
+</div>
+
+<!-- セット情報パネル -->
+<div class="panel">
+  <h2>セット情報</h2>
+  <div class="panel-grid">
+    <div>
+      <label>セット名（管理用）</label>
+      <input type="text" id="setName" oninput="markDirty()">
+    </div>
+    <div>
+      <label>表示列数</label>
+      <input type="number" id="layoutColumns" min="1" max="10" oninput="markDirty()">
+    </div>
+    <div>
+      <label>タイトル（例: GTA山登り）</label>
+      <input type="text" id="title" oninput="markDirty()">
+    </div>
+    <div>
+      <label>サブタイトル（ルール文）</label>
+      <input type="text" id="subtitle" oninput="markDirty()">
+    </div>
+    <div>
+      <label>WIN残カウンタ・ラベル（例: ホラゲ残り）</label>
+      <input type="text" id="winCounterLabel" oninput="markDirty()">
+    </div>
+    <div>
+      <label>WIN残数（例: 43）</label>
+      <input type="number" id="winCount" oninput="markDirty()">
+    </div>
+    <div>
+      <label>WIN残カウンタ・単位（例: 個）</label>
+      <input type="text" id="winCounterUnit" oninput="markDirty()">
+    </div>
+    <div>
+      <label>現在のWIN数ラベル</label>
+      <input type="text" id="currentWinLabel" oninput="markDirty()">
+    </div>
+    <div>
+      <label>現在のWIN数</label>
+      <input type="number" id="currentWin" oninput="markDirty()">
+    </div>
+  </div>
+
+  <!-- 妨害カラー -->
+  <h3>妨害ブロック デフォルトカラー</h3>
+  <div class="color-row" id="obstacleColorRow"></div>
+
+  <!-- お助けカラー -->
+  <h3>お助けブロック デフォルトカラー</h3>
+  <div class="color-row" id="helpColorRow"></div>
+
+  <h3>帯カラー</h3>
+  <div class="color-row" id="bandColorRow"></div>
+</div>
+
+<!-- ブロック一覧 -->
+<div class="panel">
+  <h2>ブロック一覧</h2>
+  <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+    <button onclick="addBlock('obstacle')">＋ 妨害ブロック追加</button>
+    <button onclick="addBlock('help')">＋ お助けブロック追加</button>
+  </div>
+  <table class="blocks-table">
+    <thead>
+      <tr>
+        <th class="col-handle">↕</th>
+        <th class="col-enabled">表示</th>
+        <th class="col-image">画像</th>
+        <th>名前</th>
+        <th class="col-type">タイプ</th>
+        <th>ギフト</th>
+        <th>画像サイズ</th>
+        <th>帯</th>
+        <th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody id="blocksBody"></tbody>
+  </table>
+</div>
+
+<!-- 保存バー -->
+<div class="status-bar">
+  <span class="status-text" id="statusText">準備完了</span>
+  <button class="ghost" onclick="reload()">変更を破棄して再読込</button>
+  <button class="save" onclick="save()">💾 保存（OBSに反映）</button>
+</div>
+
+<!-- ギフトピッカーモーダル -->
+<div class="modal-bg" id="giftModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>ギフトを選択</h3>
+      <input type="text" id="giftSearch" placeholder="名前で検索..." style="flex: 0 0 240px;" oninput="filterGifts()">
+      <input type="text" id="giftCoinFilter" placeholder="コイン数(例:100, <50, >200)..." style="flex: 0 0 200px;" oninput="filterGifts()">
+      <button class="ghost small" onclick="loadGifts(true)">🔄 更新</button>
+      <button class="ghost small" onclick="closeGiftModal()">閉じる</button>
+    </div>
+    <div class="modal-body">
+      <div id="giftGrid" class="gift-grid">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+let db = { activeSetId: "", slideIntervalSec: 3, sets: [] };
+let currentSetIndex = 0;
+let dirty = false;
+let allGifts = [];
+let pendingGiftPickBlockIndex = -1;
+
+// カラーオーバーライドを展開中のブロックIDセット
+const expandedColorBlocks = new Set();
+
+const $ = (id) => document.getElementById(id);
+
+// ============================================================
+// Init
+// ============================================================
+async function init() {
+  await reload();
+  loadGifts(false);
+}
+
+async function reload() {
+  const res = await fetch("/api/sets");
+  db = await res.json();
+  if (!db.slideIntervalSec) db.slideIntervalSec = 3;
+  if (db.sets.length === 0) {
+    db.sets.push(emptySet("set_" + Date.now(), "新規セット"));
+    db.activeSetId = db.sets[0].id;
+  }
+  currentSetIndex = Math.max(
+    0,
+    db.sets.findIndex((s) => s.id === db.activeSetId),
+  );
+  renderSetSelector();
+  renderCurrentSet();
+  dirty = false;
+  updateStatus();
+}
+
+function emptySet(id, name) {
+  return {
+    id,
+    name,
+    title: "",
+    subtitle: "",
+    winCounterLabel: "",
+    winCount: 0,
+    winCounterUnit: "",
+    currentWinLabel: "現在のWIN数",
+    currentWin: null,
+    layoutColumns: 7,
+    transitionType: "fade",
+    obstacleColor: { bg: "#a5dcef", text: "#ffffff", border: "#ffffff", borderWidth: 3 },
+    helpColor:     { bg: "#fcd9e0", text: "#ffffff", border: "#ffffff", borderWidth: 3 },
+    bandColor:     { bg: "#e88aa2", text: "#ffffff" },
+    blocks: [],
+  };
+}
+
+// ============================================================
+// セット選択
+// ============================================================
+function renderSetSelector() {
+  const sel = $("setSelector");
+  sel.innerHTML = "";
+  for (let i = 0; i < db.sets.length; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = db.sets[i].name;
+    sel.appendChild(opt);
+  }
+  sel.value = currentSetIndex;
+  $("activeIndicator").textContent =
+    db.sets[currentSetIndex]?.id === db.activeSetId ? "● OBS表示中" : "";
+}
+
+function onSetSelect() {
+  if (dirty && !confirm("未保存の変更があります。破棄して切り替えますか？")) {
+    $("setSelector").value = currentSetIndex;
+    return;
+  }
+  currentSetIndex = parseInt($("setSelector").value, 10);
+  expandedColorBlocks.clear();
+  renderCurrentSet();
+  dirty = false;
+  updateStatus();
+  renderSetSelector();
+}
+
+function addSet() {
+  const name = prompt("新規セット名:", "新規セット");
+  if (!name) return;
+  const newSet = emptySet("set_" + Date.now(), name);
+  db.sets.push(newSet);
+  currentSetIndex = db.sets.length - 1;
+  renderSetSelector();
+  renderCurrentSet();
+  markDirty();
+}
+
+function duplicateSet() {
+  const src = db.sets[currentSetIndex];
+  if (!src) return;
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = "set_" + Date.now();
+  copy.name = src.name + "（コピー）";
+  copy.blocks = copy.blocks.map((b) => ({
+    ...b,
+    id: "blk_" + Math.random().toString(36).slice(2, 8),
+  }));
+  db.sets.push(copy);
+  currentSetIndex = db.sets.length - 1;
+  renderSetSelector();
+  renderCurrentSet();
+  markDirty();
+}
+
+function setActiveSet() {
+  db.activeSetId = db.sets[currentSetIndex].id;
+  renderSetSelector();
+  markDirty();
+  alert("保存ボタンを押すとOBSが切り替わります");
+}
+
+function deleteSet() {
+  if (db.sets.length <= 1) { alert("最後の1セットは削除できません"); return; }
+  if (!confirm(`セット「${db.sets[currentSetIndex].name}」を削除？`)) return;
+  const wasActive = db.sets[currentSetIndex].id === db.activeSetId;
+  db.sets.splice(currentSetIndex, 1);
+  if (wasActive) db.activeSetId = db.sets[0].id;
+  currentSetIndex = 0;
+  expandedColorBlocks.clear();
+  renderSetSelector();
+  renderCurrentSet();
+  markDirty();
+}
+
+// ============================================================
+// カラーフィールド描画ヘルパー
+// ============================================================
+function makeColorFields(containerId, prefix, colorObj) {
+  const container = $(containerId);
+  container.innerHTML = "";
+
+  const fields = [
+    { key: "bg",    label: "背景色" },
+    { key: "text",  label: "テキスト色" },
+    { key: "border",label: "ボーダー色" },
+  ];
+
+  for (const f of fields) {
+    const val = colorObj?.[f.key] ?? "#ffffff";
+    const div = document.createElement("div");
+    div.className = "color-field";
+    div.innerHTML = `
+      <label>${f.label}</label>
+      <div class="color-pair">
+        <input type="color" id="${prefix}-${f.key}-p" value="${escapeAttr(val)}">
+        <input type="text"  id="${prefix}-${f.key}-t" value="${escapeAttr(val)}"
+               maxlength="7" style="width:82px;" oninput="markDirty()">
+      </div>`;
+    container.appendChild(div);
+
+    // picker ↔ text 同期（setTimeout で DOM 確定後に設定）
+    setTimeout(() => {
+      const picker = $(`${prefix}-${f.key}-p`);
+      const text   = $(`${prefix}-${f.key}-t`);
+      if (!picker || !text) return;
+      picker.addEventListener("input", () => { text.value = picker.value; markDirty(); });
+      text.addEventListener("change", () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      });
+    }, 0);
+  }
+
+  // borderWidth
+  const bwDiv = document.createElement("div");
+  bwDiv.className = "color-field";
+  bwDiv.innerHTML = `
+    <label>ボーダー太さ (px)</label>
+    <input type="number" id="${prefix}-bw" min="0" max="20"
+           value="${colorObj?.borderWidth ?? 3}" style="width:70px;" oninput="markDirty()">`;
+  container.appendChild(bwDiv);
+}
+
+function readColorFields(prefix) {
+  const bg     = $(`${prefix}-bg-t`)?.value     ?? "#ffffff";
+  const text   = $(`${prefix}-text-t`)?.value   ?? "#ffffff";
+  const border = $(`${prefix}-border-t`)?.value ?? "#ffffff";
+  const bw     = parseInt($(`${prefix}-bw`)?.value ?? "3", 10) || 0;
+  return { bg, text, border, borderWidth: bw };
+}
+
+function makeBandColorFields(containerId, prefix, colorObj) {
+  const container = $(containerId);
+  container.innerHTML = "";
+
+  const fields = [
+    { key: "bg", label: "背景色" },
+    { key: "text", label: "テキスト色" },
+  ];
+
+  for (const f of fields) {
+    const val = colorObj?.[f.key] ?? "#ffffff";
+    const div = document.createElement("div");
+    div.className = "color-field";
+    div.innerHTML = `
+      <label>${f.label}</label>
+      <div class="color-pair">
+        <input type="color" id="${prefix}-${f.key}-p" value="${escapeAttr(val)}">
+        <input type="text"  id="${prefix}-${f.key}-t" value="${escapeAttr(val)}"
+               maxlength="7" style="width:82px;" oninput="markDirty()">
+      </div>`;
+    container.appendChild(div);
+
+    setTimeout(() => {
+      const picker = $(`${prefix}-${f.key}-p`);
+      const text   = $(`${prefix}-${f.key}-t`);
+      if (!picker || !text) return;
+      picker.addEventListener("input", () => { text.value = picker.value; markDirty(); });
+      text.addEventListener("change", () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      });
+    }, 0);
+  }
+}
+
+function readBandColorFields(prefix) {
+  const bg   = $(`${prefix}-bg-t`)?.value   ?? "#ffffff";
+  const text = $(`${prefix}-text-t`)?.value ?? "#ffffff";
+  return { bg, text };
+}
+
+// ============================================================
+// セット情報の双方向バインド
+// ============================================================
+function renderCurrentSet() {
+  const s = db.sets[currentSetIndex];
+  if (!s) return;
+
+  // グローバル
+  $("slideIntervalSec").value = db.slideIntervalSec ?? 3;
+  $("transitionType").value = s.transitionType || "fade";
+
+  $("setName").value         = s.name || "";
+  $("title").value           = s.title || "";
+  $("subtitle").value        = s.subtitle || "";
+  $("winCounterLabel").value = s.winCounterLabel || "";
+  $("winCount").value        = s.winCount ?? 0;
+  $("winCounterUnit").value  = s.winCounterUnit || "";
+  $("currentWinLabel").value = s.currentWinLabel || "";
+  $("currentWin").value      = s.currentWin ?? "";
+  $("layoutColumns").value   = s.layoutColumns ?? 7;
+
+  makeColorFields("obstacleColorRow", "oc", s.obstacleColor);
+  makeColorFields("helpColorRow",     "hc", s.helpColor);
+  makeBandColorFields("bandColorRow", "bc", s.bandColor);
+
+  renderBlocks();
+}
+
+function pullSetFromInputs() {
+  db.slideIntervalSec = parseInt($("slideIntervalSec").value || "3", 10);
+
+  const s = db.sets[currentSetIndex];
+  if (!s) return;
+  s.name             = $("setName").value;
+  s.title            = $("title").value;
+  s.subtitle         = $("subtitle").value;
+  s.winCounterLabel  = $("winCounterLabel").value;
+  s.winCount         = parseInt($("winCount").value || "0", 10);
+  s.winCounterUnit   = $("winCounterUnit").value;
+  s.currentWinLabel  = $("currentWinLabel").value;
+  s.transitionType   = $("transitionType").value || "fade";
+  const currentWinInput = $("currentWin").value.trim();
+  const currentWinValue = currentWinInput === "" ? null : parseInt(currentWinInput, 10);
+  s.currentWin       = currentWinValue === null || Number.isNaN(currentWinValue)
+    ? null
+    : currentWinValue;
+  s.layoutColumns    = parseInt($("layoutColumns").value || "7", 10);
+  s.obstacleColor    = readColorFields("oc");
+  s.helpColor        = readColorFields("hc");
+  s.bandColor        = readBandColorFields("bc");
+}
+
+// ============================================================
+// ブロック編集
+// ============================================================
+function renderBlocks() {
+  const s = db.sets[currentSetIndex];
+  const tb = $("blocksBody");
+  tb.innerHTML = "";
+
+  s.blocks.forEach((b, i) => {
+    // メイン行
+    const tr = document.createElement("tr");
+    if (!b.enabled) tr.classList.add("disabled");
+
+    const hasOverride = !!b.colorOverride;
+    tr.innerHTML = `
+      <td class="col-handle" draggable="true" data-idx="${i}">⋮⋮</td>
+      <td class="col-enabled">
+        <input type="checkbox" ${b.enabled ? "checked" : ""}
+               onchange="toggleEnabled(${i}, this.checked)">
+      </td>
+      <td class="col-image">
+        ${b.gift && b.gift.giftImageURL
+          ? `<img class="block-thumb" src="${escapeAttr(b.gift.giftImageURL)}" onclick="openGiftPicker(${i})">`
+          : `<div class="block-thumb-empty" onclick="openGiftPicker(${i})">＋</div>`}
+      </td>
+      <td>
+        <input type="text" value="${escapeAttr(b.obstacleName)}"
+               onchange="updateBlockField(${i}, 'obstacleName', this.value)">
+      </td>
+      <td>
+        <select onchange="updateBlockField(${i}, 'obstacleType', this.value)">
+          <option value="obstacle" ${b.obstacleType === "obstacle" ? "selected" : ""}>妨害</option>
+          <option value="help"     ${b.obstacleType === "help"     ? "selected" : ""}>お助け</option>
+        </select>
+      </td>
+      <td>
+        ${b.gift?.giftName || "<span style='color:#777'>未選択</span>"}
+        <div style="font-size: 10px; color: #777;">
+          ${b.gift?.giftId ? `id: ${b.gift.giftId}` : ""}
+        </div>
+      </td>
+      <td>
+        <input type="number" min="0.1" step="0.05" style="width:70px;"
+               value="${(typeof b.imageScale === 'number' ? b.imageScale : 1).toFixed(2)}"
+               onchange="updateBlockField(${i}, 'imageScale', parseFloat(this.value) || 1)">
+      </td>
+      <td>
+        <label style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+          <input type="checkbox" ${b.bandEnabled ? "checked" : ""}
+                 onchange="updateBlockField(${i}, 'bandEnabled', this.checked)">
+          帯
+        </label>
+        <input type="text" value="${escapeAttr(b.bandText)}"
+               style="width: 70px; margin-top: 2px;"
+               placeholder="お助け"
+               onchange="updateBlockField(${i}, 'bandText', this.value)">
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <input type="color" value="${escapeAttr(b.bandColor?.bg ?? '#e88aa2')}"
+                 title="帯背景色"
+                 onchange="updateBlockBandColor(${i}, 'bg', this.value)">
+          <input type="color" value="${escapeAttr(b.bandColor?.text ?? '#ffffff')}"
+                 title="帯文字色"
+                 onchange="updateBlockBandColor(${i}, 'text', this.value)">
+        </div>
+      </td>
+      <td class="col-actions">
+        <button class="small ghost" onclick="moveBlock(${i}, -1)">↑</button>
+        <button class="small ghost" onclick="moveBlock(${i},  1)">↓</button>
+        <button class="small ghost" style="color:${hasOverride ? '#ffd24a' : '#aaa'}"
+                onclick="toggleColorRow('${b.id}', ${i})">🎨</button>
+        <button class="small danger" onclick="removeBlock(${i})">×</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+
+    // カラーオーバーライド展開行
+    if (expandedColorBlocks.has(b.id)) {
+      const overrideRow = document.createElement("tr");
+      overrideRow.className = "color-override-row";
+      overrideRow.id = `color-row-${b.id}`;
+      const base = b.obstacleType === "help"
+        ? db.sets[currentSetIndex].helpColor
+        : db.sets[currentSetIndex].obstacleColor;
+      const ov = b.colorOverride ?? {};
+
+      overrideRow.innerHTML = `
+        <td colspan="9">
+          <div class="override-panel">
+            <h4>カラーオーバーライド</h4>
+            <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;cursor:pointer;">
+              <input type="checkbox" id="ov-use-${b.id}" ${hasOverride ? "checked" : ""}
+                     onchange="toggleOverride('${b.id}', ${i}, this.checked)">
+              セットのデフォルトカラーを上書きする
+            </label>
+            <div class="override-color-row" id="ov-fields-${b.id}"
+                 style="${hasOverride ? "" : "opacity:0.4;pointer-events:none;"}">
+              ${makeOverrideFieldHTML(b.id, "bg",     "背景色",       ov.bg     ?? base?.bg     ?? "#ffffff")}
+              ${makeOverrideFieldHTML(b.id, "text",   "テキスト色",   ov.text   ?? base?.text   ?? "#ffffff")}
+              ${makeOverrideFieldHTML(b.id, "border", "ボーダー色",   ov.border ?? base?.border ?? "#ffffff")}
+              <div class="color-field">
+                <label>ボーダー太さ (px)</label>
+                <input type="number" id="ov-${b.id}-bw" min="0" max="20"
+                       value="${ov.borderWidth ?? base?.borderWidth ?? 3}"
+                       style="width:70px;"
+                       onchange="saveOverride('${b.id}', ${i})">
+              </div>
+            </div>
+          </div>
+        </td>`;
+      tb.appendChild(overrideRow);
+
+      // picker ↔ text 同期
+      setTimeout(() => syncOverridePickers(b.id, i), 0);
+    }
+  });
+}
+
+function makeOverrideFieldHTML(blockId, key, label, val) {
+  return `<div class="color-field">
+    <label>${label}</label>
+    <div class="color-pair">
+      <input type="color" id="ov-${blockId}-${key}-p" value="${escapeAttr(val)}">
+      <input type="text"  id="ov-${blockId}-${key}-t" value="${escapeAttr(val)}"
+             maxlength="7" style="width:82px;"
+             onchange="saveOverride('${blockId}', ${parseInt(blockId, 36) || 0})">
+    </div>
+  </div>`;
+}
+
+function syncOverridePickers(blockId, blockIdx) {
+  for (const key of ["bg", "text", "border"]) {
+    const picker = $(`ov-${blockId}-${key}-p`);
+    const text   = $(`ov-${blockId}-${key}-t`);
+    if (!picker || !text) continue;
+    picker.addEventListener("input", () => {
+      text.value = picker.value;
+      saveOverride(blockId, blockIdx);
+    });
+    text.addEventListener("change", () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+      saveOverride(blockId, blockIdx);
+    });
+  }
+}
+
+function toggleColorRow(blockId, blockIdx) {
+  if (expandedColorBlocks.has(blockId)) {
+    expandedColorBlocks.delete(blockId);
+  } else {
+    expandedColorBlocks.add(blockId);
+  }
+  renderBlocks();
+}
+
+function toggleOverride(blockId, blockIdx, enabled) {
+  const block = db.sets[currentSetIndex].blocks[blockIdx];
+  if (!block) return;
+  if (enabled) {
+    const base = block.obstacleType === "help"
+      ? db.sets[currentSetIndex].helpColor
+      : db.sets[currentSetIndex].obstacleColor;
+    block.colorOverride = { ...base };
+  } else {
+    delete block.colorOverride;
+  }
+  const fieldsDiv = $(`ov-fields-${blockId}`);
+  if (fieldsDiv) {
+    fieldsDiv.style.opacity = enabled ? "" : "0.4";
+    fieldsDiv.style.pointerEvents = enabled ? "" : "none";
+  }
+  markDirty();
+}
+
+function saveOverride(blockId, blockIdx) {
+  const block = db.sets[currentSetIndex].blocks.find(b => b.id === blockId);
+  if (!block) return;
+  const useOverride = $(`ov-use-${blockId}`)?.checked ?? !!block.colorOverride;
+  if (!useOverride) return;
+
+  block.colorOverride = {
+    bg:          $(`ov-${blockId}-bg-t`)?.value     ?? block.colorOverride?.bg,
+    text:        $(`ov-${blockId}-text-t`)?.value   ?? block.colorOverride?.text,
+    border:      $(`ov-${blockId}-border-t`)?.value ?? block.colorOverride?.border,
+    borderWidth: parseInt($(`ov-${blockId}-bw`)?.value ?? "3", 10) || 0,
+  };
+  markDirty();
+}
+
+function escapeAttr(s) {
+  return String(s ?? "").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function addBlock(type) {
+  const s = db.sets[currentSetIndex];
+  s.blocks.push({
+    id: "blk_" + Math.random().toString(36).slice(2, 8),
+    obstacleName: type === "help" ? "お助け名" : "妨害名",
+    obstacleType: type,
+    gift: { giftName: "", giftImageURL: "" },
+    enabled: true,
+    bandEnabled: type === "help",
+    bandText: type === "help" ? "お助け" : "",
+    bandColor: { bg: "#e88aa2", text: "#ffffff" },
+    imageScale: 1.0,
+  });
+  renderBlocks();
+  markDirty();
+}
+
+function removeBlock(i) {
+  const s = db.sets[currentSetIndex];
+  if (!confirm("削除しますか？")) return;
+  expandedColorBlocks.delete(s.blocks[i]?.id);
+  s.blocks.splice(i, 1);
+  renderBlocks();
+  markDirty();
+}
+
+function moveBlock(i, dir) {
+  const s = db.sets[currentSetIndex];
+  const j = i + dir;
+  if (j < 0 || j >= s.blocks.length) return;
+  [s.blocks[i], s.blocks[j]] = [s.blocks[j], s.blocks[i]];
+  renderBlocks();
+  markDirty();
+}
+
+function toggleEnabled(i, val) {
+  db.sets[currentSetIndex].blocks[i].enabled = val;
+  renderBlocks();
+  markDirty();
+}
+
+function updateBlockField(i, key, val) {
+  db.sets[currentSetIndex].blocks[i][key] = val;
+  markDirty();
+}
+
+function updateBlockBandColor(i, key, value) {
+  const block = db.sets[currentSetIndex].blocks[i];
+  if (!block) return;
+  block.bandColor = {
+    bg: block.bandColor?.bg ?? "#e88aa2",
+    text: block.bandColor?.text ?? "#ffffff",
+    [key]: value,
+  };
+  markDirty();
+}
+
+// ============================================================
+// ギフトピッカー
+const EXTRA_GIFTS = [
+  {
+    name: "フォローアイコン",
+    imageURL: "https://app.streamtoearn.io/assets/icons/follow.svg",
+    coins: "",
+    giftId: "follow-icon",
+  },
+];
+// ============================================================
+async function loadGifts(forceRefresh) {
+  const url = forceRefresh ? "/api/gifts?refresh=1" : "/api/gifts";
+  $("giftGrid").innerHTML = "読み込み中...";
+  try {
+    const [giftsRes, localRes] = await Promise.all([
+      fetch(url),
+      fetch("/api/local-images"),
+    ]);
+    const data = await giftsRes.json();
+    const localData = await localRes.json();
+    const localGifts = (localData.images || []).map((img) => ({
+      name: img.name,
+      imageURL: img.imageURL,
+      coins: "",
+      giftId: `local-${img.name}`,
+    }));
+    allGifts = [...EXTRA_GIFTS, ...localGifts, ...(data.gifts || [])];
+    filterGifts();
+  } catch (e) {
+    $("giftGrid").innerHTML = "<div style='color:#ff7a7a'>取得失敗: " + e + "</div>";
+  }
+}
+
+function filterGifts() {
+  const q = $("giftSearch").value.toLowerCase().trim();
+  const coinQuery = $("giftCoinFilter").value.trim();
+  
+  let filtered = allGifts;
+  
+  // 名前で絞り込み
+  if (q) {
+    filtered = filtered.filter((g) => g.name.toLowerCase().includes(q));
+  }
+  
+  // コイン数で絞り込み
+  if (coinQuery) {
+    filtered = filtered.filter((g) => {
+      const coins = parseInt(g.coins, 10);
+      if (isNaN(coins)) return true; // コイン情報がない場合は表示
+      
+      // 比較演算子をチェック
+      if (coinQuery.startsWith(">=")) {
+        const target = parseInt(coinQuery.substring(2).trim(), 10);
+        return !isNaN(target) && coins >= target;
+      } else if (coinQuery.startsWith(">")) {
+        const target = parseInt(coinQuery.substring(1).trim(), 10);
+        return !isNaN(target) && coins > target;
+      } else if (coinQuery.startsWith("<=")) {
+        const target = parseInt(coinQuery.substring(2).trim(), 10);
+        return !isNaN(target) && coins <= target;
+      } else if (coinQuery.startsWith("<")) {
+        const target = parseInt(coinQuery.substring(1).trim(), 10);
+        return !isNaN(target) && coins < target;
+      } else {
+        // 部分一致（例：100で1000, 10000も該当）
+        return g.coins.toString().includes(coinQuery);
+      }
+    });
+  }
+  
+  const grid = $("giftGrid");
+  grid.innerHTML = "";
+  for (const g of filtered) {
+    const card = document.createElement("div");
+    card.className = "gift-card";
+    card.innerHTML = `
+      <img src="${escapeAttr(g.imageURL)}" alt="">
+      <div class="gift-name">${escapeAttr(g.name)}</div>
+      <div class="gift-coins">💎 ${g.coins}</div>
+    `;
+    card.onclick = () => pickGift(g);
+    grid.appendChild(card);
+  }
+  if (filtered.length === 0) {
+    grid.innerHTML = "<div style='color:#777'>該当なし</div>";
+  }
+}
+
+function openGiftPicker(blockIdx) {
+  pendingGiftPickBlockIndex = blockIdx;
+  $("giftSearch").value = "";
+  $("giftCoinFilter").value = "";
+  filterGifts();
+  $("giftModal").classList.add("open");
+}
+
+function closeGiftModal() {
+  $("giftModal").classList.remove("open");
+  pendingGiftPickBlockIndex = -1;
+}
+
+function pickGift(g) {
+  if (pendingGiftPickBlockIndex < 0) return;
+  const block = db.sets[currentSetIndex].blocks[pendingGiftPickBlockIndex];
+  const keepId = block.gift?.giftName === g.name ? block.gift?.giftId : undefined;
+  block.gift = {
+    giftName: g.name,
+    giftImageURL: g.imageURL,
+    ...(keepId ? { giftId: keepId } : {}),
+  };
+  closeGiftModal();
+  renderBlocks();
+  markDirty();
+}
+
+// ============================================================
+// 保存・ステータス
+// ============================================================
+function markDirty() {
+  pullSetFromInputs();
+  dirty = true;
+  updateStatus();
+}
+
+function updateStatus() {
+  const t = $("statusText");
+  if (dirty) {
+    t.textContent = "● 未保存の変更あり";
+    t.classList.add("dirty");
+  } else {
+    t.textContent = "保存済み";
+    t.classList.remove("dirty");
+  }
+}
+
+async function save() {
+  pullSetFromInputs();
+  const res = await fetch("/api/sets", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(db),
+  });
+  if (res.ok) {
+    dirty = false;
+    updateStatus();
+    $("statusText").textContent = "✅ 保存完了（OBS反映済み）";
+  } else {
+    alert("保存に失敗");
+  }
+}
+
+// ============================================================
+// 起動
+// ============================================================
+init();
+window.addEventListener("beforeunload", (e) => {
+  if (dirty) { e.preventDefault(); e.returnValue = ""; }
+});
+</script>
+
+</body>
+</html>

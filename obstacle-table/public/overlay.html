@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>妨害表 Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Yusei+Magic&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     基本：透過背景・OBS Browser Source想定
+     ============================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: transparent;
+    font-family: "Mochiy Pop One", "Yusei Magic", "Hiragino Maru Gothic Pro",
+                 "ヒラギノ丸ゴ ProN", "Comic Sans MS", sans-serif;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0 34px;
+  }
+
+  /* ===== カラー変数 ===== */
+  :root {
+    --sky-blue: #46c0ff;
+    --sky-blue-light: #a5dcef;
+    --pink: #f4b3c2;
+    --pink-dark: #e88aa2;
+    --pink-light: #fcd9e0;
+    --frame-white: #e7f8fc;
+    --text-shadow-strong: 2px 2px 0 #2a6a85, -2px -2px 0 #2a6a85,
+                          2px -2px 0 #2a6a85, -2px 2px 0 #2a6a85,
+                          0 2px 0 #2a6a85, 2px 0 0 #2a6a85;
+  }
+
+  /* ===== タイトルとヘッダーのラップ ===== */
+  .title-header-wrap {
+    position: relative;
+    overflow: visible;
+    margin: 8px 0 0;
+  }
+
+  /* ===== タイトル行（青ボックスの外・上に配置） ===== */
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 0 4px;
+    position: absolute;
+    z-index: 2;
+    top: -5px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ===== ヘッダー（サブタイトルのみ） ===== */
+  .header {
+    height: 84px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin: 60px 0 0;
+    background: var(--sky-blue);
+    border-radius: 12px;
+    padding: 8px 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .title {
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--frame-white);
+    -webkit-text-stroke: 10px #46c0ff;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    paint-order: stroke fill;
+    flex: none;
+  }
+
+  .win-counter {
+    position: relative;
+    background: var(--frame-white);
+    border: 3px solid var(--sky-blue);
+    border-radius: 10px;
+    padding: 4px 10px;
+    text-align: center;
+    line-height: 1.1;
+    color: #1b1b1b;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-bottom: 16px;
+  }
+  /* 吹き出し尻尾（外側・ボーダー色） */
+  .win-counter::before {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 14px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 15px 12px 0 0;
+    border-color: var(--sky-blue) transparent transparent transparent;
+  }
+  /* 吹き出し尻尾（内側・白） */
+  .win-counter::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 16px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 11px 9px 0 0;
+    border-color: var(--frame-white) transparent transparent transparent;
+    z-index: 1;
+  }
+  .win-counter-label {
+    font-size: 24px;
+    display: block;
+  }
+  .win-counter-num {
+    font-size: 28px;
+    color: #ff3a7a;
+    display: inline-block;
+  }
+  .win-counter-unit {
+    font-size: 20px;
+    display: inline-block;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--frame-white);
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    -webkit-text-stroke: 1px #2a6a85;
+    paint-order: stroke fill;
+  }
+
+  /* ===== ブロックグリッド ===== */
+  .grid {
+    margin: 8px 0 0;
+    display: grid;
+    gap: 8px;
+    height: 284px;
+  }
+
+  .block {
+    /* background / border はインラインスタイルで上書き */
+    background: var(--sky-blue-light);
+    border: 3px solid var(--frame-white);
+    border-radius: 12px;
+    aspect-ratio: 1 / 1;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .block-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.15s;
+  }
+
+  .block-name {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    /* background / color はインラインスタイルで上書き */
+    color: var(--frame-white);
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: 6px;
+    -webkit-text-stroke: 4px #4d4d4d;
+    paint-order: stroke fill;
+    line-height: 1.15;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 22px;
+  }
+
+  /* お助け帯（左上にナナメに）- 固定ピンク、変更不要 */
+  .block-band {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--pink-dark);
+    color: var(--frame-white);
+    font-size: 16px;
+    font-weight: 800;
+    padding: 2px 14px;
+    transform: rotate(-40deg) translate(-44%, 56%);
+    transform-origin: top left;
+    text-shadow: 1px 1px 0 #8a3a52;
+    border: 2px solid var(--frame-white);
+    border-radius: 4px;
+    z-index: 2;
+    width: 100px;
+    text-align: center;
+  }
+
+  /* ===== 現在のWIN数フッター ===== */
+  .footer {
+    margin: 23px 0 12px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    height: 124px;
+  }
+
+  .footer-rules {
+    background: var(--sky-blue);
+    border-radius: 12px;
+    min-height: 80px;
+    padding: 8px 12px;
+    color: var(--frame-white);
+    font-weight: 800;
+    text-shadow: 1px 1px 0 #2a6a85;
+    font-size: 14px;
+  }
+
+  .footer-win {
+    background: var(--sky-blue);
+    border-radius: 12px;
+    min-height: 80px;
+    padding: 4px 8px;
+    color: var(--frame-white);
+    text-align: center;
+    text-shadow: 1px 1px 0 #2a6a85;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .footer-win-label {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    position: absolute;
+    top: -24px;
+    color: var(--frame-white);
+    -webkit-text-stroke: 4px #46c0ff;
+    paint-order: stroke fill
+  }
+
+  .footer-win-num {
+    font-size: 36px;
+    font-weight: 900;
+    color: #fff14a;
+    text-shadow: 2px 2px 0 #b8830f;
+    line-height: 1;
+  }
+
+  /* ===== ギフト受信エフェクト ===== */
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+  }
+  .block.flash .block-image {
+    animation: pulse 0.6s ease;
+  }
+
+  /* ===== スライドフェード ===== */
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(-25%); opacity: 0; }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(25%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  .grid.fading-out { animation: fadeOut 0.3s forwards; }
+  .grid.fading-in  { animation: fadeIn 0.3s forwards; }
+  .grid.sliding-out { animation: slideOutLeft 0.3s forwards; }
+  .grid.sliding-in  { animation: slideInRight 0.3s forwards; }
+</style>
+</head>
+<body>
+
+<div class="title-header-wrap">
+  <div class="title-row">
+    <div class="title" id="title">GTA山登り</div>
+    <div class="win-counter">
+      <span class="win-counter-label" id="winCounterLabel">ホラゲ残り</span>
+      <span class="win-counter-num" id="winCount">43</span><span
+        class="win-counter-unit" id="winCounterUnit">個</span>
+    </div>
+  </div>
+  <div class="header">
+    <div class="subtitle" id="subtitle">-1WINごとにホラゲー+1 / +1WINごとにホラゲー-1</div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  <div class="footer-rules" id="footerRules"></div>
+  <div class="footer-win">
+    <div class="footer-win-label" id="currentWinLabel">現在のWIN数</div>
+    <div class="footer-win-num" id="currentWin"></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// ===== State =====
+let currentSet = null;
+let currentSlideIntervalSec = 3;
+let currentPage = 0;
+let slideTimer = null;
+let isTransitioning = false;
+
+// ===== カラーユーティリティ =====
+function getBlockColor(b, set) {
+  const defaultObstacleColor = {
+    bg: "#e7f8fc",
+    text: "#ffffff",
+    border: "#76defa",
+    borderWidth: 4,
+  };
+  const defaultHelpColor = {
+    bg: "#faf7fc",
+    text: "#ffffff",
+    border: "#df9285",
+    borderWidth: 4,
+  };
+  const base = b.obstacleType === "help" ? (set.helpColor || defaultHelpColor) : (set.obstacleColor || defaultObstacleColor);
+  const ov = b.colorOverride ?? {};
+  return {
+    bg:          ov.bg          ?? base.bg,
+    border:      ov.border      ?? base.border,
+    borderWidth: ov.borderWidth ?? base.borderWidth,
+  };
+}
+
+// ===== 描画 =====
+function render(set) {
+  $("title").textContent = set.title || "";
+  $("subtitle").textContent = set.subtitle || "";
+  $("winCounterLabel").textContent = set.winCounterLabel || "";
+  $("winCount").textContent = set.winCount ?? "";
+  $("winCounterUnit").textContent = set.winCounterUnit || "";
+  $("currentWinLabel").textContent = set.currentWinLabel || "現在のWIN数";
+  $("currentWin").textContent = set.currentWin !== null && set.currentWin !== undefined && set.currentWin !== ""
+    ? set.currentWin
+    : "";
+  $("footerRules").textContent = "";
+
+  const cols = Math.max(1, Math.min(10, set.layoutColumns || 7));
+  $("grid").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  renderPage(set);
+}
+
+function renderPage(set) {
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
+  const maxPerPage = set.layoutColumns * 2;
+  const totalPages = Math.max(1, Math.ceil(enabled.length / maxPerPage));
+  const page = currentPage % totalPages;
+  const slice = enabled.slice(page * maxPerPage, (page + 1) * maxPerPage);
+
+  const grid = $("grid");
+  grid.innerHTML = "";
+
+  for (const b of slice) {
+    grid.appendChild(makeBlockEl(b, set));
+  }
+}
+
+function makeBlockEl(b, set) {
+  const color = getBlockColor(b, set);
+  const imgScale = b.imageScale ?? 1.0;
+
+  const div = document.createElement("div");
+  div.className = "block";
+  div.dataset.blockId = b.id;
+
+  div.style.background = color.bg;
+  div.style.border = `${color.borderWidth}px solid ${color.border}`;
+
+  // お助け帯（固定ピンク）
+  if (b.bandEnabled && b.bandText) {
+    const band = document.createElement("div");
+    band.className = "block-band";
+    band.textContent = b.bandText;
+    const bandColor = b.bandColor || set.bandColor || { bg: "var(--pink-dark)", text: "#ffffff" };
+    band.style.background = bandColor.bg;
+    band.style.color = bandColor.text;
+    div.appendChild(band);
+  }
+
+  // ギフト画像
+  if (b.gift?.giftImageURL) {
+    const img = document.createElement("img");
+    img.className = "block-image";
+    img.src = b.gift.giftImageURL;
+    img.style.transform = `scale(${imgScale})`;
+    img.alt = "";
+    div.appendChild(img);
+  }
+
+  // 妨害名ラベル
+  const nameEl = document.createElement("div");
+  nameEl.className = "block-name";
+  nameEl.textContent = b.obstacleName || "";
+  div.appendChild(nameEl);
+
+  return div;
+}
+
+// ===== スライド =====
+function startSlide(set, intervalSec) {
+  stopSlide();
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
+  const maxPerPage = set.layoutColumns * 2;
+  if (enabled.length <= maxPerPage) return;
+
+  const ms = Math.max(1, intervalSec ?? 3) * 1000;
+  slideTimer = setInterval(() => slidePage(set), ms);
+}
+
+function stopSlide() {
+  clearInterval(slideTimer);
+  slideTimer = null;
+  isTransitioning = false;
+}
+
+function slidePage(set) {
+  if (isTransitioning) return;
+  const enabled = (set.blocks || []).filter((b) => b.enabled);
+  const maxPerPage = set.layoutColumns * 2;
+  const totalPages = Math.max(1, Math.ceil(enabled.length / maxPerPage));
+
+  const grid = $("grid");
+  const transitionType = (set.transitionType || "fade").toLowerCase();
+  const outClass = transitionType === "slide" ? "sliding-out" : "fading-out";
+  const inClass = transitionType === "slide" ? "sliding-in" : "fading-in";
+
+  isTransitioning = true;
+  grid.classList.add(outClass);
+
+  setTimeout(() => {
+    grid.classList.remove(outClass);
+    currentPage = (currentPage + 1) % totalPages;
+    renderPage(set);
+    grid.classList.add(inClass);
+    setTimeout(() => {
+      grid.classList.remove(inClass);
+      isTransitioning = false;
+    }, 300);
+  }, 300);
+}
+
+// ===== 全体更新 =====
+function applyUpdate(set, slideIntervalSec) {
+  currentSet = set;
+  currentSlideIntervalSec = slideIntervalSec ?? 3;
+  currentPage = 0;
+  stopSlide();
+  render(set);
+  startSlide(set, currentSlideIntervalSec);
+}
+
+// ===== 初回ロード =====
+fetch("/api/active-set")
+  .then((r) => r.json())
+  .then((data) => {
+    // サーバーが { ...set, slideIntervalSec } を返す
+    const { slideIntervalSec, ...set } = data;
+    applyUpdate(set, slideIntervalSec);
+  })
+  .catch((e) => console.error("load failed", e));
+
+// ===== WebSocket =====
+const ws = new WebSocket(`ws://${location.host}/`);
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.type === "set_updated") {
+    applyUpdate(msg.data, msg.slideIntervalSec);
+  } else if (msg.type === "gift_received") {
+    const el = document.querySelector(`[data-block-id="${msg.blockId}"]`);
+    if (el) {
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+    }
+  }
+};
+ws.onclose = () => {
+  setTimeout(() => location.reload(), 2000);
+};
+</script>
+
+</body>
+</html>
