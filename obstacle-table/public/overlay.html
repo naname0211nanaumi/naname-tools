@@ -306,7 +306,6 @@
   /* ===== トピックビュー ===== */
   #obstacle-view { display: block; }
   #obstacle-view.hidden { display: none; }
-  #obstacle-view.waiting { display: none; }
 
   #topics-view {
     display: none;
@@ -410,7 +409,7 @@
 </head>
 <body>
 
-<div id="obstacle-view" class="waiting">
+<div id="obstacle-view">
 <div class="title-header-wrap">
   <div class="title-row">
     <div class="title" id="title">GTA山登り</div>
@@ -612,12 +611,10 @@ function setOverlayView(view) {
   const obstacleEl = $("obstacle-view");
   const topicsEl = $("topics-view");
   if (view === "topics") {
-    obstacleEl.classList.remove("waiting");
     obstacleEl.classList.add("hidden");
     topicsEl.classList.add("active");
     stopSlide();
   } else {
-    obstacleEl.classList.remove("waiting");
     obstacleEl.classList.remove("hidden");
     topicsEl.classList.remove("active");
     if (currentSet) startSlide(currentSet, currentSlideIntervalSec);
