@@ -302,10 +302,163 @@
   .grid.fading-in  { animation: fadeIn 0.3s forwards; }
   .grid.sliding-out { animation: slideOutLeft 0.3s forwards; }
   .grid.sliding-in  { animation: slideInRight 0.3s forwards; }
+
+  /* ===== トピックビュー ===== */
+  #obstacle-view { display: block; }
+  #obstacle-view.hidden { display: none; }
+
+  #topics-view {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    right: 5%;
+    bottom: 18%;
+  }
+  #topics-view.active { display: flex; }
+
+  .topics-title {
+    text-align: center;
+    font-size: 30px;
+    font-weight: 900;
+    color: #f0e8ff;
+    -webkit-text-stroke: 6px #5a2890;
+    paint-order: stroke fill;
+    letter-spacing: 0.06em;
+    margin: 14px 0 10px;
+  }
+
+  .topics-board {
+    background: rgba(50, 20, 80, 0.80);
+    border: 2px solid rgba(200, 150, 255, 0.55);
+    border-radius: 16px;
+    padding: 14px 18px;
+  }
+
+  .topic-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    margin-bottom: 7px;
+    background: rgba(120, 70, 190, 0.38);
+    border: 1.5px solid rgba(210, 170, 255, 0.4);
+    border-radius: 10px;
+  }
+  .topic-row:last-child { margin-bottom: 0; }
+  .topic-row.active-topic {
+    background: rgba(160, 90, 255, 0.55);
+    border: 2.5px solid rgba(230, 190, 255, 0.9);
+    transform: scale(1.02);
+    transform-origin: left center;
+  }
+  .topic-row.active-topic .topic-label {
+    font-size: 23px;
+    color: #fff;
+    -webkit-text-stroke: 3px rgba(60, 10, 100, 0.9);
+  }
+  .topic-row.active-topic .topic-check {
+    background: rgba(200, 120, 255, 0.7);
+    border-color: rgba(240, 210, 255, 0.9);
+    color: #fff;
+    font-size: 16px;
+  }
+  .topic-row.done {
+    background: rgba(70, 50, 90, 0.3);
+    border-color: rgba(140, 110, 170, 0.3);
+    opacity: 0.52;
+  }
+
+  .topic-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(200, 155, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    background: rgba(90, 50, 150, 0.5);
+    color: #c8a0ff;
+  }
+  .topic-row.done .topic-check {
+    background: rgba(60, 160, 90, 0.5);
+    border-color: rgba(130, 215, 130, 0.65);
+    color: #a0eea0;
+  }
+
+  .topic-label {
+    flex: 1;
+    font-size: 20px;
+    font-weight: 800;
+    color: #f0e4ff;
+    -webkit-text-stroke: 3px rgba(40, 10, 70, 0.85);
+    paint-order: stroke fill;
+    line-height: 1.3;
+  }
+  .topic-row.done .topic-label {
+    color: #a888c0;
+    text-decoration: line-through;
+    text-decoration-color: rgba(170, 130, 195, 0.55);
+    -webkit-text-stroke: 2px rgba(40, 10, 70, 0.5);
+  }
+
+  .topic-done-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #a0eea0;
+    background: rgba(50, 130, 70, 0.5);
+    border: 1px solid rgba(130, 210, 130, 0.45);
+    border-radius: 6px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+    -webkit-text-stroke: 0;
+  }
+
+  @keyframes topicsFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #topics-view.active { animation: topicsFadeIn 0.4s ease; }
+
+  /* ===== メモボード ===== */
+  #memo-board {
+    display: none;
+    position: fixed;
+    top: 18%;
+    left: 5%;
+    right: 57%;
+    bottom: 42%;
+    background: rgba(50, 20, 80, 0.82);
+    border: 2px solid rgba(200, 150, 255, 0.6);
+    border-radius: 14px;
+    padding: 14px 18px;
+    z-index: 20;
+    overflow-y: auto;
+  }
+  #memo-board.visible { display: block; }
+
+  .memo-text {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f0e4ff;
+    -webkit-text-stroke: 3px rgba(40, 10, 70, 0.85);
+    paint-order: stroke fill;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
 </style>
 </head>
 <body>
 
+<div id="memo-board">
+  <div class="memo-text" id="memoText"></div>
+</div>
+
+<div id="obstacle-view">
 <div class="title-header-wrap">
   <div class="title-row">
     <div class="title" id="title">GTA山登り</div>
@@ -327,6 +480,17 @@
   <div class="footer-win">
     <div class="footer-win-label" id="currentWinLabel">現在のWIN数</div>
     <div class="footer-win-num" id="currentWin"></div>
+  </div>
+</div>
+</div><!-- /#obstacle-view -->
+
+<div id="topics-view">
+  <div class="topics-title">✿ 雑談トピック ✿</div>
+  <div class="topics-board" id="topicsBoard">
+    <div class="topic-row">
+      <div class="topic-check">✦</div>
+      <div class="topic-label">トピックを追加するとここに表示されます</div>
+    </div>
   </div>
 </div>
 
@@ -491,15 +655,73 @@ function applyUpdate(set, slideIntervalSec) {
   startSlide(set, currentSlideIntervalSec);
 }
 
+// ===== ビュー切替 =====
+function setOverlayView(view) {
+  const obstacleEl = $("obstacle-view");
+  const topicsEl = $("topics-view");
+  if (view === "topics") {
+    obstacleEl.classList.add("hidden");
+    topicsEl.classList.add("active");
+    stopSlide();
+  } else {
+    obstacleEl.classList.remove("hidden");
+    topicsEl.classList.remove("active");
+    if (currentSet) startSlide(currentSet, currentSlideIntervalSec);
+  }
+}
+
+// ===== トピック描画 =====
+function renderTopics(topics) {
+  const board = $("topicsBoard");
+  if (!topics || !topics.length) {
+    board.innerHTML = `
+      <div class="topic-row">
+        <div class="topic-check">✦</div>
+        <div class="topic-label">トピックはまだありません</div>
+      </div>`;
+    return;
+  }
+  board.innerHTML = topics.map((t) => `
+    <div class="topic-row${t.done ? " done" : ""}${t.active ? " active-topic" : ""}">
+      <div class="topic-check">${t.done ? "✓" : t.active ? "🎙" : "✦"}</div>
+      <div class="topic-label">${escapeHtml(t.text)}</div>
+      ${t.done ? '<div class="topic-done-badge">完了</div>' : ""}
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
 // ===== 初回ロード =====
 fetch("/api/active-set")
   .then((r) => r.json())
   .then((data) => {
-    // サーバーが { ...set, slideIntervalSec } を返す
     const { slideIntervalSec, ...set } = data;
     applyUpdate(set, slideIntervalSec);
   })
   .catch((e) => console.error("load failed", e));
+
+fetch("/api/topics")
+  .then((r) => r.json())
+  .then((data) => {
+    renderTopics(data.topics || []);
+    setOverlayView(data.overlayView || "obstacle");
+  })
+  .catch((e) => console.error("topics load failed", e));
+
+fetch("/api/memo")
+  .then((r) => r.json())
+  .then((memo) => applyMemo(memo))
+  .catch((e) => console.error("memo load failed", e));
+
+function applyMemo(memo) {
+  const board = $("memo-board");
+  const textEl = $("memoText");
+  textEl.textContent = memo.text || "";
+  board.classList.toggle("visible", !!memo.visible);
+}
 
 // ===== WebSocket =====
 const ws = new WebSocket(`ws://${location.host}/`);
@@ -514,6 +736,12 @@ ws.onmessage = (e) => {
       void el.offsetWidth;
       el.classList.add("flash");
     }
+  } else if (msg.type === "topics_updated") {
+    renderTopics(msg.topics);
+  } else if (msg.type === "overlay_view") {
+    setOverlayView(msg.view);
+  } else if (msg.type === "memo_updated") {
+    applyMemo(msg.memo);
   }
 };
 ws.onclose = () => {
