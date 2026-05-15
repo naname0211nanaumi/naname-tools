@@ -203,7 +203,10 @@ Deno.serve({ port: PORT }, async (req) => {
           case "stop_endroll": broadcast({ type: "stop_endroll" }); break;
           case "reset_session": resetSession(); break;
           case "get_endroll_data": socket.send(JSON.stringify({ type: "endroll_data", data: buildEndrollData() })); break;
-          case "set_goal": bottleState.goal = Math.max(1, toPosInt(msg.value, 1000)); broadcast({ type: "set_goal", value: bottleState.goal }); break;
+          case "set_goal":
+            bottleState.goal = Math.max(1, toPosInt(msg.value, 1000));
+            broadcast({ type: "set_goal", value: bottleState.goal });
+            break;
           case "add_likes": {
             const add = Math.max(0, toPosInt(msg.value, 0));
             if (add > 0) { bottleState.likes += add; sessionState.totalLikes += add; broadcast({ type: "add_likes", value: add }); }
@@ -217,7 +220,38 @@ Deno.serve({ port: PORT }, async (req) => {
             broadcast({ type: "set_likes", value: bottleState.likes });
             break;
           }
-          case "reset": bottleState.likes = 0; lastTotalLikeCount = 0; broadcast({ type: "reset" }); break;
+          case "set_liquid_color": {
+            if (msg.value && typeof msg.value === "object") {
+              bottleState.liquidColor = {
+                top: String((msg.value as Record<string, unknown>).top ?? bottleState.liquidColor.top),
+                bottom: String((msg.value as Record<string, unknown>).bottom ?? bottleState.liquidColor.bottom),
+              };
+              broadcast({ type: "set_liquid_color", value: bottleState.liquidColor });
+            }
+            break;
+          }
+          case "set_glass_color": {
+            bottleState.glassColor = String(msg.value || bottleState.glassColor);
+            broadcast({ type: "set_glass_color", value: bottleState.glassColor });
+            break;
+          }
+          case "set_bottle_shape": {
+            bottleState.bottleShape = String(msg.value || bottleState.bottleShape);
+            broadcast({ type: "set_bottle_shape", value: bottleState.bottleShape });
+            break;
+          }
+          case "set_float_items": {
+            if (Array.isArray(msg.value)) {
+              bottleState.floatItems = msg.value.map((item: unknown) => String(item));
+              broadcast({ type: "set_float_items", value: bottleState.floatItems });
+            }
+            break;
+          }
+          case "reset":
+            bottleState.likes = 0;
+            lastTotalLikeCount = 0;
+            broadcast({ type: "reset" });
+            break;
         }
       } catch (e) { log("[WS] message parse error", e); }
     };
