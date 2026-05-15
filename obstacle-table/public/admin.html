@@ -452,6 +452,10 @@
 
   <h3>帯カラー</h3>
   <div class="color-row" id="bandColorRow"></div>
+
+  <div style="margin-top:12px;">
+    <button class="ghost small" onclick="applyDefaultColors()">🎨 未設定カラーを一括デフォルト設定</button>
+  </div>
 </div>
 
 <!-- ブロック一覧 -->
@@ -568,6 +572,19 @@ const $ = (id) => document.getElementById(id);
 async function init() {
   await reload();
   loadGifts(false);
+}
+
+function applyDefaultColors() {
+  const DEFAULT = { bg: "#1b1b1b", text: "#ffffff", border: "#ffffff" };
+  for (const prefix of ["oc", "hc"]) {
+    for (const [key, val] of Object.entries(DEFAULT)) {
+      const picker = $(`${prefix}-${key}-p`);
+      const text   = $(`${prefix}-${key}-t`);
+      if (picker) picker.value = val;
+      if (text)   text.value   = val;
+    }
+  }
+  markDirty();
 }
 
 async function reload() {
