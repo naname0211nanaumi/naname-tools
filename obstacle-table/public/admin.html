@@ -571,14 +571,28 @@ async function init() {
   loadGifts(false);
 }
 
-function applyDefaultColorToBlock(idx) {
+const DEFAULT_BLOCK_COLOR = { bg: "#1b1b1b", text: "#ffffff", border: "#ffffff", borderWidth: 3 };
+
+function isDefaultColor(b) {
+  const ov = b.colorOverride;
+  return ov && ov.bg === DEFAULT_BLOCK_COLOR.bg &&
+               ov.text === DEFAULT_BLOCK_COLOR.text &&
+               ov.border === DEFAULT_BLOCK_COLOR.border;
+}
+
+function toggleDefaultColor(idx, on) {
   const s = db.sets[currentSetIndex];
-  s.blocks[idx].colorOverride = {
-    bg: "#1b1b1b",
-    text: "#ffffff",
-    border: "#ffffff",
-    borderWidth: 3,
-  };
+  s.blocks[idx].colorOverride = on ? { ...DEFAULT_BLOCK_COLOR } : undefined;
+  markDirty();
+  renderBlocks();
+}
+
+function copyBlock(idx) {
+  const s = db.sets[currentSetIndex];
+  const original = s.blocks[idx];
+  const copy = JSON.parse(JSON.stringify(original));
+  copy.id = "blk_" + Date.now();
+  s.blocks.splice(idx + 1, 0, copy);
   markDirty();
   renderBlocks();
 }
@@ -917,8 +931,13 @@ function renderBlocks() {
         <button class="small ghost" onclick="moveBlock(${i},  1)">↓</button>
         <button class="small ghost" style="color:${hasOverride ? '#ffd24a' : '#aaa'}"
                 onclick="toggleColorRow('${b.id}', ${i})">🎨</button>
-        <button class="small ghost" title="未設定カラーを適用"
-                onclick="applyDefaultColorToBlock(${i})">⬛</button>
+        <label class="active-switch" title="デフォルトカラー適用" style="gap:3px;">
+          <input type="checkbox" ${isDefaultColor(b) ? "checked" : ""}
+                 onchange="toggleDefaultColor(${i}, this.checked)">
+          <span class="switch-track"></span>
+        </label>
+        <button class="small ghost" title="直下にコピー"
+                onclick="copyBlock(${i})">📋</button>
         <button class="small danger" onclick="removeBlock(${i})">×</button>
       </td>
     `;
