@@ -453,9 +453,6 @@
   <h3>帯カラー</h3>
   <div class="color-row" id="bandColorRow"></div>
 
-  <div style="margin-top:12px;">
-    <button class="ghost small" onclick="applyDefaultColors()">🎨 未設定カラーを一括デフォルト設定</button>
-  </div>
 </div>
 
 <!-- ブロック一覧 -->
@@ -574,17 +571,16 @@ async function init() {
   loadGifts(false);
 }
 
-function applyDefaultColors() {
-  const DEFAULT = { bg: "#1b1b1b", text: "#ffffff", border: "#ffffff" };
-  for (const prefix of ["oc", "hc"]) {
-    for (const [key, val] of Object.entries(DEFAULT)) {
-      const picker = $(`${prefix}-${key}-p`);
-      const text   = $(`${prefix}-${key}-t`);
-      if (picker) picker.value = val;
-      if (text)   text.value   = val;
-    }
-  }
+function applyDefaultColorToBlock(idx) {
+  const s = db.sets[currentSetIndex];
+  s.blocks[idx].colorOverride = {
+    bg: "#1b1b1b",
+    text: "#ffffff",
+    border: "#ffffff",
+    borderWidth: 3,
+  };
   markDirty();
+  renderBlocks();
 }
 
 async function reload() {
@@ -921,6 +917,8 @@ function renderBlocks() {
         <button class="small ghost" onclick="moveBlock(${i},  1)">↓</button>
         <button class="small ghost" style="color:${hasOverride ? '#ffd24a' : '#aaa'}"
                 onclick="toggleColorRow('${b.id}', ${i})">🎨</button>
+        <button class="small ghost" title="未設定カラーを適用"
+                onclick="applyDefaultColorToBlock(${i})">⬛</button>
         <button class="small danger" onclick="removeBlock(${i})">×</button>
       </td>
     `;
