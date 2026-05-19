@@ -547,8 +547,10 @@ async function handleCommentWebhook(req: Request): Promise<Response> {
     const payload = await req.json() as TikFinityPayload;
     const uniqueId = payload.data?.user?.uniqueId ?? "";
     const nickname = payload.data?.user?.nickname ?? "anonymous";
+    const comment = payload.data?.comment ?? "";
     if (!uniqueId) return Response.json({ ok: false, reason: "no uniqueId" });
-    const stamped = await tryStamp(uniqueId, nickname, "comment");
+    if (!comment.includes("こんナナ")) return Response.json({ ok: true, reason: "no trigger keyword" });
+    const stamped = await tryStamp(uniqueId, nickname, "comment:こんナナ");
     return Response.json({ ok: true, stamped });
   } catch (e) {
     console.error("Comment webhook error:", e);
