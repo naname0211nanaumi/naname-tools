@@ -256,6 +256,94 @@ async function handler(req: Request): Promise<Response> {
     return Response.json({ ok: true });
   }
 
+  // ===== スタンプカード =====
+  if (path === "/stamp-card") {
+    return await serveFile("./public/stamp-card.html", "text/html");
+  }
+  if (path === "/api/stamp-card/settings" && req.method === "GET") {
+    const sc = await loadStampDB();
+    return Response.json(sc.settings);
+  }
+  if (path === "/api/stamp-card/settings" && req.method === "POST") {
+    const settings = await req.json() as StampCardSettings;
+    const sc = await loadStampDB();
+    sc.settings = settings;
+    await saveStampDB(sc);
+    broadcast({ type: "stamp_settings_updated", settings });
+    return Response.json({ ok: true });
+  }
+  if (path === "/api/stamp-card/today" && req.method === "GET") {
+    const sc = await loadStampDB();
+    const today = todayStr();
+    const entries = sc.entries.filter((e) => e.date === today);
+    const maxCards = sc.settings.gridCols * sc.settings.gridRows;
+    return Response.json({ entries, count: entries.length, maxCards, complete: entries.length >= maxCards });
+  }
+  if (path === "/api/stamp-card/stats" && req.method === "GET") {
+    const sc = await loadStampDB();
+    const daily: { date: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const s = dateStr(d);
+      daily.push({ date: s, count: sc.entries.filter((e) => e.date === s).length });
+    }
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const calendar: { date: string; count: number }[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const s = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      calendar.push({ date: s, count: sc.entries.filter((e) => e.date === s).length });
+    }
+    return Response.json({ daily, calendar });
+  }
+  if (path === "/api/stamp-card/rankings" && req.method === "GET") {
+    const sc = await loadStampDB();
+    const now = new Date();
+    const monthPfx = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const userNick = new Map<string, string>();
+    for (const e of sc.entries) userNick.set(e.uniqueId, e.nickname);
+
+    const countBy = (entries: StampEntry[]) => {
+      const m = new Map<string, number>();
+      for (const e of entries) m.set(e.uniqueId, (m.get(e.uniqueId) ?? 0) + 1);
+      return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20)
+        .map(([uid, count]) => ({ uniqueId: uid, nickname: userNick.get(uid) ?? uid, count }));
+    };
+    const streaks = calcStreaks(sc.entries);
+    const toSRanking = (key: "current" | "max") =>
+      [...streaks.entries()].sort((a, b) => b[1][key] - a[1][key]).slice(0, 20)
+        .map(([uid, s]) => ({ uniqueId: uid, nickname: userNick.get(uid) ?? uid, count: s[key] }));
+
+    return Response.json({
+      monthly: countBy(sc.entries.filter((e) => e.date.startsWith(monthPfx))),
+      cumulative: countBy(sc.entries),
+      currentStreak: toSRanking("current"),
+      maxStreak: toSRanking("max"),
+    });
+  }
+  if (path === "/api/stamp-card/participants" && req.method === "GET") {
+    const sc = await loadStampDB();
+    const search = (url.searchParams.get("search") ?? "").toLowerCase();
+    const dateF = url.searchParams.get("date") ?? "";
+    let results = [...sc.entries].sort((a, b) => b.stampedAt - a.stampedAt);
+    if (search) results = results.filter((e) => e.nickname.toLowerCase().includes(search) || e.uniqueId.toLowerCase().includes(search));
+    if (dateF) results = results.filter((e) => e.date === dateF);
+    return Response.json({ participants: results, total: results.length });
+  }
+  if (path.startsWith("/api/stamp-card/participants/") && req.method === "DELETE") {
+    const parts = path.split("/");
+    const uid = decodeURIComponent(parts[4]);
+    const date = parts[5];
+    const sc = await loadStampDB();
+    sc.entries = sc.entries.filter((e) => !(e.uniqueId === uid && e.date === date));
+    await saveStampDB(sc);
+    broadcast({ type: "stamp_card_updated" });
+    return Response.json({ ok: true });
+  }
+  if (path === "/webhook/comment" && req.method === "POST") {
+    return await handleCommentWebhook(req);
+  }
+
   // ===== API: オーバーレイ表示切替 =====
   if (path === "/api/overlay-view" && req.method === "POST") {
     const { view } = await req.json() as { view: "obstacle" | "topics" };
@@ -355,6 +443,116 @@ async function serveFile(
 }
 
 // ============================================================
+// スタンプカード データ層
+// ============================================================
+interface StampCardColors {
+  cardBg: string; cardBorder: string; stampedBg: string;
+  usernameColor: string; overlayBg: string;
+}
+interface StampCardSettings {
+  gridCols: number; gridRows: number;
+  backgroundImageURL: string; stampImageURL: string;
+  stampSoundURL: string; completeSoundURL: string;
+  colorPreset: string; colors: StampCardColors; enabled: boolean;
+}
+interface StampEntry {
+  uniqueId: string; nickname: string; date: string; stampedAt: number;
+}
+interface StampCardDB {
+  settings: StampCardSettings; entries: StampEntry[];
+}
+
+const STAMP_PATH = "./data/stamp-card.json";
+const DEFAULT_STAMP_SETTINGS: StampCardSettings = {
+  gridCols: 5, gridRows: 2,
+  backgroundImageURL: "", stampImageURL: "", stampSoundURL: "", completeSoundURL: "",
+  colorPreset: "blue",
+  colors: { cardBg: "#0d1a2e", cardBorder: "#4488ff", stampedBg: "#0d2e4a", usernameColor: "#aaccff", overlayBg: "rgba(5,10,25,0.8)" },
+  enabled: true,
+};
+
+async function loadStampDB(): Promise<StampCardDB> {
+  try {
+    return JSON.parse(await Deno.readTextFile(STAMP_PATH)) as StampCardDB;
+  } catch {
+    return { settings: { ...DEFAULT_STAMP_SETTINGS }, entries: [] };
+  }
+}
+async function saveStampDB(db: StampCardDB): Promise<void> {
+  await Deno.writeTextFile(STAMP_PATH, JSON.stringify(db, null, 2));
+}
+
+function todayStr(): string { return dateStr(new Date()); }
+function dateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function calcStreaks(entries: StampEntry[]): Map<string, { current: number; max: number }> {
+  const byUser = new Map<string, Set<string>>();
+  for (const e of entries) {
+    if (!byUser.has(e.uniqueId)) byUser.set(e.uniqueId, new Set());
+    byUser.get(e.uniqueId)!.add(e.date);
+  }
+  const today = todayStr();
+  const result = new Map<string, { current: number; max: number }>();
+  for (const [uid, dates] of byUser) {
+    const sorted = [...dates].sort();
+    let max = 0, streak = 0;
+    let prev: string | null = null;
+    for (const d of sorted) {
+      if (!prev) { streak = 1; }
+      else {
+        const diff = (new Date(d).getTime() - new Date(prev).getTime()) / 86400000;
+        streak = diff === 1 ? streak + 1 : 1;
+      }
+      max = Math.max(max, streak);
+      prev = d;
+    }
+    let current = 0;
+    let check = new Date(today + "T00:00:00");
+    while (dates.has(dateStr(check))) {
+      current++;
+      check = new Date(check.getTime() - 86400000);
+    }
+    result.set(uid, { current, max });
+  }
+  return result;
+}
+
+async function handleCommentWebhook(req: Request): Promise<Response> {
+  try {
+    const payload = await req.json() as TikFinityPayload;
+    const uniqueId = payload.data?.user?.uniqueId ?? "";
+    const nickname = payload.data?.user?.nickname ?? "anonymous";
+    if (!uniqueId) return Response.json({ ok: false, reason: "no uniqueId" });
+
+    const sc = await loadStampDB();
+    if (!sc.settings.enabled) return Response.json({ ok: true });
+
+    const today = todayStr();
+    if (sc.entries.some((e) => e.uniqueId === uniqueId && e.date === today)) {
+      return Response.json({ ok: true, reason: "already stamped" });
+    }
+
+    sc.entries.push({ uniqueId, nickname, date: today, stampedAt: Date.now() });
+    await saveStampDB(sc);
+
+    const todayEntries = sc.entries.filter((e) => e.date === today);
+    const maxCards = sc.settings.gridCols * sc.settings.gridRows;
+    const complete = todayEntries.length >= maxCards;
+
+    broadcast({ type: "stamp_card_stamp", uniqueId, nickname, todayCount: todayEntries.length, maxCards, complete });
+    if (complete) broadcast({ type: "stamp_card_complete" });
+
+    console.log(`[STAMP] ${nickname}(${uniqueId}) → ${todayEntries.length}/${maxCards}`);
+    return Response.json({ ok: true, stamped: true, count: todayEntries.length });
+  } catch (e) {
+    console.error("Comment webhook error:", e);
+    return Response.json({ ok: false, error: String(e) }, { status: 500 });
+  }
+}
+
+// ============================================================
 // TikFinity Webhook
 // ============================================================
 interface TikFinityPayload {
@@ -439,8 +637,9 @@ async function handleWebhook(req: Request): Promise<Response> {
 // 起動
 // ============================================================
 console.log(`妨害表ツール起動: http://localhost:${PORT}`);
-console.log(`  Overlay: http://localhost:${PORT}/overlay`);
-console.log(`  Admin:   http://localhost:${PORT}/admin`);
-console.log(`  Webhook: http://localhost:${PORT}/webhook`);
+console.log(`  Overlay:    http://localhost:${PORT}/overlay`);
+console.log(`  Admin:      http://localhost:${PORT}/admin`);
+console.log(`  StampCard:  http://localhost:${PORT}/stamp-card`);
+console.log(`  Webhook:    http://localhost:${PORT}/webhook`);
 
 Deno.serve({ port: PORT }, handler);

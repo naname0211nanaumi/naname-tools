@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>スタンプカード Overlay</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    font-family: "Hiragino Maru Gothic Pro", "ヒラギノ丸ゴ ProN",
+                 "Meiryo", sans-serif;
+    user-select: none;
+  }
+
+  #bg {
+    position: fixed; inset: 0;
+    background-size: cover;
+    background-position: center;
+    display: none;
+  }
+  #overlay-bg { position: fixed; inset: 0; }
+
+  #grid-wrap {
+    position: fixed; inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    padding: 12px;
+  }
+  #grid {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ===== カード ===== */
+  .card {
+    border-radius: 10px;
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+    min-width: 0;
+  }
+  .card-slot {
+    font-size: clamp(14px, 2.5vw, 22px);
+    font-weight: 900;
+    opacity: 0.25;
+  }
+  .card .stamp-img {
+    width: 65%;
+    height: 55%;
+    object-fit: contain;
+    display: none;
+  }
+  .card.stamped .stamp-img { display: block; }
+  .card .username {
+    font-size: clamp(9px, 1.4vw, 14px);
+    font-weight: 800;
+    text-align: center;
+    margin-top: 2px;
+    line-height: 1.2;
+    word-break: break-all;
+    max-width: 100%;
+    display: none;
+  }
+  .card.stamped .username { display: block; }
+  .card.stamped .card-slot { display: none; }
+
+  /* ===== スタンプアニメ ===== */
+  @keyframes stampPop {
+    0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+    60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+    80%  { transform: scale(0.92) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .card.stamp-anim .stamp-img {
+    animation: stampPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  @keyframes nameSlideIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card.stamp-anim .username {
+    animation: nameSlideIn 0.35s 0.3s ease both;
+  }
+
+  /* ===== キラキラ ===== */
+  .spark {
+    position: fixed;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 50;
+    animation: sparkFly 0.75s ease-out forwards;
+  }
+  @keyframes sparkFly {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
+  /* ===== 紙吹雪 ===== */
+  #confetti-layer {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+  }
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== コンプリートバナー ===== */
+  #complete-banner {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    border: 4px solid #fff;
+    border-radius: 20px;
+    padding: 20px 44px;
+    font-size: clamp(24px, 5vw, 42px);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+    z-index: 200;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #complete-banner.show { transform: translate(-50%, -50%) scale(1); }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="overlay-bg"></div>
+<div id="grid-wrap"><div id="grid"></div></div>
+<div id="confetti-layer"></div>
+<div id="complete-banner">🎉 コンプリート！ 🎉</div>
+
+<script>
+let settings = null;
+let todayEntries = [];
+
+async function init() {
+  const [sr, tr] = await Promise.all([
+    fetch("/api/stamp-card/settings"),
+    fetch("/api/stamp-card/today"),
+  ]);
+  settings = await sr.json();
+  const td = await tr.json();
+  todayEntries = td.entries;
+  applySettings();
+  renderGrid();
+}
+
+function applySettings() {
+  const bg = document.getElementById("bg");
+  if (settings.backgroundImageURL) {
+    bg.style.backgroundImage = `url(${CSS.escape ? settings.backgroundImageURL : settings.backgroundImageURL})`;
+    bg.style.display = "block";
+  } else {
+    bg.style.display = "none";
+  }
+  document.getElementById("overlay-bg").style.background = settings.colors.overlayBg;
+
+  const grid = document.getElementById("grid");
+  grid.style.gridTemplateColumns = `repeat(${settings.gridCols}, 1fr)`;
+  grid.style.gridTemplateRows    = `repeat(${settings.gridRows}, 1fr)`;
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  const total = settings.gridCols * settings.gridRows;
+  for (let i = 0; i < total; i++) {
+    grid.appendChild(makeCard(i, todayEntries[i] ?? null));
+  }
+}
+
+function makeCard(idx, entry) {
+  const div = document.createElement("div");
+  div.className = "card" + (entry ? " stamped" : "");
+  div.id = `card-${idx}`;
+  div.style.background   = entry ? settings.colors.stampedBg : settings.colors.cardBg;
+  div.style.borderColor  = settings.colors.cardBorder;
+
+  const slot = document.createElement("div");
+  slot.className = "card-slot";
+  slot.textContent = String(idx + 1);
+  slot.style.color = settings.colors.cardBorder;
+  div.appendChild(slot);
+
+  const img = document.createElement("img");
+  img.className = "stamp-img";
+  img.src = settings.stampImageURL || "";
+  img.alt = "";
+  div.appendChild(img);
+
+  const name = document.createElement("div");
+  name.className = "username";
+  name.textContent = entry?.nickname ?? "";
+  name.style.color = settings.colors.usernameColor;
+  div.appendChild(name);
+
+  return div;
+}
+
+function playStamp(nickname, todayCount) {
+  const idx = todayCount - 1;
+  const card = document.getElementById(`card-${idx}`);
+  if (!card) return;
+
+  card.classList.add("stamped", "stamp-anim");
+  card.style.background = settings.colors.stampedBg;
+  card.querySelector(".stamp-img").src = settings.stampImageURL || "";
+  card.querySelector(".username").textContent = nickname;
+
+  spawnSparkles(card);
+  if (settings.stampSoundURL) new Audio(settings.stampSoundURL).play().catch(() => {});
+
+  setTimeout(() => card.classList.remove("stamp-anim"), 700);
+}
+
+const SPARK_COLORS = ["#ffd700","#ff6ec7","#7effb2","#6ecbff","#ff6e6e","#fff"];
+function spawnSparkles(card) {
+  const r = card.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 14; i++) {
+    const sp = document.createElement("div");
+    sp.className = "spark";
+    sp.style.left = cx + "px";
+    sp.style.top  = cy + "px";
+    sp.style.background = SPARK_COLORS[i % SPARK_COLORS.length];
+    const angle = (i / 14) * 360;
+    const dist  = 45 + Math.random() * 45;
+    sp.style.setProperty("--dx", `${Math.cos(angle * Math.PI / 180) * dist}px`);
+    sp.style.setProperty("--dy", `${Math.sin(angle * Math.PI / 180) * dist}px`);
+    document.body.appendChild(sp);
+    setTimeout(() => sp.remove(), 850);
+  }
+}
+
+function triggerComplete() {
+  if (settings.completeSoundURL) new Audio(settings.completeSoundURL).play().catch(() => {});
+
+  const layer = document.getElementById("confetti-layer");
+  layer.style.display = "block";
+  layer.innerHTML = "";
+  const colors = ["#ffd700","#ff4d4d","#4dff88","#4d88ff","#ff4dff","#ff9900","#fff"];
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    p.style.left     = Math.random() * 100 + "vw";
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width    = (8 + Math.random() * 8) + "px";
+    p.style.height   = (12 + Math.random() * 8) + "px";
+    p.style.animationDuration = (2 + Math.random() * 2) + "s";
+    p.style.animationDelay    = Math.random() * 1.5 + "s";
+    p.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+    layer.appendChild(p);
+  }
+
+  const banner = document.getElementById("complete-banner");
+  banner.classList.add("show");
+  setTimeout(() => {
+    banner.classList.remove("show");
+    layer.style.display = "none";
+  }, 6000);
+}
+
+// WebSocket
+const ws = new WebSocket(`ws://${location.host}/`);
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.type === "stamp_card_stamp") {
+    todayEntries.push({ uniqueId: msg.uniqueId, nickname: msg.nickname, date: "", stampedAt: 0 });
+    playStamp(msg.nickname, msg.todayCount);
+    if (msg.complete) setTimeout(triggerComplete, 900);
+  } else if (msg.type === "stamp_settings_updated") {
+    settings = msg.settings;
+    applySettings();
+    renderGrid();
+  } else if (msg.type === "stamp_card_updated") {
+    init();
+  }
+};
+ws.onclose = () => setTimeout(() => location.reload(), 2000);
+
+init();
+</script>
+</body>
+</html>

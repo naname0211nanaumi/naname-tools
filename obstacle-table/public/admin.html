@@ -365,6 +365,7 @@
 <nav class="tab-nav">
   <button class="tab-btn active" id="tabBtn-obstacle" onclick="switchTab('obstacle')">🎮 妨害表</button>
   <button class="tab-btn" id="tabBtn-topics" onclick="switchTab('topics')">💬 トピック</button>
+  <button class="tab-btn" id="tabBtn-stamp" onclick="switchTab('stamp')">🎴 スタンプカード</button>
 </nav>
 
 <!-- ===== 妨害表タブ ===== -->
@@ -524,6 +525,141 @@
   </div>
 
 </div><!-- /#tab-topics -->
+
+<!-- ===== スタンプカードタブ ===== -->
+<div id="tab-stamp" hidden>
+
+  <div class="panel">
+    <h2>基本設定</h2>
+    <div class="panel-grid">
+      <div>
+        <label>横マス数</label>
+        <input type="number" id="sc-cols" min="1" max="20" value="5" oninput="scMarkDirty()">
+      </div>
+      <div>
+        <label>縦マス数</label>
+        <input type="number" id="sc-rows" min="1" max="10" value="2" oninput="scMarkDirty()">
+      </div>
+    </div>
+    <div style="margin-top:10px;background:#1a1d2e;padding:8px 12px;border-radius:6px;">
+      <label>OBSブラウザソースURL</label>
+      <div style="font-family:monospace;color:#a5dcef;font-size:13px;user-select:all;">http://localhost:8788/stamp-card</div>
+    </div>
+    <div style="margin-top:8px;background:#1a1d2e;padding:8px 12px;border-radius:6px;">
+      <label>TikFinityコメントWebhook URL</label>
+      <div style="font-family:monospace;color:#a5dcef;font-size:13px;user-select:all;">http://localhost:8788/webhook/comment</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>画像・音声設定</h2>
+    <div class="panel-grid">
+      <div>
+        <label>背景画像URL（空欄で透明）</label>
+        <input type="text" id="sc-bgImage" placeholder="https://..." oninput="scMarkDirty()">
+      </div>
+      <div>
+        <label>スタンプ画像URL（gifも可）</label>
+        <input type="text" id="sc-stampImage" placeholder="https://..." oninput="scMarkDirty()">
+      </div>
+      <div>
+        <label>スタンプ音URL（mp3など）</label>
+        <input type="text" id="sc-stampSound" placeholder="https://..." oninput="scMarkDirty()">
+      </div>
+      <div>
+        <label>コンプリート音URL</label>
+        <input type="text" id="sc-completeSound" placeholder="https://..." oninput="scMarkDirty()">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>カラー設定</h2>
+    <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="ghost small" onclick="applyScPreset('blue')">🔵 BLUE</button>
+      <button class="ghost small" onclick="applyScPreset('red')">🔴 RED</button>
+      <button class="ghost small" onclick="applyScPreset('purple')">🟣 PURPLE</button>
+      <button class="ghost small" onclick="applyScPreset('green')">🟢 GREEN</button>
+      <button class="ghost small" onclick="applyScPreset('gold')">🟡 GOLD</button>
+    </div>
+    <div class="panel-grid">
+      <div>
+        <label>オーバーレイ背景（rgba可）</label>
+        <input type="text" id="sc-overlayBg" placeholder="rgba(0,0,0,0.5)" oninput="scMarkDirty()" style="width:100%">
+      </div>
+      <div>
+        <label>カード背景色</label>
+        <div class="color-pair">
+          <input type="color" id="sc-cardBg-p" value="#0d1a2e">
+          <input type="text" id="sc-cardBg-t" value="#0d1a2e" maxlength="7" style="width:82px;" oninput="scMarkDirty()">
+        </div>
+      </div>
+      <div>
+        <label>カードボーダー色</label>
+        <div class="color-pair">
+          <input type="color" id="sc-cardBorder-p" value="#4488ff">
+          <input type="text" id="sc-cardBorder-t" value="#4488ff" maxlength="7" style="width:82px;" oninput="scMarkDirty()">
+        </div>
+      </div>
+      <div>
+        <label>スタンプ済み背景色</label>
+        <div class="color-pair">
+          <input type="color" id="sc-stampedBg-p" value="#1a3a6e">
+          <input type="text" id="sc-stampedBg-t" value="#1a3a6e" maxlength="7" style="width:82px;" oninput="scMarkDirty()">
+        </div>
+      </div>
+      <div>
+        <label>ユーザー名色</label>
+        <div class="color-pair">
+          <input type="color" id="sc-userColor-p" value="#ffffff">
+          <input type="text" id="sc-userColor-t" value="#ffffff" maxlength="7" style="width:82px;" oninput="scMarkDirty()">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <button onclick="saveStampSettings()">💾 スタンプカード設定を保存</button>
+      <span id="sc-save-status" style="margin-left:10px;font-size:12px;color:#888;"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>今日の状況</h2>
+    <div id="sc-today-count" style="font-size:18px;font-weight:700;color:#a5dcef;margin-bottom:8px;">読み込み中...</div>
+    <div id="sc-today-list" style="max-height:200px;overflow-y:auto;"></div>
+    <button class="ghost small" style="margin-top:8px;" onclick="loadStampToday()">🔄 更新</button>
+  </div>
+
+  <div class="panel">
+    <h2>統計（過去30日）</h2>
+    <div id="sc-stats-graph" style="overflow-x:auto;"><p style="color:#888;font-size:13px;">読み込み中...</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>カレンダー（今月）</h2>
+    <div id="sc-calendar"><p style="color:#888;font-size:13px;">読み込み中...</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>ランキング</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="ghost small" id="sc-rank-btn-monthly" onclick="loadStampRankings('monthly')">📅 月間</button>
+      <button class="ghost small" id="sc-rank-btn-cumulative" onclick="loadStampRankings('cumulative')">🏆 累積</button>
+      <button class="ghost small" id="sc-rank-btn-currentStreak" onclick="loadStampRankings('currentStreak')">🔥 連続</button>
+      <button class="ghost small" id="sc-rank-btn-maxStreak" onclick="loadStampRankings('maxStreak')">⭐ 最多連続</button>
+    </div>
+    <div id="sc-rankings"></div>
+  </div>
+
+  <div class="panel">
+    <h2>参加者一覧</h2>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <input type="text" id="sc-search" placeholder="ユーザー名で検索..." style="flex:1;min-width:120px;" oninput="loadStampParticipants()">
+      <input type="text" id="sc-date-filter" placeholder="日付で絞り込み (例: 2025-05-19)" style="flex:1;min-width:160px;" oninput="loadStampParticipants()">
+    </div>
+    <div id="sc-participants" style="max-height:400px;overflow-y:auto;"></div>
+  </div>
+
+</div><!-- /#tab-stamp -->
 
 <!-- 保存バー -->
 <div class="status-bar">
@@ -1281,12 +1417,13 @@ window.addEventListener("beforeunload", (e) => {
 // タブ切替
 // ============================================================
 function switchTab(name) {
-  ["obstacle", "topics"].forEach((t) => {
+  ["obstacle", "topics", "stamp"].forEach((t) => {
     $("tab-" + t).hidden = (t !== name);
     const btn = document.getElementById("tabBtn-" + t);
     if (btn) btn.classList.toggle("active", t === name);
   });
   if (name === "topics") loadTopics();
+  if (name === "stamp") initStampTab();
 }
 
 // ============================================================
@@ -1421,6 +1558,294 @@ function updateOverlayViewBtns() {
 
 function escapeHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ============================================================
+// スタンプカード管理
+// ============================================================
+let scDirty = false;
+let scCurrentRankType = "monthly";
+
+const SC_PRESETS = {
+  blue:   { cardBg: "#0d1a2e", cardBorder: "#4488ff", stampedBg: "#1a3a6e", overlayBg: "rgba(0,0,0,0.5)", usernameColor: "#ffffff" },
+  red:    { cardBg: "#2e0d0d", cardBorder: "#ff4444", stampedBg: "#6e1a1a", overlayBg: "rgba(0,0,0,0.5)", usernameColor: "#ffffff" },
+  purple: { cardBg: "#1a0d2e", cardBorder: "#9944ff", stampedBg: "#3a1a6e", overlayBg: "rgba(0,0,0,0.5)", usernameColor: "#ffffff" },
+  green:  { cardBg: "#0d2e0d", cardBorder: "#44dd44", stampedBg: "#1a6e1a", overlayBg: "rgba(0,0,0,0.5)", usernameColor: "#ffffff" },
+  gold:   { cardBg: "#2e1a0d", cardBorder: "#ffd700", stampedBg: "#6e3a1a", overlayBg: "rgba(0,0,0,0.5)", usernameColor: "#ffffff" },
+};
+
+function scMarkDirty() { scDirty = true; }
+
+function applyScPreset(name) {
+  const p = SC_PRESETS[name];
+  if (!p) return;
+  $("sc-overlayBg").value = p.overlayBg;
+  setScColor("cardBg", p.cardBg);
+  setScColor("cardBorder", p.cardBorder);
+  setScColor("stampedBg", p.stampedBg);
+  setScColor("userColor", p.usernameColor);
+  scDirty = true;
+}
+
+function setScColor(key, val) {
+  const t = $("sc-" + key + "-t");
+  const p = $("sc-" + key + "-p");
+  if (t) t.value = val;
+  if (p && /^#[0-9a-fA-F]{6}$/.test(val)) p.value = val;
+}
+
+function initScColorPickers() {
+  for (const key of ["cardBg", "cardBorder", "stampedBg", "userColor"]) {
+    const picker = $("sc-" + key + "-p");
+    const text   = $("sc-" + key + "-t");
+    if (!picker || !text) continue;
+    picker.addEventListener("input", () => { text.value = picker.value; scDirty = true; });
+    text.addEventListener("change", () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+    });
+  }
+}
+
+let scTabInited = false;
+async function initStampTab() {
+  if (!scTabInited) {
+    initScColorPickers();
+    scTabInited = true;
+  }
+  await loadStampSettings();
+  loadStampToday();
+  loadStampStats();
+  loadStampRankings(scCurrentRankType);
+  loadStampParticipants();
+}
+
+async function loadStampSettings() {
+  const res = await fetch("/api/stamp-card/settings");
+  const s = await res.json();
+  $("sc-cols").value = s.gridCols ?? 5;
+  $("sc-rows").value = s.gridRows ?? 2;
+  $("sc-bgImage").value = s.backgroundImageURL || "";
+  $("sc-stampImage").value = s.stampImageURL || "";
+  $("sc-stampSound").value = s.stampSoundURL || "";
+  $("sc-completeSound").value = s.completeSoundURL || "";
+  const c = s.colors || {};
+  $("sc-overlayBg").value = c.overlayBg || "rgba(0,0,0,0.5)";
+  setScColor("cardBg", c.cardBg || "#0d1a2e");
+  setScColor("cardBorder", c.cardBorder || "#4488ff");
+  setScColor("stampedBg", c.stampedBg || "#1a3a6e");
+  setScColor("userColor", c.usernameColor || "#ffffff");
+  scDirty = false;
+  $("sc-save-status").textContent = "";
+}
+
+async function saveStampSettings() {
+  const existing = await fetch("/api/stamp-card/settings").then((r) => r.json());
+  const body = {
+    ...existing,
+    gridCols: parseInt($("sc-cols").value || "5", 10),
+    gridRows: parseInt($("sc-rows").value || "2", 10),
+    backgroundImageURL: $("sc-bgImage").value.trim(),
+    stampImageURL: $("sc-stampImage").value.trim(),
+    stampSoundURL: $("sc-stampSound").value.trim(),
+    completeSoundURL: $("sc-completeSound").value.trim(),
+    colors: {
+      overlayBg:     $("sc-overlayBg").value.trim(),
+      cardBg:        $("sc-cardBg-t").value.trim(),
+      cardBorder:    $("sc-cardBorder-t").value.trim(),
+      stampedBg:     $("sc-stampedBg-t").value.trim(),
+      usernameColor: $("sc-userColor-t").value.trim(),
+    },
+  };
+  const res = await fetch("/api/stamp-card/settings", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.ok) {
+    scDirty = false;
+    $("sc-save-status").textContent = "✅ 保存完了";
+    setTimeout(() => { $("sc-save-status").textContent = ""; }, 3000);
+  } else {
+    $("sc-save-status").textContent = "❌ 保存失敗";
+  }
+}
+
+async function loadStampToday() {
+  const res = await fetch("/api/stamp-card/today");
+  const data = await res.json();
+  const entries = data.entries || [];
+  $("sc-today-count").textContent = `本日の参加者: ${entries.length} / ${data.maxCards ?? "?"} 人`;
+  if (!entries.length) {
+    $("sc-today-list").innerHTML = '<p style="color:#888;font-size:13px;">まだ参加者はいません</p>';
+    return;
+  }
+  $("sc-today-list").innerHTML = entries.map((e, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #2a2d3e;">
+      <span style="color:#4488ff;font-weight:700;min-width:24px;">${i + 1}</span>
+      <span style="flex:1;">${escapeHtml(e.nickname || e.uniqueId)}</span>
+    </div>`).join("");
+}
+
+async function loadStampStats() {
+  const res = await fetch("/api/stamp-card/stats");
+  const data = await res.json();
+  renderStampGraph(data.daily || []);
+  renderStampCalendar(data.calendar || []);
+}
+
+function renderStampGraph(daily) {
+  const container = $("sc-stats-graph");
+  if (!daily.length) {
+    container.innerHTML = '<p style="color:#888;font-size:13px;">データがありません</p>';
+    return;
+  }
+  const max = Math.max(...daily.map((d) => d.count), 1);
+  const W = 620, H = 150, padL = 28, padB = 28, padT = 12;
+  const chartW = W - padL - 4, chartH = H - padB - padT;
+  const barW = Math.max(4, Math.floor(chartW / daily.length) - 2);
+
+  let bars = "", labels = "";
+  daily.forEach((d, i) => {
+    const x = padL + i * (barW + 2);
+    const bh = Math.round((d.count / max) * chartH) || 0;
+    const y = padT + chartH - bh;
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="#4488ff" opacity="0.85" rx="2"/>`;
+    if (d.count > 0)
+      bars += `<text x="${x + barW / 2}" y="${y - 3}" text-anchor="middle" font-size="9" fill="#a5dcef">${d.count}</text>`;
+    if (i % 5 === 0 || i === daily.length - 1) {
+      const lbl = d.date.slice(5);
+      labels += `<text x="${x + barW / 2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#777">${lbl}</text>`;
+    }
+  });
+
+  let yAxis = "";
+  for (const v of [0, Math.round(max / 2), max]) {
+    const y = padT + chartH - Math.round((v / max) * chartH);
+    yAxis += `<text x="${padL - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#777">${v}</text>`;
+    yAxis += `<line x1="${padL}" y1="${y}" x2="${W}" y2="${y}" stroke="#2a2d3e" stroke-width="1"/>`;
+  }
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;">${yAxis}${bars}${labels}</svg>`;
+}
+
+function renderStampCalendar(calendar) {
+  const el = $("sc-calendar");
+  if (!calendar.length) {
+    el.innerHTML = '<p style="color:#888;font-size:13px;">データがありません</p>';
+    return;
+  }
+  const byDate = {};
+  calendar.forEach((d) => { byDate[d.date] = d.count; });
+
+  const firstDateStr = calendar[0].date;
+  const year = parseInt(firstDateStr.slice(0, 4), 10);
+  const month = parseInt(firstDateStr.slice(5, 7), 10);
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = calendar.length;
+  const today = new Date().toISOString().slice(0, 10);
+
+  let html = `<div style="font-weight:700;color:#a5b0d0;margin-bottom:8px;">${year}年${month}月</div>`;
+  html += '<table style="border-collapse:collapse;width:100%;font-size:12px;">';
+  html += '<tr>' + ["日","月","火","水","木","金","土"].map((d) =>
+    `<th style="padding:4px;color:#888;text-align:center;font-weight:500;">${d}</th>`).join("") + '</tr>';
+
+  let day = 1;
+  for (let week = 0; week < 6; week++) {
+    if (day > daysInMonth) break;
+    html += '<tr>';
+    for (let dow = 0; dow < 7; dow++) {
+      if ((week === 0 && dow < firstDay) || day > daysInMonth) {
+        html += '<td style="padding:4px;"></td>';
+      } else {
+        const ds = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const count = byDate[ds] || 0;
+        const isToday = ds === today;
+        const bg = count > 0 ? "#1a3a6e" : "transparent";
+        const border = isToday ? "2px solid #4488ff" : "1px solid #2a2d3e";
+        html += `<td style="padding:4px;text-align:center;background:${bg};border:${border};border-radius:4px;">
+          <div style="font-weight:${isToday ? "700" : "400"};color:${isToday ? "#a5dcef" : "#e8eaf0"};">${day}</div>
+          ${count > 0 ? `<div style="color:#4488ff;font-size:10px;">${count}人</div>` : ""}
+        </td>`;
+        day++;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+async function loadStampRankings(type) {
+  scCurrentRankType = type || scCurrentRankType;
+  ["monthly", "cumulative", "currentStreak", "maxStreak"].forEach((t) => {
+    const btn = $("sc-rank-btn-" + t);
+    if (btn) btn.style.color = t === scCurrentRankType ? "#a5dcef" : "";
+  });
+  const res = await fetch("/api/stamp-card/rankings");
+  const data = await res.json();
+  const rankings = data[scCurrentRankType] || [];
+  const el = $("sc-rankings");
+  if (!rankings.length) {
+    el.innerHTML = '<p style="color:#888;font-size:13px;">データがありません</p>';
+    return;
+  }
+  const labels = { monthly: "月間回数", cumulative: "累積回数", currentStreak: "連続日数", maxStreak: "最多連続" };
+  const medals = ["🥇", "🥈", "🥉"];
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;">'
+    + `<tr>
+        <th style="text-align:left;padding:6px;color:#a5b0d0;border-bottom:1px solid #2a2d3e;font-size:11px;">順位</th>
+        <th style="text-align:left;padding:6px;color:#a5b0d0;border-bottom:1px solid #2a2d3e;font-size:11px;">ユーザー名</th>
+        <th style="text-align:right;padding:6px;color:#a5b0d0;border-bottom:1px solid #2a2d3e;font-size:11px;">${labels[scCurrentRankType]}</th>
+       </tr>`
+    + rankings.map((r, i) => `
+      <tr>
+        <td style="padding:5px 6px;color:${i < 3 ? "#ffd700" : "#888"};">${medals[i] ?? (i + 1)}</td>
+        <td style="padding:5px 6px;">${escapeHtml(r.nickname || r.uniqueId)}</td>
+        <td style="padding:5px 6px;text-align:right;color:#a5dcef;font-weight:700;">${r.count}</td>
+      </tr>`).join("")
+    + '</table>';
+}
+
+async function loadStampParticipants() {
+  const search = $("sc-search")?.value.trim() || "";
+  const dateF  = $("sc-date-filter")?.value.trim() || "";
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (dateF)  params.set("date", dateF);
+  const res = await fetch("/api/stamp-card/participants?" + params.toString());
+  const data = await res.json();
+  const participants = data.participants || [];
+  const el = $("sc-participants");
+  if (!participants.length) {
+    el.innerHTML = '<p style="color:#888;font-size:13px;">参加者データがありません</p>';
+    return;
+  }
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;">'
+    + '<tr>'
+    + '<th style="text-align:left;padding:5px 6px;color:#a5b0d0;border-bottom:1px solid #2a2d3e;font-size:11px;">ユーザー名</th>'
+    + '<th style="text-align:left;padding:5px 6px;color:#a5b0d0;border-bottom:1px solid #2a2d3e;font-size:11px;">日付</th>'
+    + '<th style="padding:5px 6px;border-bottom:1px solid #2a2d3e;"></th>'
+    + '</tr>'
+    + participants.map((p) => `
+      <tr>
+        <td style="padding:5px 6px;">${escapeHtml(p.nickname || p.uniqueId)}</td>
+        <td style="padding:5px 6px;color:#888;font-size:12px;">${p.date}</td>
+        <td style="padding:5px 6px;text-align:right;">
+          <button class="small danger" onclick="deleteStampEntry('${escapeAttr(p.uniqueId)}','${p.date}')">削除</button>
+        </td>
+      </tr>`).join("")
+    + '</table>'
+    + `<div style="margin-top:8px;color:#888;font-size:12px;">${data.total}件</div>`;
+}
+
+async function deleteStampEntry(uid, date) {
+  if (!confirm(date + " の参加記録を削除しますか？")) return;
+  const res = await fetch(
+    "/api/stamp-card/participants/" + encodeURIComponent(uid) + "/" + date,
+    { method: "DELETE" }
+  );
+  if (res.ok) loadStampParticipants();
+  else alert("削除に失敗しました");
 }
 </script>
 
