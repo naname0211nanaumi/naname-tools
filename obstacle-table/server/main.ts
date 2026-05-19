@@ -168,15 +168,20 @@ async function handler(req: Request): Promise<Response> {
 
   // ===== API: DB全体保存（admin保存ボタン） =====
   if (path === "/api/sets" && req.method === "POST") {
-    const incoming = await req.json() as DB;
-    await saveDB(incoming);
+    const incoming = await req.json() as Partial<DB>;
+    const db = await loadDB();
+    // sets/activeSetId/slideIntervalSec のみ更新。topics/memo/overlayViewは保持
+    if (incoming.sets !== undefined) db.sets = incoming.sets;
+    if (incoming.activeSetId !== undefined) db.activeSetId = incoming.activeSetId;
+    if (incoming.slideIntervalSec !== undefined) db.slideIntervalSec = incoming.slideIntervalSec;
+    await saveDB(db);
 
     // overlayへアクティブセット変更を配信（slideIntervalSec付き）
-    const activeSet = incoming.sets.find((s) => s.id === incoming.activeSetId);
+    const activeSet = db.sets.find((s) => s.id === db.activeSetId);
     broadcast({
       type: "set_updated",
       data: activeSet,
-      slideIntervalSec: incoming.slideIntervalSec ?? 3,
+      slideIntervalSec: db.slideIntervalSec ?? 3,
     });
 
     return Response.json({ ok: true });
