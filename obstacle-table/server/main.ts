@@ -122,17 +122,6 @@ async function saveDB(db: DB): Promise<void> {
 // ============================================================
 const sockets = new Set<WebSocket>();
 
-// いいね累計（配信中メモリ）: 日付が変わったらリセット
-const likeCountsToday = new Map<string, number>();
-let likeCountsDate = "";
-function addLikesToday(uniqueId: string, count: number): { prev: number; next: number } {
-  const today = todayStr();
-  if (today !== likeCountsDate) { likeCountsToday.clear(); likeCountsDate = today; }
-  const prev = likeCountsToday.get(uniqueId) ?? 0;
-  const next = prev + count;
-  likeCountsToday.set(uniqueId, next);
-  return { prev, next };
-}
 
 function broadcast(message: unknown): void {
   const text = JSON.stringify(message);
@@ -558,14 +547,8 @@ async function handleCommentWebhook(req: Request): Promise<Response> {
     const payload = await req.json() as TikFinityPayload;
     const uniqueId = payload.data?.user?.uniqueId ?? "";
     const nickname = payload.data?.user?.nickname ?? "anonymous";
-    const comment = payload.data?.comment ?? "";
     if (!uniqueId) return Response.json({ ok: false, reason: "no uniqueId" });
-
-    if (!comment.includes("こんナナ")) {
-      return Response.json({ ok: true, reason: "no trigger keyword" });
-    }
-
-    const stamped = await tryStamp(uniqueId, nickname, "comment:こんナナ");
+    const stamped = await tryStamp(uniqueId, nickname, "comment");
     return Response.json({ ok: true, stamped });
   } catch (e) {
     console.error("Comment webhook error:", e);
@@ -604,15 +587,9 @@ async function handleLikeWebhook(req: Request): Promise<Response> {
     const user = (data.user as Record<string, unknown>) ?? {};
     const uniqueId = String(user.uniqueId ?? "");
     const nickname = String(user.nickname ?? "anonymous");
-    const likeCount = Number(data.likeCount ?? 0);
-    if (!uniqueId || likeCount <= 0) return Response.json({ ok: true });
-
-    const { prev, next } = addLikesToday(uniqueId, likeCount);
-    // いいね累計が100の倍数を超えたらスタンプ
-    if (Math.floor(next / 100) > Math.floor(prev / 100)) {
-      await tryStamp(uniqueId, nickname, `like:${next}`);
-    }
-    return Response.json({ ok: true, total: next });
+    if (!uniqueId) return Response.json({ ok: true });
+    const stamped = await tryStamp(uniqueId, nickname, "like");
+    return Response.json({ ok: true, stamped });
   } catch (e) {
     console.error("Like webhook error:", e);
     return Response.json({ ok: false, error: String(e) }, { status: 500 });
