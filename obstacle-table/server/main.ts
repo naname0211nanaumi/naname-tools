@@ -122,6 +122,18 @@ async function saveDB(db: DB): Promise<void> {
 // ============================================================
 const sockets = new Set<WebSocket>();
 
+// いいね累計（配信中メモリ）: 日付が変わったらリセット
+const likeCountsToday = new Map<string, number>();
+let likeCountsDate = "";
+function addLikesToday(uniqueId: string, count: number): { prev: number; next: number } {
+  const today = todayStr();
+  if (today !== likeCountsDate) { likeCountsToday.clear(); likeCountsDate = today; }
+  const prev = likeCountsToday.get(uniqueId) ?? 0;
+  const next = prev + count;
+  likeCountsToday.set(uniqueId, next);
+  return { prev, next };
+}
+
 function broadcast(message: unknown): void {
   const text = JSON.stringify(message);
   for (const ws of sockets) {
@@ -150,6 +162,9 @@ async function handler(req: Request): Promise<Response> {
   // ===== Webhook =====
   if (path === "/webhook" && req.method === "POST") {
     return await handleWebhook(req);
+  }
+  if (path === "/webhook/like" && req.method === "POST") {
+    return await handleLikeWebhook(req);
   }
 
   // ===== API: アクティブセット取得（slideIntervalSec含む） =====
@@ -482,6 +497,25 @@ async function saveStampDB(db: StampCardDB): Promise<void> {
   await Deno.writeTextFile(STAMP_PATH, JSON.stringify(db, null, 2));
 }
 
+// スタンプを1枚押す。重複チェック込み。戻り値: 実際に押したか
+async function tryStamp(uniqueId: string, nickname: string, reason: string): Promise<boolean> {
+  const sc = await loadStampDB();
+  if (!sc.settings.enabled) return false;
+  const today = todayStr();
+  if (sc.entries.some((e) => e.uniqueId === uniqueId && e.date === today)) return false;
+
+  sc.entries.push({ uniqueId, nickname, date: today, stampedAt: Date.now() });
+  await saveStampDB(sc);
+
+  const todayEntries = sc.entries.filter((e) => e.date === today);
+  const maxCards = sc.settings.gridCols * sc.settings.gridRows;
+  const complete = todayEntries.length >= maxCards;
+  broadcast({ type: "stamp_card_stamp", uniqueId, nickname, todayCount: todayEntries.length, maxCards, complete });
+  if (complete) broadcast({ type: "stamp_card_complete" });
+  console.log(`[STAMP:${reason}] ${nickname}(${uniqueId}) → ${todayEntries.length}/${maxCards}`);
+  return true;
+}
+
 function todayStr(): string { return dateStr(new Date()); }
 function dateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -524,28 +558,15 @@ async function handleCommentWebhook(req: Request): Promise<Response> {
     const payload = await req.json() as TikFinityPayload;
     const uniqueId = payload.data?.user?.uniqueId ?? "";
     const nickname = payload.data?.user?.nickname ?? "anonymous";
+    const comment = payload.data?.comment ?? "";
     if (!uniqueId) return Response.json({ ok: false, reason: "no uniqueId" });
 
-    const sc = await loadStampDB();
-    if (!sc.settings.enabled) return Response.json({ ok: true });
-
-    const today = todayStr();
-    if (sc.entries.some((e) => e.uniqueId === uniqueId && e.date === today)) {
-      return Response.json({ ok: true, reason: "already stamped" });
+    if (!comment.includes("こんナナ")) {
+      return Response.json({ ok: true, reason: "no trigger keyword" });
     }
 
-    sc.entries.push({ uniqueId, nickname, date: today, stampedAt: Date.now() });
-    await saveStampDB(sc);
-
-    const todayEntries = sc.entries.filter((e) => e.date === today);
-    const maxCards = sc.settings.gridCols * sc.settings.gridRows;
-    const complete = todayEntries.length >= maxCards;
-
-    broadcast({ type: "stamp_card_stamp", uniqueId, nickname, todayCount: todayEntries.length, maxCards, complete });
-    if (complete) broadcast({ type: "stamp_card_complete" });
-
-    console.log(`[STAMP] ${nickname}(${uniqueId}) → ${todayEntries.length}/${maxCards}`);
-    return Response.json({ ok: true, stamped: true, count: todayEntries.length });
+    const stamped = await tryStamp(uniqueId, nickname, "comment:こんナナ");
+    return Response.json({ ok: true, stamped });
   } catch (e) {
     console.error("Comment webhook error:", e);
     return Response.json({ ok: false, error: String(e) }, { status: 500 });
@@ -563,6 +584,8 @@ interface TikFinityPayload {
     diamondCount?: number;
     repeatCount?: number;
     repeatEnd?: boolean;
+    comment?: string;
+    likeCount?: number;
     user?: {
       nickname?: string;
       uniqueId?: string;
@@ -574,12 +597,35 @@ interface TikFinityPayload {
   diamondCount?: number;
 }
 
+async function handleLikeWebhook(req: Request): Promise<Response> {
+  try {
+    const raw = await req.json() as Record<string, unknown>;
+    const data = (raw.data as Record<string, unknown>) ?? raw;
+    const user = (data.user as Record<string, unknown>) ?? {};
+    const uniqueId = String(user.uniqueId ?? "");
+    const nickname = String(user.nickname ?? "anonymous");
+    const likeCount = Number(data.likeCount ?? 0);
+    if (!uniqueId || likeCount <= 0) return Response.json({ ok: true });
+
+    const { prev, next } = addLikesToday(uniqueId, likeCount);
+    // いいね累計が100の倍数を超えたらスタンプ
+    if (Math.floor(next / 100) > Math.floor(prev / 100)) {
+      await tryStamp(uniqueId, nickname, `like:${next}`);
+    }
+    return Response.json({ ok: true, total: next });
+  } catch (e) {
+    console.error("Like webhook error:", e);
+    return Response.json({ ok: false, error: String(e) }, { status: 500 });
+  }
+}
+
 async function handleWebhook(req: Request): Promise<Response> {
   try {
     const payload = await req.json() as TikFinityPayload;
     const giftId = String(payload.data?.giftId ?? payload.giftId ?? "");
     const giftName = payload.data?.giftName ?? payload.giftName ?? "";
     const diamonds = payload.data?.diamondCount ?? payload.diamondCount ?? 0;
+    const uniqueId = payload.data?.user?.uniqueId ?? "";
     const userName = payload.data?.user?.nickname ?? "anonymous";
 
     if (!giftName) {
@@ -626,6 +672,11 @@ async function handleWebhook(req: Request): Promise<Response> {
       );
     }
 
+    // スタンプカード: ギフト送信者をスタンプ
+    if (uniqueId) {
+      await tryStamp(uniqueId, userName, `gift:${giftName}`);
+    }
+
     return Response.json({ ok: true });
   } catch (e) {
     console.error("Webhook error:", e);
@@ -641,5 +692,6 @@ console.log(`  Overlay:    http://localhost:${PORT}/overlay`);
 console.log(`  Admin:      http://localhost:${PORT}/admin`);
 console.log(`  StampCard:  http://localhost:${PORT}/stamp-card`);
 console.log(`  Webhook:    http://localhost:${PORT}/webhook`);
+console.log(`  LikeHook:   http://localhost:${PORT}/webhook/like`);
 
 Deno.serve({ port: PORT }, handler);

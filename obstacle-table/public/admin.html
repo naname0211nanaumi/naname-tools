@@ -545,9 +545,31 @@
       <label>OBSブラウザソースURL</label>
       <div style="font-family:monospace;color:#a5dcef;font-size:13px;user-select:all;">http://localhost:8788/stamp-card</div>
     </div>
-    <div style="margin-top:8px;background:#1a1d2e;padding:8px 12px;border-radius:6px;">
-      <label>TikFinityコメントWebhook URL</label>
-      <div style="font-family:monospace;color:#a5dcef;font-size:13px;user-select:all;">http://localhost:8788/webhook/comment</div>
+    <div style="margin-top:10px;background:#1a1d2e;padding:10px 12px;border-radius:6px;">
+      <label style="margin-bottom:6px;font-size:12px;color:#a5b0d0;font-weight:600;">スタンプ発動条件（1配信で1人1枚）</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="color:#ffd24a;font-size:13px;min-width:20px;">🎁</span>
+          <div>
+            <div style="font-size:13px;">ギフト受信</div>
+            <div style="font-size:11px;color:#888;font-family:monospace;">TikFinity Webhook → http://localhost:8788/webhook</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="color:#c89aff;font-size:13px;min-width:20px;">💬</span>
+          <div>
+            <div style="font-size:13px;">「<strong style="color:#c89aff;">こんナナ</strong>」を含むコメント</div>
+            <div style="font-size:11px;color:#888;font-family:monospace;">TikFinity Comment Webhook → http://localhost:8788/webhook/comment</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="color:#ff6ec7;font-size:13px;min-width:20px;">❤️</span>
+          <div>
+            <div style="font-size:13px;">いいね 累計100回（100ごとに判定）</div>
+            <div style="font-size:11px;color:#888;font-family:monospace;">TikFinity Like Webhook → http://localhost:8788/webhook/like</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
